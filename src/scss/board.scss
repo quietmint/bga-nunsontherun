@@ -1,0 +1,96 @@
+@use "material-colors" as *;
+
+#notr-board {
+  aspect-ratio: 1409 / 1509;
+  background-image: url(img/board.webp);
+  background-repeat: no-repeat;
+  background-size: contain;
+  container-type: inline-size;
+  margin: 0 auto;
+  max-height: calc(100vh - 132px);
+  position: relative;
+}
+
+.notr-player {
+  aspect-ratio: 1;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border-radius: 100%;
+  border: 0.4cqw solid black;
+  box-shadow: 0 0 1cqw black;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: all 0.5s ease-out;
+  width: 3.5%;
+}
+
+.notr-1 {
+  left: 89.5%;
+  top: 93.3%;
+}
+
+.notr-2 {
+  left: 80.2%;
+  top: 93.3%;
+}
+
+.notr-3 {
+  left: 71.6%;
+  top: 93.3%;
+}
+
+.notr-4 {
+  left: 62.3%;
+  top: 93.3%;
+}
+
+.notr-5 {
+  left: 52.3%;
+  top: 93.3%;
+}
+
+.notr-6 {
+  left: 42.2%;
+  top: 93.3%;
+}
+
+.notr-7 {
+  left: 31.5%;
+  top: 93.3%;
+}
+
+.notr-8 {
+  left: 23.6%;
+  top: 93.3%;
+}
+
+.notr-9 {
+  left: 15%;
+  top: 93.3%;
+}
+
+.notr-10 {
+  left: 7.2%;
+  top: 93.3%;
+}
+
+.notr-11 {
+  left: 7.2%;
+  top: 87.3%;
+}
+
+.notr-15 {
+  left: 36.5%;
+  top: 87.3%;
+}
+
+.notr-22 {
+  left: 93.8%;
+  top: 87.3%;
+}
+
+.notr-26 {
+  left: 71.6%;
+  top: 79.3%;
+}

@@ -1,0 +1,77 @@
+.notr-wish {
+  align-items: center;
+  display: grid;
+  gap: 4px;
+  grid-template-areas:
+    "title title"
+    "icon icon"
+    "key loc";
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  text-align: center;
+
+  &.notr-notify {
+    margin-top: 8px;
+  }
+}
+
+.notr-wish-title {
+  font-size: 85%;
+  grid-area: title;
+}
+
+.notr-wish-icon {
+  grid-area: icon;
+  aspect-ratio: 1;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border-radius: 50%;
+}
+
+.notr-wish-key {
+  font-weight: bold;
+  grid-area: key;
+}
+
+.notr-wish-loc {
+  font-weight: bold;
+  grid-area: loc;
+}
+
+.notr-wish-dessert {
+  background-image: url(img/wish-dessert.webp);
+}
+
+.notr-wish-game {
+  background-image: url(img/wish-game.webp);
+}
+
+.notr-wish-letter {
+  background-image: url(img/wish-letter.webp);
+}
+
+.notr-wish-magazine {
+  background-image: url(img/wish-magazine.webp);
+}
+
+.notr-wish-makeup {
+  background-image: url(img/wish-makeup.webp);
+}
+
+.notr-wish-perfume {
+  background-image: url(img/wish-perfume.webp);
+}
+
+.notr-wish-phone {
+  background-image: url(img/wish-phone.webp);
+}
+
+.notr-wish-wine {
+  background-image: url(img/wish-wine.webp);
+}
+
+.notr-wish-unknown {
+  background-image: url(img/wish-unknown.webp);
+  background-size: 125%;
+}

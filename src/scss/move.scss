@@ -1,0 +1,78 @@
+.notr-move {
+  align-items: center;
+  display: grid;
+  gap: 4px;
+  grid-template-areas:
+    "title title"
+    "icon icon"
+    "distance noise";
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  text-align: center;
+}
+
+.notr-move-title {
+  font-size: 85%;
+  grid-area: title;
+}
+
+.notr-move-icon {
+  grid-area: icon;
+  aspect-ratio: 1;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border-radius: 50%;
+}
+
+.notr-move-distance {
+  font-weight: bold;
+  grid-area: distance;
+}
+
+.notr-move-noise {
+  font-weight: bold;
+  grid-area: noise;
+}
+
+.notr-move-run {
+  background-image: url(img/move-run.webp);
+}
+
+.notr-move-sneak {
+  background-image: url(img/move-sneak.webp);
+}
+
+.notr-move-stand {
+  background-image: url(img/move-stand.webp);
+}
+
+.notr-move-walk {
+  background-image: url(img/move-walk.webp);
+}
+
+.notr-move-unknown {
+  .notr-panel-blue & {
+    background-image: url(img/novice-blue.webp);
+  }
+
+  .notr-panel-green & {
+    background-image: url(img/novice-green.webp);
+  }
+
+  .notr-panel-orange & {
+    background-image: url(img/novice-orange.webp);
+  }
+
+  .notr-panel-purple & {
+    background-image: url(img/novice-purple.webp);
+  }
+
+  .notr-panel-red & {
+    background-image: url(img/novice-red.webp);
+  }
+
+  .notr-panel-yellow & {
+    background-image: url(img/novice-yellow.webp);
+  }
+}

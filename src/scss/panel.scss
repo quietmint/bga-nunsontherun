@@ -1,0 +1,16 @@
+.notr-panel {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-areas: "move wish";
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto;
+
+  .notr-move {
+    grid-area: move;
+  }
+
+  .notr-wish {
+    grid-area: wish;
+  }
+}
