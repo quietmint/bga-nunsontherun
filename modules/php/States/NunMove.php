@@ -10,14 +10,14 @@ use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\Game;
 
-class NoviceMove extends GameState
+class NunMove extends GameState
 {
   function __construct(
     protected Game $game,
   ) {
     parent::__construct(
       $game,
-      id: 11,
+      id: 22,
       type: StateType::PRIVATE,
       descriptionMyTurn: clienttranslate('${you} must move'),
     );
@@ -25,25 +25,25 @@ class NoviceMove extends GameState
 
   public function getArgs(int $playerId): array
   {
-    $novice = $this->game->getNovice($playerId);
+    $nun = $this->game->getNun('prioress');
     return [
-      'possible' => $this->game->board->getNovicePossibleMoves($novice)
+      'possible' => $this->game->board->getNunPossibleMoves($nun)
     ];
   }
 
   #[PossibleAction]
-  public function actMove(int $currentPlayerId, array $args, int $location)
+  public function actMove(int $playerId, array $args, int $location)
   {
-    $novice = $this->game->getNovice($currentPlayerId);
+    $novice = $this->game->getNovice($playerId);
     $novice->location = $location;
     $this->game->saveNovice($novice);
 
-    $this->bga->notify->all("noviceMove", clienttranslate('${player_name} moves to ${location}'), [
-      "player_id" => $currentPlayerId,
+    $this->bga->notify->all("move", clienttranslate('${player_name} moves to ${location}'), [
+      "player_id" => $playerId,
       "player_name" => $novice->playerName,
       "location" => $location
     ]);
-    $this->gamestate->nextPrivateState($currentPlayerId, NoviceMove::class);
+    return NunMove::class;
   }
 
   /**
@@ -59,7 +59,7 @@ class NoviceMove extends GameState
       "player_id" => $currentPlayerId,
       "player_name" => $this->game->getPlayerNameById($currentPlayerId),
     ]);
-    $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NunsMove::class);
+    $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NovicesMove::class);
   }
 
   /**

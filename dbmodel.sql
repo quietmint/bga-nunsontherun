@@ -30,4 +30,5 @@
 
 -- Example 2: add a custom field to the standard "player" table
 -- ALTER TABLE `player` ADD `player_my_custom_field` INT UNSIGNED NOT NULL DEFAULT 0;
+ALTER TABLE `player` ADD `colorName` VARCHAR(20) NOT NULL DEFAULT 0;
 ALTER TABLE `player` ADD `nun` INT UNSIGNED NOT NULL DEFAULT 0;

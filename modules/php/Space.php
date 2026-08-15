@@ -6,28 +6,28 @@ namespace Bga\Games\NunsOnTheRun;
 
 class Space
 {
-	public int $spaceId;
+	public int $location;
 	public int $roomId;
 	public array $neighbors = [];
 
-	public function __construct(int $spaceId, int $roomId)
+	public function __construct(int $location, int $roomId)
 	{
-		$this->spaceId = $spaceId;
+		$this->location = $location;
 		$this->roomId = $roomId;
 	}
 
 	public function __toString(): string
 	{
-		return "Space({$this->spaceId})";
+		return "Space({$this->location})";
 	}
 
 	public function addNeighbor(Space $other, bool $locked)
 	{
-		$this->neighbors[$other->spaceId] = [
+		$this->neighbors[$other->location] = [
 			'space' => $other,
 			'locked' => $locked
 		];
-		$other->neighbors[$this->spaceId] = [
+		$other->neighbors[$this->location] = [
 			'space' => $this,
 			'locked' => $locked
 		];

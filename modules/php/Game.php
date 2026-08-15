@@ -21,11 +21,11 @@ declare(strict_types=1);
 namespace Bga\Games\NunsOnTheRun;
 
 use Bga\GameFramework\Components\Counters\PlayerCounter;
-use Bga\Games\NunsOnTheRun\States\NoviceMove;
+use Bga\Games\NunsOnTheRun\States\NovicesMove;
 
 class Game extends \Bga\GameFramework\Table
 {
-  private Board $board;
+  public Board $board;
 
   /**
    * Your global variables labels:
@@ -114,20 +114,50 @@ class Game extends \Bga\GameFramework\Table
   {
     $result = [];
     $result['players'] = $this->getCollectionFromDb(
-      'SELECT `player_id` AS `id`, `player_score` AS `score` FROM `player`'
+      'SELECT `player_id` AS `id`, `player_score` AS `score`, `colorName` FROM `player`'
     );
-    $novices = $this->bga->globals->get('novices');
-    foreach ($novices as $id => &$novice) {
-      if ($id == $currentPlayerId) {
-        $novice['keyLocation'] = $this->getKeyLocation($novice['wish']);
-        $novice['wishLocation'] = $this->getWishLocation($novice['wish']);
-      } else {
-        unset($novice['wish']);
-      }
-    }
-    $result['novices'] = $novices;
-    $result['nuns'] = $this->bga->globals->get('nuns');
+    $result['novices'] = $this->getNoviceList();
+    $result['nuns'] = $this->getNunList();
     return $result;
+  }
+
+  function getNoviceList(): NoviceList
+  {
+    return new NoviceList($this->bga->globals->get('novices'));
+  }
+
+  function getNovice(int $playerId): Novice
+  {
+    return $this->getNoviceList()->get($playerId);
+  }
+
+  function saveNovice(Novice $novice)
+  {
+    $noviceList = $this->getNoviceList();
+    $noviceList->add($novice);
+    $this->saveNovices($noviceList);
+  }
+
+  function saveNovices(NoviceList $noviceList)
+  {
+    $this->bga->globals->set('novices', $noviceList);
+  }
+
+  function getNunList(): NunList
+  {
+    return new NunList($this->bga->globals->get('nuns'));
+  }
+
+  function getNun(string $type): ?Nun
+  {
+    return $this->getNunList()->get($type);
+  }
+
+  function saveNun(Nun $nun) {}
+
+  function saveNuns(NunList $nunList)
+  {
+    $this->bga->globals->set('nuns', $nunList);
   }
 
   function getSpecificColorPairings(): array
@@ -140,6 +170,36 @@ class Game extends \Bga\GameFramework\Table
       '982fff' /* Purple */      => '9c27b0', // purple-500
       'ffa500' /* Yellow */      => 'ffc107', // amber-500
     ];
+  }
+
+  public function getColorName(string $color): ?string
+  {
+    switch ($color) {
+      case 'f07f16': // bga orange
+      case 'ff5722': // deep-orange-500
+        return 'orange';
+      case '0000ff': // bga blue
+      case '03a9f4': // light-blue-500
+        return 'blue';
+      case 'ff0000': // bga red
+      case 'e91e63': // pink-500
+        return 'red';
+      case '008000': // bga green
+      case '8bc34a': // light-green-500
+        return 'green';
+      case '982fff': // bga purple
+      case '9c27b0': // purple-500
+        return 'purple';
+      case 'ffa500': // bga yellow
+      case 'ffc107': // amber-500
+        return 'yellow';
+      case '000000':
+        return 'black';
+      case 'ffffff':
+        return 'white';
+      default:
+        return null;
+    }
   }
 
   /**
@@ -168,10 +228,9 @@ class Game extends \Bga\GameFramework\Table
 
     // Assign novice colors
     $gameinfos = $this->getGameinfos();
-    $noviceColors = $r->shuffleArray($gameinfos['player_colors']);
     foreach ($players as $playerId => $player) {
       // Now you can access both $player_id and $player array
-      $color = array_shift($noviceColors);
+      $color = array_shift($gameinfos['player_colors']);
       $insert[] = vsprintf("(%s, '%s', '%s', 0)", [
         $playerId,
         $color,
@@ -185,71 +244,68 @@ class Game extends \Bga\GameFramework\Table
     $this->reloadPlayersBasicInfos();
 
     // Setup nuns
-    $nuns = [];
+    $nuns = new NunList();
     $nunColors = ['000000', 'ffffff'];
     if (count($nunIds) == 1) {
       $nunIds[1] = $nunIds[0];
     }
     $players = $this->getCollectionFromDb(
-      "SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 1"
+      "SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 1 ORDER BY `player_no`"
     );
-    foreach (['abbess', 'prioress'] as $nun) {
+    foreach (['abbess', 'prioress'] as $type) {
       $playerId = array_shift($nunIds);
       $player = $players[$playerId];
       $color = array_shift($nunColors);
-      $nuns[$nun] = [
-        'color' => $color,
-        'location' => 26,
-        'nun' => $nun,
-        'playerId' => $playerId,
-      ];
+      $colorName = $this->getColorName($color);
+      $this->DbQuery("UPDATE `player` SET `colorName` = '$colorName' WHERE `player_color` = '$color'");
+      $nun = new Nun();
+      $nun->color = $colorName;
+      $nun->location = 26;
+      $nun->playerId = $playerId;
+      $nun->playerName = $player['player_name'];
+      $nun->type = $type;
+      $nuns->add($nun);
       $this->bga->notify->all(
         'message',
-        clienttranslate('${player_name} (${nun}) starts at ${location}.'),
+        clienttranslate('${player_name} (${type}) starts at ${location}.'),
         [
-          'i18n' => ['nun'],
-          'location' => 26,
-          'nun' => $nun,
-          'player_id' => $playerId,
-          'player_name' => $player['player_name'],
+          'i18n' => ['type'],
+          'location' => $nun->location,
+          'player_id' => $nun->playerId,
+          'player_name' => $nun->playerName,
+          'type' => $nun->type,
         ]
       );
     }
-    $this->bga->globals->set('nuns', $nuns);
+    $this->saveNuns($nuns);
 
     // Setup novices
-    $novices = [];
+    $novices = new NoviceList();
     $players = $this->getCollectionFromDb(
-      "SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 0"
+      "SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 0 ORDER BY `player_no`"
     );
     $wishes = $r->shuffleArray(['dessert', 'game', 'letter', 'magazine', 'makeup', 'perfume', 'phone', 'wine']);
-    $starts = [
-      "ff5722" => 1, // Orange (was f07f16) - starts at 1
-      "03a9f4" => 2, // Blue (was 0000ff) - starts at 2
-      "e91e63" => 3, // Red (was ff0000) - starts at 3
-      "8bc34a" => 4, // Green (was 008000) - starts at 4
-      "9c27b0" => 5, // Purple (was 982fff) - starts at 5
-      "ffc107" => 6, // Yellow (was ffa500) - starts at 6
-    ];
+    $location = 1;
     foreach ($players as $playerId => $player) {
       $color = $player['player_color'];
-      $start = $starts[$color];
-      $wish = array_shift($wishes);
-      $novices[$playerId] = [
-        'color' => $color,
-        'location' => $start,
-        'playerId' => $playerId,
-        'wish' => $wish,
-      ];
+      $colorName = $this->getColorName($color);
+      $this->DbQuery("UPDATE `player` SET `colorName` = '$colorName' WHERE `player_color` = '$color'");
+      $novice = new Novice();
+      $novice->color = $colorName;
+      $novice->location = $location++;
+      $novice->playerId = $playerId;
+      $novice->playerName = $player['player_name'];
+      $novice->wish = array_shift($wishes);
+      $novices->add($novice);
       $this->bga->notify->all(
         'message',
-        clienttranslate('${player_name} (${nun}) starts at ${location}.'),
+        clienttranslate('${player_name} (${type}) starts at ${location}.'),
         [
-          'i18n' => ['nun'],
-          'location' => $start,
-          'nun' => 'novice',
-          'player_id' => $playerId,
-          'player_name' => $player['player_name'],
+          'i18n' => ['type'],
+          'location' => $novice->location,
+          'player_id' => $novice->playerId,
+          'player_name' => $novice->playerName,
+          'type' => 'novice',
         ]
       );
       $this->bga->notify->player(
@@ -258,19 +314,19 @@ class Game extends \Bga\GameFramework\Table
         clienttranslate('Your secret wish is ${wish}'),
         [
           'i18n' => ['wish'],
-          'keyLocation' => $this->getKeyLocation($wish),
+          'keyLocation' => $novice->getKeyLocation(),
           'preserve' => [
             'keyLocation',
             'wishIcon',
             'wishLocation',
           ],
-          'wish' => $wish,
-          'wishIcon' => $wish,
-          'wishLocation' => $this->getWishLocation($wish),
+          'wish' => $novice->wish,
+          'wishIcon' => $novice->wish,
+          'wishLocation' => $novice->getWishLocation(),
         ]
       );
     }
-    $this->bga->globals->set('novices', $novices);
+    $this->saveNovices($novices);
 
     // Init global values with their initial values.
 
@@ -284,55 +340,7 @@ class Game extends \Bga\GameFramework\Table
 
     // TODO: Setup the initial game situation here.
 
-    return NoviceMove::class;
-  }
-
-  public function getKeyLocation(string $wish): ?int
-  {
-    switch ($wish) {
-      case 'dessert':
-        return 36;
-      case 'game':
-        return 67;
-      case 'letter':
-        return 72;
-      case 'magazine':
-        return 107;
-      case 'makeup':
-        return 130;
-      case 'perfume':
-        return 149;
-      case 'phone':
-        return 82;
-      case 'wine':
-        return 36;
-      default:
-        return null;
-    }
-  }
-
-  public function getWishLocation(string $wish): ?int
-  {
-    switch ($wish) {
-      case 'dessert':
-        return 148;
-      case 'game':
-        return 109;
-      case 'letter':
-        return 110;
-      case 'magazine':
-        return 119;
-      case 'makeup':
-        return 121;
-      case 'perfume':
-        return 121;
-      case 'phone':
-        return 118;
-      case 'wine':
-        return 155;
-      default:
-        return null;
-    }
+    return NovicesMove::class;
   }
 
   public function getMoveDistance(string $move): ?array

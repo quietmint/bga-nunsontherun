@@ -4,62 +4,52 @@ declare(strict_types=1);
 
 namespace Bga\Games\NunsOnTheRun\States;
 
+use Bga\GameFramework\Actions\CheckAction;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
-use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\Game;
 
-class NoviceMove extends GameState
+class NovicesMove extends GameState
 {
   function __construct(
     protected Game $game,
   ) {
     parent::__construct(
       $game,
-      id: 11,
-      type: StateType::PRIVATE,
-      descriptionMyTurn: clienttranslate('${you} must move'),
+      id: 10,
+      type: StateType::MULTIPLE_ACTIVE_PLAYER,
+      description: clienttranslate('Novices must move'),
+      initialPrivate: NoviceMove::class,
     );
   }
 
-  public function getArgs(int $playerId): array
+  public function onEnteringState(): void
   {
-    $novice = $this->game->getNovice($playerId);
-    return [
-      'possible' => $this->game->board->getNovicePossibleMoves($novice)
-    ];
+    $playerIds = $players = $this->game->getObjectListFromDB(
+      "SELECT `player_id` FROM `player` WHERE `nun` = 0",
+      true
+    );
+    $this->gamestate->setPlayersMultiactive($playerIds, '');
+    $this->gamestate->initializePrivateStateForAllActivePlayers();
   }
 
+  #[CheckAction(false)]
   #[PossibleAction]
-  public function actMove(int $currentPlayerId, array $args, int $location)
+  public function actReset(int $currentPlayerId)
   {
     $novice = $this->game->getNovice($currentPlayerId);
-    $novice->location = $location;
+    $novice->move = null;
+    $novice->location = 1;
     $this->game->saveNovice($novice);
-
-    $this->bga->notify->all("noviceMove", clienttranslate('${player_name} moves to ${location}'), [
+    $this->notify->all("move", clienttranslate('${player_name} restarts their turn, returning to ${location}'), [
       "player_id" => $currentPlayerId,
-      "player_name" => $novice->playerName,
-      "location" => $location
+      "player_name" => $novice->playerName, // remove this line if you uncomment notification decorator
+      "location" => $novice->location,
     ]);
-    $this->gamestate->nextPrivateState($currentPlayerId, NoviceMove::class);
-  }
 
-  /**
-   * Player action, example content.
-   *
-   * In this scenario, each time a player pass, this method will be called. This method is called directly
-   * by the action trigger on the front side with `bgaPerformAction`.
-   */
-  #[PossibleAction]
-  public function actDone(int $currentPlayerId)
-  {
-    $this->notify->all("done", clienttranslate('${player_name} is done moving'), [
-      "player_id" => $currentPlayerId,
-      "player_name" => $this->game->getPlayerNameById($currentPlayerId),
-    ]);
-    $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NunsMove::class);
+    $this->gamestate->setPlayersMultiactive([$currentPlayerId], '');
+    $this->gamestate->initializePrivateState($currentPlayerId);
   }
 
   /**
@@ -77,6 +67,6 @@ class NoviceMove extends GameState
    */
   function zombie(int $playerId)
   {
-    return $this->actDone($playerId);
+    return NextPlayer::class;
   }
 }

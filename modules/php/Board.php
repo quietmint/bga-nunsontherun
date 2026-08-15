@@ -316,23 +316,73 @@ class Board
 
 		// Create spaces
 		foreach ($rooms as $roomId => $room) {
-			foreach ($room as $spaceId => $neighborIds) {
-				if (array_key_exists($spaceId, $this->spaces)) {
-					throw new VisibleSystemException("Space already exists: $spaceId");
+			foreach ($room as $location => $neighborIds) {
+				if (array_key_exists($location, $this->spaces)) {
+					throw new VisibleSystemException("Space already exists: $location");
 				}
-				$this->spaces[$spaceId] = new Space($spaceId, $roomId);
+				$this->spaces[$location] = new Space($location, $roomId);
 			}
 		}
 
 		// Add neighbors
 		foreach ($rooms as $roomId => $room) {
-			foreach ($room as $spaceId => $neighborIds) {
-				$space = $this->spaces[$spaceId];
+			foreach ($room as $location => $neighborIds) {
+				$space = $this->spaces[$location];
 				foreach ($neighborIds as $neighborId) {
 					$neighbor = $this->spaces[abs($neighborId)];
 					$space->addNeighbor($neighbor, $neighborId < 0);
 				}
 			}
 		}
+	}
+
+	public function getNovicePossibleMoves(Novice $novice): array
+	{
+		$possible = [];
+		$distance = $novice->getCurrentDistance();
+		$queue = [new PossibleMove($distance, $novice->location, [])];
+		$visited = [];
+		while (!empty($queue)) {
+			$nextQueue = [];
+			foreach ($queue as $move) {
+				$location = $move->location;
+				$distance = $move->distance;
+				if ($distance > $novice->getMaxDistance()) {
+					continue;
+				}
+				if (array_key_exists($location, $visited)) {
+					// Don't reprocess the same space
+					continue;
+				}
+				$visited[$location] = true;
+				$this->game->debug("$novice processing queue: location $location via $move // ");
+				if (!array_key_exists($location, $possible) || $distance < $possible[$location]->distance) {
+					$this->game->debug("-- $novice found a better way to get to space $location in distance $distance // ");
+					$possible[$location] = $move;
+					// break;
+				}
+				$space = $this->spaces[$location];
+				foreach ($space->neighbors as $neighborId => $neighbor) {
+					if (in_array($neighborId, $move->path)) {
+						// Ignore backtracking
+						continue;
+					}
+					if (!$novice->hasKey && $neighbor['locked']) {
+						// Ignore locked doors
+						$this->game->debug("-- from $location neighbor $neighborId is locked and no key! Skip! // ");
+						continue;
+					}
+					$nextQueue[] = new PossibleMove($distance + 1, $neighborId, $move->path);
+				}
+			}
+			$queue = $nextQueue;
+		}
+		return $possible;
+	}
+
+	public function getNunPossibleMoves(Nun $nun): array
+	{
+		$possible = [];
+		return $possible;
 	}
 }

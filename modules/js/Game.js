@@ -8,14 +8,31 @@
  * -----
  */
 
-import { PlayerTurn } from "./States/PlayerTurn.js";
+import { NoviceMove } from "./States/NoviceMove.js";
+import { NovicesMove } from "./States/NovicesMove.js";
 
 export class Game {
   constructor(bga) {
     console.log("Nuns on the Run!");
     this.bga = bga;
     this.bga.states.logger = console.log;
-    this.bga.states.register("PlayerTurn", new PlayerTurn(this, bga));
+    this.bga.states.register("NoviceMove", new NoviceMove(this, bga));
+    this.bga.states.register("NovicesMove", new NovicesMove(this, bga));
+
+    this.classLocations = [];
+    for (let i = 1; i <= 155; i++) {
+      this.classLocations.push("notr-" + i);
+    }
+  }
+
+  isNovice() {
+    const playerId = this.bga.players.getCurrentPlayerId();
+    return this.gamedatas.novices[playerId] != null;
+  }
+
+  isNun() {
+    const playerId = this.bga.players.getCurrentPlayerId();
+    return this.gamedatas.nuns.abbess.playerId == playerId || this.gamedatas.nuns.prioress.playerId == playerId;
   }
 
   setup(gamedatas) {
@@ -24,19 +41,6 @@ export class Game {
 
     Object.values(gamedatas.players).forEach((player) => {
       player.avatarUrl = this.bga.players.getPlayerAvatarUrl(player.id);
-      if (player.color == "ff5722") {
-        player.colorName = "orange";
-      } else if (player.color == "03a9f4") {
-        player.colorName = "blue";
-      } else if (player.color == "e91e63") {
-        player.colorName = "red";
-      } else if (player.color == "8bc34a") {
-        player.colorName = "green";
-      } else if (player.color == "9c27b0") {
-        player.colorName = "purple";
-      } else if (player.color == "ffc107") {
-        player.colorName = "yellow";
-      }
     });
     this.setupBoard();
     this.setupPanels();
@@ -48,12 +52,11 @@ export class Game {
     const boardEl = document.getElementById("notr-board");
     Object.values(this.gamedatas.nuns).forEach((nun) => {
       const player = this.gamedatas.players[nun.playerId];
-      const title = nun.nun;
-      boardEl.insertAdjacentHTML("beforeend", `<div class="notr-player notr-color-${nun.color} notr-${nun.location}" style="background-image: url(${player.avatarUrl}); border-color: #${nun.color}" title="${player.name} (${title})"></div>`);
+      boardEl.insertAdjacentHTML("beforeend", `<div id="notr-nun-${nun.type}" class="notr-player notr-${nun.color} notr-${nun.location}" style="background-image: url(${player.avatarUrl})" title="${player.name} (${_(nun.type)})"></div>`);
     });
     Object.values(this.gamedatas.novices).forEach((novice) => {
       const player = this.gamedatas.players[novice.playerId];
-      boardEl.insertAdjacentHTML("beforeend", `<div class="notr-player notr-color-${novice.color} notr-${novice.location}" style="background-image: url(${player.avatarUrl}); border-color: #${novice.color}" title="${player.name}"></div>`);
+      boardEl.insertAdjacentHTML("beforeend", `<div id="notr-novice-${novice.playerId}" class="notr-player notr-${novice.color} notr-${novice.location}" style="background-image: url(${player.avatarUrl})" title="${player.name}"></div>`);
     });
   }
 
@@ -63,7 +66,7 @@ export class Game {
       const panelEl = this.bga.playerPanels.getElement(novice.playerId);
       panelEl.insertAdjacentHTML(
         "beforeend",
-        `<div class="notr-panel notr-panel-${player.colorName}">
+        `<div class="notr-panel notr-${novice.color}">
   <div class="notr-move">
     <div class="notr-move-title">${_("Movement")}</div>
     <div class="notr-move-icon notr-move-${novice.move || "unknown"}" title="${_(novice.move || "?")}"></div>
@@ -82,13 +85,20 @@ export class Game {
   }
 
   setupNotifications() {
-    console.log("notifications subscriptions setup");
-
-    // automatically listen to the notifications, based on the `notif_xxx` function on this class.
-    // Uncomment the logger param to see debug information in the console about notifications.
     this.bga.notifications.setupPromiseNotifications({
-      // logger: console.log
+      logger: console.log,
     });
+  }
+
+  async notif_noviceMove(args) {
+    const noviceEl = document.getElementById("notr-novice-" + args.player_id);
+    if (noviceEl == null) {
+      console.error(`notr-novice-${args.player_id} not found`);
+      return;
+    }
+    console.log('this.classLocations', this.classLocations);
+    noviceEl.classList.remove(...this.classLocations);
+    noviceEl.classList.add("notr-" + args.location);
   }
 
   ///////////////////////////////////////////////////
