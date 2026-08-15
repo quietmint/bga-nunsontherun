@@ -34,24 +34,53 @@ class NoviceMove extends GameState
   #[PossibleAction]
   public function actMove(int $currentPlayerId, array $args, int $location)
   {
+
+    // Check location
+    if (!array_key_exists($location, $args['possible'])) {
+      throw new UserException("Cannot move to location $location");
+    }
+    $possible = $args['possible'][$location];
+    $spaces = $possible->spaces;
+    array_shift($spaces);
+
+    $roomIds = $this->game->getNunRoomIds();
     $novice = $this->game->getNovice($currentPlayerId);
-    $novice->location = $location;
+    $roomId = $this->game->board->getRoomId($novice->location);
+    $oldVisible = array_key_exists($roomId, $roomIds);
+    foreach ($spaces as $spaceId) {
+      $roomId = $this->game->board->getRoomId($spaceId);
+      $newVisible = array_key_exists($roomId, $roomIds);
+      if ($newVisible) {
+        // visible
+        $this->bga->notify->all("noviceMove", clienttranslate('${player_name} moves to ${location} in view of the nuns'), [
+          "player_id" => $currentPlayerId,
+          "player_name" => $novice->playerName,
+          "location" => $spaceId
+        ]);
+      } else {
+        // hidden
+        if ($oldVisible) {
+          $this->bga->notify->all("vanish", clienttranslate('${player_name} vanishes from ${location}'), [
+            "player_id" => $currentPlayerId,
+            "player_name" => $novice->playerName,
+            "location" => $novice->location
+          ]);
+        }
+        $this->bga->notify->player($currentPlayerId, "noviceMove", clienttranslate('${player_name} moves secretly to ${location}'), [
+          "player_id" => $currentPlayerId,
+          "player_name" => $novice->playerName,
+          "location" => $spaceId
+        ]);
+      }
+      $oldVisible = $newVisible;
+      $novice->location = $location;
+    }
+    array_push($novice->move->spaces, ...$spaces);
     $this->game->saveNovice($novice);
 
-    $this->bga->notify->all("noviceMove", clienttranslate('${player_name} moves to ${location}'), [
-      "player_id" => $currentPlayerId,
-      "player_name" => $novice->playerName,
-      "location" => $location
-    ]);
     $this->gamestate->nextPrivateState($currentPlayerId, NoviceMove::class);
   }
 
-  /**
-   * Player action, example content.
-   *
-   * In this scenario, each time a player pass, this method will be called. This method is called directly
-   * by the action trigger on the front side with `bgaPerformAction`.
-   */
   #[PossibleAction]
   public function actDone(int $currentPlayerId)
   {
@@ -60,6 +89,23 @@ class NoviceMove extends GameState
       "player_name" => $this->game->getPlayerNameById($currentPlayerId),
     ]);
     $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NunsMove::class);
+  }
+
+  #[PossibleAction]
+  public function actReset(int $currentPlayerId)
+  {
+    $novice = $this->game->getNovice($currentPlayerId);
+    $novice->location = $novice->move->start;
+    $novice->move->spaces = [];
+    $this->game->saveNovice($novice);
+    $this->notify->all("noviceMove", clienttranslate('${player_name} restarts their turn'), [
+      "player_id" => $currentPlayerId,
+      "player_name" => $novice->playerName,
+      "location" => $novice->location,
+    ]);
+
+    $this->gamestate->setPlayersMultiactive([$currentPlayerId], '');
+    $this->gamestate->initializePrivateState($currentPlayerId);
   }
 
   /**

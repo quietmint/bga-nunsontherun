@@ -20,7 +20,7 @@ export class NovicesMove {
   onPlayerActivationChange(args, isCurrentPlayerActive) {
     if (!isCurrentPlayerActive && this.game.isNovice()) {
       this.bga.players.getCurrentPlayerId();
-      this.bga.statusBar.addActionButton(_("Reset"), () => this.bga.actions.performAction("actReset", {}, { checkAction: false, checkPossibleActions: true }), { color: "secondary" });
+      this.bga.statusBar.addActionButton(_("Go Back"), () => this.bga.actions.performAction("actActivate", {}, { checkAction: false, checkPossibleActions: true }), { color: "secondary" });
     }
   }
 }

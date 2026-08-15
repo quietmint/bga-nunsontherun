@@ -11,7 +11,7 @@ class Novice implements \JsonSerializable
 	public bool $hasWish = false;
 	public int $location;
 	public ?Move $move = null;
-	public array $moves;
+	public array $moves = [];
 	public int $playerId;
 	public string $playerName;
 	public string $wish;
@@ -27,6 +27,9 @@ class Novice implements \JsonSerializable
 			$this->playerId = $data->playerId;
 			$this->playerName = $data->playerName;
 			$this->wish = $data->wish;
+			foreach ($data->moves as $move) {
+				array_push($this->moves, new Move($move));
+			}
 		}
 	}
 
@@ -44,6 +47,7 @@ class Novice implements \JsonSerializable
 			'keyLocation' => $this->getKeyLocation(),
 			'location' => $this->location,
 			'move' => $this->move,
+			'moves' => $this->moves,
 			'playerId' => $this->playerId,
 			'playerName' => $this->playerName,
 			'wish' => $this->wish,
@@ -97,15 +101,5 @@ class Novice implements \JsonSerializable
 			default:
 				return null;
 		}
-	}
-
-	public function getCurrentDistance(): int
-	{
-		return 0;
-	}
-
-	public function getMaxDistance(): int
-	{
-		return 10;
 	}
 }

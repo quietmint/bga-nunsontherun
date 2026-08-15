@@ -52,7 +52,7 @@ export class Game {
     const boardEl = document.getElementById("notr-board");
     Object.values(this.gamedatas.nuns).forEach((nun) => {
       const player = this.gamedatas.players[nun.playerId];
-      boardEl.insertAdjacentHTML("beforeend", `<div id="notr-nun-${nun.type}" class="notr-player notr-${nun.color} notr-${nun.location}" style="background-image: url(${player.avatarUrl})" title="${player.name} (${_(nun.type)})"></div>`);
+      boardEl.insertAdjacentHTML("beforeend", `<div id="notr-nun-${nun.role}" class="notr-player notr-${nun.color} notr-${nun.location}" style="background-image: url(${player.avatarUrl})" title="${player.name} (${_(nun.role)})"></div>`);
     });
     Object.values(this.gamedatas.novices).forEach((novice) => {
       const player = this.gamedatas.players[novice.playerId];
@@ -96,7 +96,6 @@ export class Game {
       console.error(`notr-novice-${args.player_id} not found`);
       return;
     }
-    console.log('this.classLocations', this.classLocations);
     noviceEl.classList.remove(...this.classLocations);
     noviceEl.classList.add("notr-" + args.location);
   }

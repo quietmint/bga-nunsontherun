@@ -69,7 +69,10 @@ class Game extends \Bga\GameFramework\Table
    */
   public function getGameProgression()
   {
-    return 0;
+    $playerCount = (int) $this->getUniqueValueFromDB('SELECT COUNT(1) FROM `player`');
+    $caughtProgression = round($this->getCaught() / $playerCount * 100);
+    $roundProgression = round(($this->getRound() - 1) / 0.15);
+    return max($caughtProgression, $roundProgression);
   }
 
   /**
@@ -116,8 +119,10 @@ class Game extends \Bga\GameFramework\Table
     $result['players'] = $this->getCollectionFromDb(
       'SELECT `player_id` AS `id`, `player_score` AS `score`, `colorName` FROM `player`'
     );
+    $result['caught'] = $this->getCaught();
     $result['novices'] = $this->getNoviceList();
     $result['nuns'] = $this->getNunList();
+    $result['round'] = $this->getRound();
     return $result;
   }
 
@@ -151,6 +156,16 @@ class Game extends \Bga\GameFramework\Table
   function getNun(string $type): ?Nun
   {
     return $this->getNunList()->get($type);
+  }
+
+  function getNunRoomIds(): array
+  {
+    $roomIds = [];
+    $nuns = $this->getNunList();
+    foreach ($nuns as $nun) {
+      $nun->location;
+    }
+    return $roomIds;
   }
 
   function saveNun(Nun $nun) {}
@@ -252,7 +267,7 @@ class Game extends \Bga\GameFramework\Table
     $players = $this->getCollectionFromDb(
       "SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 1 ORDER BY `player_no`"
     );
-    foreach (['abbess', 'prioress'] as $type) {
+    foreach (['abbess', 'prioress'] as $role) {
       $playerId = array_shift($nunIds);
       $player = $players[$playerId];
       $color = array_shift($nunColors);
@@ -263,19 +278,24 @@ class Game extends \Bga\GameFramework\Table
       $nun->location = 26;
       $nun->playerId = $playerId;
       $nun->playerName = $player['player_name'];
-      $nun->type = $type;
+      $nun->role = $role;
       $nuns->add($nun);
       $this->bga->notify->all(
         'message',
-        clienttranslate('${player_name} (${type}) starts at ${location}.'),
+        clienttranslate('${player_name} (${role}) starts at ${location}.'),
         [
-          'i18n' => ['type'],
+          'i18n' => ['role'],
           'location' => $nun->location,
           'player_id' => $nun->playerId,
           'player_name' => $nun->playerName,
-          'type' => $nun->type,
+          'role' => $nun->role,
         ]
       );
+      $this->bga->playerStats->set('caught', 0, $playerId);
+      $this->bga->playerStats->set('role', 1, $playerId);
+      $this->bga->playerStats->set('runMove', 0, $playerId);
+      $this->bga->playerStats->set('spaces', 0, $playerId);
+      $this->bga->playerStats->set('walkMove', 0, $playerId);
     }
     $this->saveNuns($nuns);
 
@@ -299,13 +319,13 @@ class Game extends \Bga\GameFramework\Table
       $novices->add($novice);
       $this->bga->notify->all(
         'message',
-        clienttranslate('${player_name} (${type}) starts at ${location}.'),
+        clienttranslate('${player_name} (${role}) starts at ${location}.'),
         [
-          'i18n' => ['type'],
+          'i18n' => ['role'],
           'location' => $novice->location,
           'player_id' => $novice->playerId,
           'player_name' => $novice->playerName,
-          'type' => 'novice',
+          'role' => 'novice',
         ]
       );
       $this->bga->notify->player(
@@ -325,22 +345,35 @@ class Game extends \Bga\GameFramework\Table
           'wishLocation' => $novice->getWishLocation(),
         ]
       );
+      $this->bga->playerStats->set('caughtTimes', 0, $playerId);
+      $this->bga->playerStats->set('keyLocation', $novice->getKeyLocation(), $playerId);
+      $this->bga->playerStats->set('keyObtained', 0, $playerId);
+      $this->bga->playerStats->set('role', 0, $playerId);
+      $this->bga->playerStats->set('runMove', 0, $playerId);
+      $this->bga->playerStats->set('sneakMove', 0, $playerId);
+      $this->bga->playerStats->set('spaces', 0, $playerId);
+      $this->bga->playerStats->set('standMove', 0, $playerId);
+      $this->bga->playerStats->set('startLocation', $novice->location, $playerId);
+      $this->bga->playerStats->set('walkMove', 0, $playerId);
+      $this->bga->playerStats->set('wishLocation', $novice->getKeyLocation(), $playerId);
+      $this->bga->playerStats->set('wishObtained', 0, $playerId);
     }
     $this->saveNovices($novices);
 
-    // Init global values with their initial values.
-
-    // Init game statistics.
-    //
-    // NOTE: statistics used in this file must be defined in your `stats.inc.php` file.
-
-    // Dummy content.
-    // $this->tableStats->init('table_teststat1', 0);
-    // $this->playerStats->init('player_teststat1', 0);
-
-    // TODO: Setup the initial game situation here.
+    // Table statistics
+    $this->bga->tableStats->init('round', 1);
 
     return NovicesMove::class;
+  }
+
+  public function getCaught(): int
+  {
+    return $this->tableStats->get('caught');
+  }
+
+  public function getRound(): int
+  {
+    return $this->tableStats->get('round');
   }
 
   public function getMoveDistance(string $move): ?array

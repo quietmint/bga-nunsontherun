@@ -339,7 +339,9 @@ class Board
 	public function getNovicePossibleMoves(Novice $novice): array
 	{
 		$possible = [];
-		$distance = $novice->getCurrentDistance();
+		$move = $novice->move;
+		$maxDistance = $this->game->getRound() == 1 ? 10 : 5;
+		$distance = count($novice->move->spaces);
 		$queue = [new PossibleMove($distance, $novice->location, [])];
 		$visited = [];
 		while (!empty($queue)) {
@@ -347,7 +349,7 @@ class Board
 			foreach ($queue as $move) {
 				$location = $move->location;
 				$distance = $move->distance;
-				if ($distance > $novice->getMaxDistance()) {
+				if ($distance > $maxDistance) {
 					continue;
 				}
 				if (array_key_exists($location, $visited)) {
@@ -363,7 +365,7 @@ class Board
 				}
 				$space = $this->spaces[$location];
 				foreach ($space->neighbors as $neighborId => $neighbor) {
-					if (in_array($neighborId, $move->path)) {
+					if (in_array($neighborId, $move->spaces)) {
 						// Ignore backtracking
 						continue;
 					}
@@ -372,7 +374,7 @@ class Board
 						$this->game->debug("-- from $location neighbor $neighborId is locked and no key! Skip! // ");
 						continue;
 					}
-					$nextQueue[] = new PossibleMove($distance + 1, $neighborId, $move->path);
+					$nextQueue[] = new PossibleMove($distance + 1, $neighborId, $move->spaces);
 				}
 			}
 			$queue = $nextQueue;
@@ -384,5 +386,10 @@ class Board
 	{
 		$possible = [];
 		return $possible;
+	}
+
+	public function getRoomId(int $spaceId): int
+	{
+		return $this->spaces[$spaceId]->roomId;
 	}
 }

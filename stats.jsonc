@@ -1,27 +1,102 @@
 {
   // Statistics for the table
-  "table": {},
+  "table": {
+    "round": {
+      "id": 10,
+      "name": "Rounds",
+      "type": "int",
+    },
+    "caught": {
+      "id": 11,
+      "name": "Novices Caught",
+      "type": "int",
+    },
+  },
 
   // Statistics for each player
   "player": {
-    /* 
-      EXAMPLE:
+    "role": {
+      "id": 13,
+      "name": "Role",
+      "type": "int",
+    },
+    "caught": {
+      "id": 11,
+      "name": "Novices Caught",
+      "type": "int",
+    },
+    "caughtTimes": {
+      "id": 12,
+      "name": "Times Caught",
+      "type": "int",
+    },
 
-      "turns_number": {
-        "id": 10,
-        "name": "Number of turns",
-        "type": "int"
-      },
-      "player_teststat1": {
-        "id": 11,
-        "name": "player test stat 1",
-        "type": "int"
-      },
-      "player_teststat2": {
-        "id": 12,
-        "name": "player test stat 2",
-        "type": "float"
-      }
-      */
+    "startLocation": {
+      "id": 20,
+      "name": "Start Location",
+      "type": "int",
+    },
+    "keyLocation": {
+      "id": 21,
+      "name": "Key Location",
+      "type": "int",
+    },
+    "wishLocation": {
+      "id": 22,
+      "name": "Wish Location",
+      "type": "int",
+    },
+
+    "keyObtained": {
+      "id": 23,
+      "name": "Key Obtained",
+      "type": "int",
+    },
+    "wishObtained": {
+      "id": 24,
+      "name": "Wish Obtained",
+      "type": "int",
+    },
+
+    "spaces": {
+      "id": 39,
+      "name": "Spaces Moved",
+      "type": "int",
+    },
+    "standMove": {
+      "id": 30,
+      "name": "Moves - Standing",
+      "type": "int",
+    },
+    "sneakMove": {
+      "id": 31,
+      "name": "Moves - Sneaking",
+      "type": "int",
+    },
+    "walkMove": {
+      "id": 32,
+      "name": "Moves - Walking",
+      "type": "int",
+    },
+    "runMove": {
+      "id": 33,
+      "name": "Moves - Runing",
+      "type": "int",
+    },
+  },
+
+  "value_labels": {
+    "13": {
+      "0": "Novice",
+      "1": "Nun",
+    },
+    "22": {
+      "0": "No",
+      "1": "Yes",
+    },
+    "23": {
+      "0": "No",
+      "1": "Yes",
+    },
   },
 }

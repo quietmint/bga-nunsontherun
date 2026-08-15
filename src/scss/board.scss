@@ -21,7 +21,7 @@
   box-shadow: 0 0 1cqw black;
   position: absolute;
   transform: translate(-50%, -50%);
-  transition: all 0.5s ease-out;
+  transition: all 0.25s ease-out;
   width: 3.5%;
 
   &.notr-blue {
@@ -64,7 +64,6 @@
   text-align: center;
   text-shadow: 1px 1px white;
   transform: translate(-50%, -50%);
-  transition: all 0.5s ease-out;
   width: 3.5%;
 }
 

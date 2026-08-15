@@ -12,13 +12,13 @@ export class NoviceMove {
       const boardEl = document.getElementById("notr-board");
       for (const i in args.possible) {
         const move = args.possible[i];
-        boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${move.location}" class="notr-possible notr-${move.location}">${move.path.length - 1}</div>`);
+        boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${move.location}" class="notr-possible notr-${move.location}">${move.spaces.length - 1}</div>`);
         const el = document.getElementById("notr-possible-" + move.location);
         el.addEventListener("click", () => this.onClickMove(move.location));
       }
 
       // this.bga.statusBar.setTitle(_("${you} must play a card or pass"));
-      this.bga.statusBar.addActionButton(_("Done"), () => this.bga.actions.performAction("actDone"), { color: "secondary" });
+      this.bga.statusBar.addActionButton(_("Done"), () => this.bga.actions.performAction("actDone"));
       this.bga.statusBar.addActionButton(_("Restart Turn"), () => this.bga.actions.performAction("actReset"), { color: "red" });
     }
   }

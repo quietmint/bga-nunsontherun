@@ -11,8 +11,8 @@ class NunList implements \IteratorAggregate, \JsonSerializable
 	public function __construct(?\stdClass $data = null)
 	{
 		if ($data != null) {
-			foreach ($data as $type => $nun) {
-				$this->nuns[$type] = new Nun($nun);
+			foreach ($data as $role => $nun) {
+				$this->nuns[$role] = new Nun($nun);
 			}
 		}
 	}
@@ -29,11 +29,11 @@ class NunList implements \IteratorAggregate, \JsonSerializable
 
 	public function add(Nun $nun): void
 	{
-		$this->nuns[$nun->type] = $nun;
+		$this->nuns[$nun->role] = $nun;
 	}
 
-	public function get(string $type): ?Nun
+	public function get(string $role): ?Nun
 	{
-		return array_key_exists($type, $this->nuns) ? $this->nuns[$type] : null;
+		return array_key_exists($role, $this->nuns) ? $this->nuns[$role] : null;
 	}
 }

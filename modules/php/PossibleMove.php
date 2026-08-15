@@ -8,18 +8,18 @@ class PossibleMove
 {
 	public int $distance;
 	public int $location;
-	public array $path;
+	public array $spaces;
 
-	public function __construct(int $distance, int $location, array $path)
+	public function __construct(int $distance, int $location, array $spaces)
 	{
 		$this->distance = $distance;
 		$this->location = $location;
-		$this->path = $path;
-		$this->path[] = $location;
+		$this->spaces = $spaces;
+		$this->spaces[] = $location;
 	}
 
 	public function __toString()
 	{
-		return 'PossibleMove(' . $this->distance . '=' . join('>', $this->path) . ')';
+		return 'PossibleMove(' . $this->distance . '=' . join('>', $this->spaces) . ')';
 	}
 }

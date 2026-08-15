@@ -9,6 +9,7 @@ use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\Games\NunsOnTheRun\Game;
+use Bga\Games\NunsOnTheRun\Move;
 
 class NovicesMove extends GameState
 {
@@ -26,8 +27,21 @@ class NovicesMove extends GameState
 
   public function onEnteringState(): void
   {
-    $playerIds = $players = $this->game->getObjectListFromDB(
-      "SELECT `player_id` FROM `player` WHERE `nun` = 0",
+    $novices = $this->game->getNoviceList();
+    foreach ($novices as &$novice) {
+      // Add previous move to the history
+      if ($novice->move != null) {
+        array_push($novice->moves, $novice->move);
+      }
+      // Create a new move
+      $move = new Move();
+      $move->start = $novice->location;
+      $novice->move = $move;
+    }
+    $this->game->saveNovices($novices);
+
+    $playerIds = $this->game->getObjectListFromDB(
+      'SELECT `player_id` FROM `player` WHERE `nun` = 0 AND `player_zombie` = 0 AND `player_eliminated` = 0',
       true
     );
     $this->gamestate->setPlayersMultiactive($playerIds, '');
@@ -36,18 +50,8 @@ class NovicesMove extends GameState
 
   #[CheckAction(false)]
   #[PossibleAction]
-  public function actReset(int $currentPlayerId)
+  public function actActivate(int $currentPlayerId)
   {
-    $novice = $this->game->getNovice($currentPlayerId);
-    $novice->move = null;
-    $novice->location = 1;
-    $this->game->saveNovice($novice);
-    $this->notify->all("move", clienttranslate('${player_name} restarts their turn, returning to ${location}'), [
-      "player_id" => $currentPlayerId,
-      "player_name" => $novice->playerName, // remove this line if you uncomment notification decorator
-      "location" => $novice->location,
-    ]);
-
     $this->gamestate->setPlayersMultiactive([$currentPlayerId], '');
     $this->gamestate->initializePrivateState($currentPlayerId);
   }
