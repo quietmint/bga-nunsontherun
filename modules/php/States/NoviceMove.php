@@ -19,22 +19,31 @@ class NoviceMove extends GameState
       $game,
       id: 11,
       type: StateType::PRIVATE,
-      descriptionMyTurn: clienttranslate('${you} must move'),
+      descriptionMyTurn: clienttranslate('${you} must confirm your move'),
     );
   }
 
   public function getArgs(int $playerId): array
   {
     $novice = $this->game->getNovice($playerId);
+    $nuns = $this->game->getNunList();
+    $round = $this->game->getRound();
+    $possible = $this->game->board->getNovicePossibleMoves($novice, $nuns, $round);
+    $distance = count($novice->move->spaces);
+    $actions = $this->game->board->getNoviceActions($round);
+    $actionsForNow = $this->game->board->getNoviceActionsForDistance($actions, $distance);
+    foreach ($actions as $action => &$info) {
+      $info['disabled'] = !in_array($action, $actionsForNow);
+    }
     return [
-      'possible' => $this->game->board->getNovicePossibleMoves($novice)
+      'actions' => $actions,
+      'possible' => $possible,
     ];
   }
 
   #[PossibleAction]
   public function actMove(int $currentPlayerId, array $args, int $location)
   {
-
     // Check location
     if (!array_key_exists($location, $args['possible'])) {
       throw new UserException("Cannot move to location $location");
@@ -50,27 +59,14 @@ class NoviceMove extends GameState
     foreach ($spaces as $spaceId) {
       $roomId = $this->game->board->getRoomId($spaceId);
       $newVisible = array_key_exists($roomId, $roomIds);
-      if ($newVisible) {
-        // visible
-        $this->bga->notify->all("noviceMove", clienttranslate('${player_name} moves to ${location} in view of the nuns'), [
-          "player_id" => $currentPlayerId,
-          "player_name" => $novice->playerName,
-          "location" => $spaceId
-        ]);
-      } else {
-        // hidden
-        if ($oldVisible) {
-          $this->bga->notify->all("vanish", clienttranslate('${player_name} vanishes from ${location}'), [
-            "player_id" => $currentPlayerId,
-            "player_name" => $novice->playerName,
-            "location" => $novice->location
-          ]);
-        }
-        $this->bga->notify->player($currentPlayerId, "noviceMove", clienttranslate('${player_name} moves secretly to ${location}'), [
-          "player_id" => $currentPlayerId,
-          "player_name" => $novice->playerName,
-          "location" => $spaceId
-        ]);
+      $this->bga->notify->player($currentPlayerId, "noviceMove", clienttranslate('You move to ${location}'), [
+        "player_id" => $currentPlayerId,
+        "location" => $spaceId
+      ]);
+      if ($newVisible && !$oldVisible) {
+        $this->bga->notify->player($currentPlayerId, "message", clienttranslate('You appear on the board, visible to the nuns'));
+      } else if (!$newVisible && $oldVisible) {
+        $this->bga->notify->player($currentPlayerId, "message", clienttranslate('You vanish from the board, invisible to the nuns'));
       }
       $oldVisible = $newVisible;
       $novice->location = $location;
@@ -82,13 +78,46 @@ class NoviceMove extends GameState
   }
 
   #[PossibleAction]
-  public function actDone(int $currentPlayerId)
+  public function actConfirm(int $currentPlayerId, string $confirmAction)
   {
-    $this->notify->all("done", clienttranslate('${player_name} is done moving'), [
-      "player_id" => $currentPlayerId,
-      "player_name" => $this->game->getPlayerNameById($currentPlayerId),
+    $novice = $this->game->getNovice($currentPlayerId);
+    $round = $this->game->getRound();
+    $distance = count($novice->move->spaces);
+    $actions = $this->game->board->getNoviceActions($round);
+    $actionsForNow = $this->game->board->getNoviceActionsForDistance($actions, $distance);
+    if (!in_array($confirmAction, $actionsForNow)) {
+      throw new UserException("Cannot $confirmAction -- This move is not authorized now. Must be " . json_encode($actionsForNow));
+    }
+
+    $novice->move->action = $confirmAction;
+    $novice->move->noiseRoll = \bga_rand(1, 6);
+    $novice->move->noiseTotal = max(0, $novice->move->noiseRoll + $actions[$novice->move->action]['noise']);
+    $this->game->saveNovice($novice);
+    switch ($confirmAction) {
+      case 'stand':
+        $message = clienttranslate('You stand still at ${location}');
+        break;
+      case 'sneak':
+        $message = clienttranslate('You sneak from ${startLocation} to ${location}');
+        break;
+      case 'walk':
+        $message = clienttranslate('You walk from ${startLocation} to ${location}');
+        break;
+      case 'run':
+        $message = clienttranslate('You run from ${startLocation} to ${location}');
+        break;
+    }
+    $this->bga->notify->player($currentPlayerId, "message", $message, [
+      "i18n" => ["action"],
+      "action" => $novice->move->action,
+      "location" => $novice->location,
+      "startLocation" => $novice->move->start,
     ]);
-    $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NunsMove::class);
+    $this->game->bga->notify->player($currentPlayerId, "noviceRoll", clienttranslate('You roll ${roll} for noise'), [
+      "roll" => $novice->move->noiseRoll
+    ]);
+
+    $this->gamestate->nextPrivateState($currentPlayerId, NoviceNoise::class);
   }
 
   #[PossibleAction]
@@ -96,11 +125,11 @@ class NoviceMove extends GameState
   {
     $novice = $this->game->getNovice($currentPlayerId);
     $novice->location = $novice->move->start;
+    $novice->move->action = null;
     $novice->move->spaces = [];
     $this->game->saveNovice($novice);
-    $this->notify->all("noviceMove", clienttranslate('${player_name} restarts their turn'), [
+    $this->notify->player($currentPlayerId, "noviceMove", clienttranslate('You restart your turn'), [
       "player_id" => $currentPlayerId,
-      "player_name" => $novice->playerName,
       "location" => $novice->location,
     ]);
 
@@ -123,6 +152,6 @@ class NoviceMove extends GameState
    */
   function zombie(int $playerId)
   {
-    return $this->actDone($playerId);
+    return $this->actDone($playerId, $this->getArgs($playerId), 'stand');
   }
 }

@@ -6,14 +6,20 @@ namespace Bga\Games\NunsOnTheRun;
 
 class Move implements \JsonSerializable
 {
-	public ?string $move = null;
+	public ?string $action = null;
+	public ?int $noiseRoll = null;
+	public array $noiseTokens = [];
+	public ?int $noiseTotal = null;
 	public array $spaces = [];
 	public int $start;
 
 	public function __construct(?\stdClass $data = null)
 	{
 		if ($data != null) {
-			$this->move = $data->move;
+			$this->action = $data->action;
+			$this->noiseRoll = $data->noiseRoll;
+			$this->noiseTokens = $data->noiseTokens;
+			$this->noiseTotal = $data->noiseTotal;
 			$this->spaces = $data->spaces;
 			$this->start = $data->start;
 		}
@@ -22,7 +28,10 @@ class Move implements \JsonSerializable
 	public function jsonSerialize(): array
 	{
 		return [
-			'move' => $this->move,
+			'action' => $this->action,
+			'noiseRoll' => $this->noiseRoll,
+			'noiseTokens' => $this->noiseTokens,
+			'noiseTotal' => $this->noiseTotal,
 			'spaces' => $this->spaces,
 			'start' => $this->start,
 		];

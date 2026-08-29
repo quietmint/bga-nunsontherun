@@ -59,7 +59,7 @@ class NunMove extends GameState
       "player_id" => $currentPlayerId,
       "player_name" => $this->game->getPlayerNameById($currentPlayerId),
     ]);
-    $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NovicesMove::class);
+    $this->gamestate->setPlayerNonMultiactive($currentPlayerId, Novices::class);
   }
 
   /**

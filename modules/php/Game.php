@@ -21,7 +21,7 @@ declare(strict_types=1);
 namespace Bga\Games\NunsOnTheRun;
 
 use Bga\GameFramework\Components\Counters\PlayerCounter;
-use Bga\Games\NunsOnTheRun\States\NovicesMove;
+use Bga\Games\NunsOnTheRun\States\Novices;
 
 class Game extends \Bga\GameFramework\Table
 {
@@ -363,7 +363,7 @@ class Game extends \Bga\GameFramework\Table
     // Table statistics
     $this->bga->tableStats->init('round', 1);
 
-    return NovicesMove::class;
+    return Novices::class;
   }
 
   public function getCaught(): int
@@ -374,22 +374,6 @@ class Game extends \Bga\GameFramework\Table
   public function getRound(): int
   {
     return $this->tableStats->get('round');
-  }
-
-  public function getMoveDistance(string $move): ?array
-  {
-    switch ($move) {
-      case 'run':
-        return [1, 5];
-      case 'walk':
-        return [3, 4];
-      case 'sneak':
-        return [1, 2];
-      case 'still':
-        return [0];
-      default:
-        return null;
-    }
   }
 
   public function getMoveNoise(string $move): ?int

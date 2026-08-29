@@ -336,13 +336,32 @@ class Board
 		}
 	}
 
-	public function getNovicePossibleMoves(Novice $novice): array
+	public function getRoomId(int $spaceId): int
 	{
-		$possible = [];
-		$move = $novice->move;
-		$maxDistance = $this->game->getRound() == 1 ? 10 : 5;
+		return $this->spaces[$spaceId]->roomId;
+	}
+
+	public function getNovicePossibleMoves(Novice $novice, NunList $nuns, int $round): array
+	{
 		$distance = count($novice->move->spaces);
-		$queue = [new PossibleMove($distance, $novice->location, [])];
+		$maxDistance = $round == 1 ? 10 : 5;
+		$impassable = [];
+		foreach ($nuns as $nun) {
+			$impassable[$nun->location] = true;
+		}
+
+		$possible = $this->traverse($novice->location, $distance, $maxDistance, $novice->hasKey, $impassable);
+		$actions = $this->getNoviceActions($round);
+		foreach ($possible as $location => &$p) {
+			$p->actions = $this->getNoviceActionsForDistance($actions, $p->distance);
+			if (empty($p->actions)) {
+				// Ignore impossible moves (distance = 1 on round = 1)
+				unset($possible[$location]);
+			}
+		}
+		/*
+		$actions = $this->getNoviceActionsForDistance($distance, $round);
+		$queue = [new PossibleMove($distance, $actions, $novice->location, [])];
 		$visited = [];
 		while (!empty($queue)) {
 			$nextQueue = [];
@@ -359,9 +378,12 @@ class Board
 				$visited[$location] = true;
 				$this->game->debug("$novice processing queue: location $location via $move // ");
 				if (!array_key_exists($location, $possible) || $distance < $possible[$location]->distance) {
-					$this->game->debug("-- $novice found a better way to get to space $location in distance $distance // ");
-					$possible[$location] = $move;
-					// break;
+					// Ignore impossible moves (distance = 1 on round = 1)
+					if (!empty($move->actions)) {
+						$this->game->debug("-- $novice found a better way to get to space $location in distance $distance // ");
+						$possible[$location] = $move;
+						// break;
+					}
 				}
 				$space = $this->spaces[$location];
 				foreach ($space->neighbors as $neighborId => $neighbor) {
@@ -374,12 +396,87 @@ class Board
 						$this->game->debug("-- from $location neighbor $neighborId is locked and no key! Skip! // ");
 						continue;
 					}
-					$nextQueue[] = new PossibleMove($distance + 1, $neighborId, $move->spaces);
+					$actions = $this->getNoviceActionsForDistance($distance + 1, $round);
+					$nextQueue[] = new PossibleMove($distance + 1, $actions, $neighborId, $move->spaces);
 				}
 			}
 			$queue = $nextQueue;
 		}
+		unset($possible[$novice->location]);
+		*/
 		return $possible;
+	}
+
+	public function getNovicePossibleNoise(Novice $novice, NunList $nuns): array
+	{
+		$possible = [];
+		$traverse = $this->traverse($novice->location, 0, $novice->move->noiseTotal, true, []);
+		foreach ($nuns as $nun) {
+			if (array_key_exists($nun->location, $traverse)) {
+				// Heard by the nun, but how?
+				// $possible[$nun->location] = $traverse[$nun->location];
+				// Determine the closest neighbor
+				$neighbors = [];
+				foreach ($this->spaces[$nun->location]->neighbors as $neighborId => $n) {
+					if (array_key_exists($neighborId, $traverse)) {
+						$neighbors[$neighborId] = $traverse[$neighborId]->distance;
+						$this->game->debug("NEIGHBOR $neighborId = distance " . $traverse[$neighborId]->distance . " // ");
+					}
+				}
+				if (!empty($neighbors)) {
+					$min = min($neighbors);
+					$this->game->debug("min distance is $min // ");
+					foreach ($neighbors as $neighborId => $distance) {
+						if ($distance == $min) {
+							$possible[$nun->role][$neighborId] = true;
+						}
+					}
+				}
+			}
+		}
+		return $possible;
+	}
+
+	public function getNoviceActions(int $round): array
+	{
+		$multi = $round == 1 ? 2 : 1;
+		return [
+			'stand' => [
+				'min' => 0,
+				'max' => 0,
+				'name' => \clienttranslate('Stand'),
+				'noise' => -3,
+			],
+			'sneak' => [
+				'min' => 1 * $multi,
+				'max' => 2 * $multi,
+				'name' => \clienttranslate('Sneak'),
+				'noise' => -2,
+			],
+			'walk' => [
+				'min' => 3 * $multi,
+				'max' => 4 * $multi,
+				'name' => \clienttranslate('Walk'),
+				'noise' => -1,
+			],
+			'run' => [
+				'min' => 1 * $multi,
+				'max' => 5 * $multi,
+				'name' => \clienttranslate('Run'),
+				'noise' => 1,
+			],
+		];
+	}
+
+	public function getNoviceActionsForDistance(array $actions, int $distance): array
+	{
+		$actionsForNow = [];
+		foreach ($actions as $action => $info) {
+			if ($distance >= $info['min'] && $distance <= $info['max']) {
+				$actionsForNow[] = $action;
+			}
+		}
+		return $actionsForNow;
 	}
 
 	public function getNunPossibleMoves(Nun $nun): array
@@ -388,8 +485,47 @@ class Board
 		return $possible;
 	}
 
-	public function getRoomId(int $spaceId): int
+	private function traverse(int $start, int $distance, int $maxDistance, bool $key, array $impassable): array
 	{
-		return $this->spaces[$spaceId]->roomId;
+		$possible = [];
+		$queue = [new PossibleMove($distance, [], $start, [])];
+		$visited = [];
+		while (!empty($queue)) {
+			$nextQueue = [];
+			foreach ($queue as $move) {
+				$location = $move->location;
+				$distance = $move->distance;
+				if ($distance > $maxDistance) {
+					continue;
+				}
+				if (array_key_exists($location, $visited)) {
+					// Don't reprocess the same space
+					continue;
+				}
+				$visited[$location] = true;
+				if (!array_key_exists($location, $possible) || $distance < $possible[$location]->distance) {
+					$possible[$location] = $move;
+				}
+				$space = $this->spaces[$location];
+				foreach ($space->neighbors as $neighborId => $neighbor) {
+					if (in_array($neighborId, $move->spaces)) {
+						// Ignore backtracking
+						continue;
+					}
+					if (!$key && $neighbor['locked']) {
+						// Ignore locked doors
+						continue;
+					}
+					if (array_key_exists($neighborId, $impassable)) {
+						// Ignore impassable spaces
+						continue;
+					}
+					$nextQueue[] = new PossibleMove($distance + 1, [], $neighborId, $move->spaces);
+				}
+			}
+			$queue = $nextQueue;
+		}
+		unset($possible[$start]);
+		return $possible;
 	}
 }

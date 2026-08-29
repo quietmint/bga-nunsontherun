@@ -1,10 +1,32 @@
+@use "material-colors" as *;
+
 .notr-panel {
   align-items: center;
   display: grid;
   gap: 10px;
-  grid-template-areas: "move wish";
+  grid-template-areas:
+    "caught caught"
+    "move wish";
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto;
+
+  .notr-caught {
+    color: white;
+    font-variant: small-caps;
+    font-weight: bold;
+    grid-area: caught;
+    letter-spacing: 2px;
+    padding: 2px;
+    text-align: center;
+
+    &.notr-caught-false {
+      background: $color-grey-900;
+    }
+
+    &.notr-caught-true {
+      background: $color-deep-orange-900;
+    }
+  }
 
   .notr-move {
     grid-area: move;

@@ -1,3 +1,22 @@
+.notr-move-action {
+  display: flex;
+  text-align: left;
+
+  .notr-move-info {
+    font-size: 85%;
+    font-weight: normal;
+  }
+
+  .notr-move-icon {
+    margin-right: 4px;
+    width: 48px;
+
+    .action-button:disabled & {
+      filter: grayscale(1);
+    }
+  }
+}
+
 .notr-move {
   align-items: center;
   display: grid;

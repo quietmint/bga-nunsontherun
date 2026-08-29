@@ -6,6 +6,7 @@ namespace Bga\Games\NunsOnTheRun;
 
 class Novice implements \JsonSerializable
 {
+	public bool $caught = false;
 	public string $color;
 	public bool $hasKey = false;
 	public bool $hasWish = false;
@@ -19,6 +20,7 @@ class Novice implements \JsonSerializable
 	public function __construct(?\stdClass $data = null)
 	{
 		if ($data != null) {
+			$this->caught = property_exists($data, 'caught') && $data->caught;
 			$this->color = $data->color;
 			$this->hasKey = property_exists($data, 'hasKey') && $data->hasKey;
 			$this->hasWish = property_exists($data, 'hasWish') && $data->hasWish;
@@ -41,6 +43,7 @@ class Novice implements \JsonSerializable
 	public function jsonSerialize(): array
 	{
 		return [
+			'caught' => $this->caught,
 			'color' => $this->color,
 			'hasKey' => $this->hasKey,
 			'hasWish' => $this->hasWish,
@@ -50,6 +53,7 @@ class Novice implements \JsonSerializable
 			'moves' => $this->moves,
 			'playerId' => $this->playerId,
 			'playerName' => $this->playerName,
+			'statusText' => $this->getStatusText(),
 			'wish' => $this->wish,
 			'wishLocation' => $this->getWishLocation(),
 		];
@@ -101,5 +105,12 @@ class Novice implements \JsonSerializable
 			default:
 				return null;
 		}
+	}
+
+	public function getStatusText(): string
+	{
+		return $this->caught
+			? \clienttranslate('Caught')
+			: \clienttranslate('On The Run');
 	}
 }

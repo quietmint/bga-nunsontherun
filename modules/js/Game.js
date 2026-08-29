@@ -8,16 +8,20 @@
  * -----
  */
 
+import { Novices } from "./States/Novices.js";
 import { NoviceMove } from "./States/NoviceMove.js";
-import { NovicesMove } from "./States/NovicesMove.js";
+import { NoviceNoise } from "./States/NoviceNoise.js";
+import { Nuns } from "./States/Nuns.js";
 
 export class Game {
   constructor(bga) {
     console.log("Nuns on the Run!");
     this.bga = bga;
     this.bga.states.logger = console.log;
+    this.bga.states.register("Novices", new Novices(this, bga));
     this.bga.states.register("NoviceMove", new NoviceMove(this, bga));
-    this.bga.states.register("NovicesMove", new NovicesMove(this, bga));
+    this.bga.states.register("NoviceNoise", new NoviceNoise(this, bga));
+    this.bga.states.register("Nuns", new Nuns(this, bga));
 
     this.classLocations = [];
     for (let i = 1; i <= 155; i++) {
@@ -28,6 +32,13 @@ export class Game {
   isNovice() {
     const playerId = this.bga.players.getCurrentPlayerId();
     return this.gamedatas.novices[playerId] != null;
+  }
+
+  getNovice(playerId) {
+    if (playerId == null) {
+      playerId = this.bga.players.getCurrentPlayerId();
+    }
+    return this.gamedatas.novices[playerId];
   }
 
   isNun() {
@@ -67,6 +78,7 @@ export class Game {
       panelEl.insertAdjacentHTML(
         "beforeend",
         `<div class="notr-panel notr-${novice.color}">
+  <div class="notr-caught notr-caught-${novice.caught}">${_(novice.statusText)}</div>
   <div class="notr-move">
     <div class="notr-move-title">${_("Movement")}</div>
     <div class="notr-move-icon notr-move-${novice.move || "unknown"}" title="${_(novice.move || "?")}"></div>
@@ -113,9 +125,12 @@ export class Game {
         if (args.location) {
           args.location = `<b>🚩${args.location}</b>`;
         }
-        // if (args.wishLocation) {
-        //   args.wishLocation = `<b>🌟${args.wishLocation}</b>`;
-        // }
+        if (args.startLocation) {
+          args.startLocation = `<b>🚩${args.startLocation}</b>`;
+        }
+        if (args.noiseLocation) {
+          args.noiseLocation = `<b>👂${args.noiseLocation}</b>`;
+        }
         if (args.wishIcon) {
           log += `<div class="notr-notify notr-wish">
   <div class="notr-wish-icon notr-wish-${args.wishIcon}" title="${_(args.wish)}"></div>

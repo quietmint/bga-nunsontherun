@@ -1,4 +1,4 @@
-export class NovicesMove {
+export class Nuns {
   constructor(game, bga) {
     this.game = game;
     this.bga = bga;
@@ -18,9 +18,8 @@ export class NovicesMove {
    * If your state is not a MULTIPLE_ACTIVE_PLAYER one, you can delete this function.
    */
   onPlayerActivationChange(args, isCurrentPlayerActive) {
-    if (!isCurrentPlayerActive && this.game.isNovice()) {
-      this.bga.players.getCurrentPlayerId();
-      this.bga.statusBar.addActionButton(_("Go Back"), () => this.bga.actions.performAction("actActivate", {}, { checkAction: false, checkPossibleActions: true }), { color: "secondary" });
-    }
+    // if (!isCurrentPlayerActive && this.game.isNovice()) {
+    //   this.bga.statusBar.addActionButton(_("Go Back"), () => this.bga.actions.performAction("actActivate", {}, { checkAction: false, checkPossibleActions: true }), { color: "secondary" });
+    // }
   }
 }

@@ -1,0 +1,131 @@
+@use "material-colors" as *;
+
+.notr-die {
+  display: inline-block;
+  font-size: 150%;
+  height: 1.5em;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1s ease;
+  vertical-align: middle;
+  width: 1.5em;
+
+  &.show-1 {
+    transform: rotateX(360deg) rotateY(1080deg);
+  }
+
+  &.show-2 {
+    transform: rotateX(-360deg) rotateY(-810deg);
+  }
+
+  &.show-3 {
+    transform: rotateX(-810deg) rotateY(-90deg);
+  }
+
+  &.show-4 {
+    transform: rotateX(360deg) rotateY(540deg) rotateZ(180deg);
+  }
+
+  &.show-5 {
+    transform: rotateX(-810deg) rotateY(180deg) rotateZ(90deg);
+  }
+
+  &.show-6 {
+    transform: rotateX(450deg) rotateY(720deg) rotateZ(0deg);
+  }
+
+  .face {
+    background-color: $color-grey-100;
+    border-radius: 5px;
+    box-shadow: inset 0 0 0.25em $color-grey-400;
+    color: $color-blue-grey-800;
+    height: 1.5em;
+    line-height: 1.5em;
+    position: absolute;
+    text-shadow: 2px 2px $color-blue-grey-300;
+    width: 1.5em;
+  }
+
+  .face-1 {
+    transform: translateZ(0.75em);
+  }
+
+  .face-2 {
+    transform: rotateY(90deg) translateZ(0.75em);
+  }
+
+  .face-3 {
+    transform: rotateY(90deg) rotateX(90deg) translateZ(0.75em);
+  }
+
+  .face-4 {
+    transform: rotateY(180deg) rotateZ(90deg) translateZ(0.75em);
+  }
+
+  .face-5 {
+    transform: rotateY(-90deg) rotateZ(90deg) translateZ(0.75em);
+  }
+
+  .face-6 {
+    transform: rotateX(-90deg) translateZ(0.75em);
+  }
+
+  .pip {
+    background-color: $color-blue-grey-500; //$color-red-400; // #f25f5c;
+    border-radius: 100%;
+    box-shadow: inset 2px 2px $color-blue-grey-900; //$color-red-a700; //#d90429;
+    height: 0.35em;
+    position: absolute;
+    translate: -50% -50%;
+    width: 0.35em;
+  }
+
+  .face-2 .pip-1,
+  .face-3 .pip-1,
+  .face-4 .pip-1,
+  .face-5 .pip-1,
+  .face-6 .pip-1 {
+    top: 20%;
+    left: 20%;
+  }
+
+  .face-4 .pip-3,
+  .face-5 .pip-3,
+  .face-6 .pip-4 {
+    top: 20%;
+    left: 80%;
+  }
+
+  .face-6 .pip-2 {
+    top: 50%;
+    left: 20%;
+  }
+
+  .face-1 .pip-1,
+  .face-3 .pip-2,
+  .face-5 .pip-5 {
+    top: 50%;
+    left: 50%;
+  }
+
+  .face-6 .pip-5 {
+    top: 50%;
+    left: 80%;
+  }
+
+  .face-4 .pip-2,
+  .face-5 .pip-2,
+  .face-6 .pip-3 {
+    top: 80%;
+    left: 20%;
+  }
+
+  .face-2 .pip-2,
+  .face-3 .pip-3,
+  .face-4 .pip-4,
+  .face-5 .pip-4,
+  .face-6 .pip-6 {
+    top: 80%;
+    left: 80%;
+  }
+}

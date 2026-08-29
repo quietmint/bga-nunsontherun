@@ -4,56 +4,50 @@ declare(strict_types=1);
 
 namespace Bga\Games\NunsOnTheRun\States;
 
-use Bga\GameFramework\Actions\CheckAction;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\Games\NunsOnTheRun\Game;
-use Bga\Games\NunsOnTheRun\Move;
 
-class NovicesMove extends GameState
+class Nuns extends GameState
 {
   function __construct(
     protected Game $game,
   ) {
     parent::__construct(
       $game,
-      id: 10,
+      id: 20,
       type: StateType::MULTIPLE_ACTIVE_PLAYER,
-      description: clienttranslate('Novices must move'),
-      initialPrivate: NoviceMove::class,
+      description: clienttranslate('Nuns must take their turns'),
+      initialPrivate: NunMove::class,
     );
   }
 
   public function onEnteringState(): void
   {
-    $novices = $this->game->getNoviceList();
-    foreach ($novices as &$novice) {
-      // Add previous move to the history
-      if ($novice->move != null) {
-        array_push($novice->moves, $novice->move);
-      }
-      // Create a new move
-      $move = new Move();
-      $move->start = $novice->location;
-      $novice->move = $move;
-    }
-    $this->game->saveNovices($novices);
-
-    $playerIds = $this->game->getObjectListFromDB(
-      'SELECT `player_id` FROM `player` WHERE `nun` = 0 AND `player_zombie` = 0 AND `player_eliminated` = 0',
+    $playerIds = $players = $this->game->getObjectListFromDB(
+      "SELECT `player_id` FROM `player` WHERE `nun` = 1",
       true
     );
     $this->gamestate->setPlayersMultiactive($playerIds, '');
     $this->gamestate->initializePrivateStateForAllActivePlayers();
   }
 
-  #[CheckAction(false)]
   #[PossibleAction]
-  public function actActivate(int $currentPlayerId)
+  public function actReset(int $playerId)
   {
-    $this->gamestate->setPlayersMultiactive([$currentPlayerId], '');
-    $this->gamestate->initializePrivateState($currentPlayerId);
+    $novice = $this->game->getNovice($playerId);
+    $novice->move = null;
+    $novice->location = 1;
+    $this->game->saveNovice($novice);
+    $this->notify->all("move", clienttranslate('${player_name} restarts their turn, returning to ${location}'), [
+      "player_id" => $playerId,
+      "player_name" => $novice->playerName, // remove this line if you uncomment notification decorator
+      "location" => $novice->location,
+    ]);
+
+    $this->gamestate->setPlayersMultiactive([$playerId], '');
+    $this->gamestate->initializePrivateState($playerId);
   }
 
   /**
