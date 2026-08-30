@@ -1,4 +1,4 @@
-export class NoviceMovePrivateState {
+export class NunMovePlayerState {
   constructor(game, bga) {
     this.game = game;
     this.bga = bga;

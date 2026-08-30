@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Bga\Games\NunsOnTheRun\States;
 
 use Bga\GameFramework\StateType;
+use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
 
 class NextPlayer extends \Bga\GameFramework\States\GameState
@@ -16,7 +17,7 @@ class NextPlayer extends \Bga\GameFramework\States\GameState
     parent::__construct(
       $game,
       id: 90,
-      type: StateType::GAME,
+      type: StateType::ACTIVE_PLAYER,
       updateGameProgression: true,
     );
   }
@@ -28,18 +29,12 @@ class NextPlayer extends \Bga\GameFramework\States\GameState
    */
   function onEnteringState(int $activePlayerId)
   {
+    // $this->game->giveExtraTime($activePlayerId);
+    // $this->game->activeNextPlayer();
+  }
 
-    // Give some extra time to the active player when he completed an action
-    $this->game->giveExtraTime($activePlayerId);
-
-    $this->game->activeNextPlayer();
-
-    // Go to another gamestate
-    $gameEnd = false; // Here, we would detect if the game is over to make the appropriate transition
-    if ($gameEnd) {
-      return EndScore::class;
-    } else {
-      return NoviceMove::class;
-    }
+  function zombie(int $playerId)
+  {
+    throw new SystemException($this::class . " zombie function not implemented");
   }
 }

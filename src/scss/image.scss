@@ -1,0 +1,53 @@
+.notr-path-image {
+  aspect-ratio: 1;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+
+  &.notr-notify {
+    margin-top: 8px;
+  }
+
+  &.notr-path-blue-26-84 {
+    background-image: url(img/path-blue-26-84.webp);
+  }
+  &.notr-path-blue-26-147 {
+    background-image: url(img/path-blue-26-147.webp);
+  }
+  &.notr-path-blue-84-122 {
+    background-image: url(img/path-blue-84-122.webp);
+  }
+  &.notr-path-green-101-122 {
+    background-image: url(img/path-green-101-122.webp);
+  }
+  &.notr-path-green-26-101 {
+    background-image: url(img/path-green-26-101.webp);
+  }
+  &.notr-path-green-26-84 {
+    background-image: url(img/path-green-26-84.webp);
+  }
+  &.notr-path-pink-101-147 {
+    background-image: url(img/path-pink-101-147.webp);
+  }
+  &.notr-path-pink-84-101 {
+    background-image: url(img/path-pink-84-101.webp);
+  }
+  &.notr-path-red-122-147 {
+    background-image: url(img/path-red-122-147.webp);
+  }
+  &.notr-path-red-26-122 {
+    background-image: url(img/path-red-26-122.webp);
+  }
+  &.notr-path-red-26-147 {
+    background-image: url(img/path-red-26-147.webp);
+  }
+  &.notr-path-yellow-26-101 {
+    background-image: url(img/path-yellow-26-101.webp);
+  }
+  &.notr-path-yellow-26-122 {
+    background-image: url(img/path-yellow-26-122.webp);
+  }
+  &.notr-path-yellow-84-147 {
+    background-image: url(img/path-yellow-84-147.webp);
+  }
+}

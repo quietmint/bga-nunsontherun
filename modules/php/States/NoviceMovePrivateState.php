@@ -32,7 +32,7 @@ class NoviceMovePrivateState extends GameState
     $possible = $this->game->board->getNovicePossibleMoves($novice, $nuns, $round);
     $distance = count($novice->move->spaces);
     $actions = $this->game->board->getNoviceActions($round);
-    $actionsForNow = $this->game->board->getNoviceActionsForDistance($actions, $distance);
+    $actionsForNow = $this->game->board->getActionsForDistance($actions, $distance);
     foreach ($actions as $action => &$info) {
       $info['disabled'] = !in_array($action, $actionsForNow);
     }
@@ -91,7 +91,7 @@ class NoviceMovePrivateState extends GameState
     $round = $this->game->getRound();
     $distance = count($novice->move->spaces);
     $actions = $this->game->board->getNoviceActions($round);
-    $actionsForNow = $this->game->board->getNoviceActionsForDistance($actions, $distance);
+    $actionsForNow = $this->game->board->getActionsForDistance($actions, $distance);
     if (!in_array($confirmAction, $actionsForNow)) {
       throw new UserException("Cannot $confirmAction -- This move is not authorized now. Must be " . json_encode($actionsForNow));
     }

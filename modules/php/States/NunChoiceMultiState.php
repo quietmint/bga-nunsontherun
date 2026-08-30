@@ -21,8 +21,8 @@ class NunChoiceMultiState extends GameState
       $game,
       id: 30,
       type: StateType::MULTIPLE_ACTIVE_PLAYER,
-      description: clienttranslate('Nuns must choose who to move'),
-      descriptionMyTurn: clienttranslate('${you} must choose who to move'),
+      description: clienttranslate('Nuns must choose which nun to activate'),
+      descriptionMyTurn: clienttranslate('${you} must choose which nun to activate'),
     );
   }
 
@@ -39,8 +39,11 @@ class NunChoiceMultiState extends GameState
   function onEnteringState(array $args)
   {
     if ($args['_no_notify']) {
-      return NunPathMultiState::class;
+      $role = reset($args['choices']);
+      $this->setCurrentNun($role);
+      return;
     }
+
     // Activate all nuns
     $this->gamestate->setPlayersMultiactive($this->game->getPlayerIds(1), '', true);
   }
@@ -48,20 +51,27 @@ class NunChoiceMultiState extends GameState
   #[PossibleAction]
   public function actChoose(int $currentPlayerId, array $args, string $role)
   {
-    $nun = $this->game->getNunList()->get($role);
-    $nun->move = new Move();
-    $nun->move->current = true;
-    $nun->move->start = $nun->location;
-    $this->game->saveNun($nun);
-
-    $this->bga->notify->all('message', clienttranslate('${player_name} chooses to move ${icon} ${role}'), [
+    $this->bga->notify->all('message', clienttranslate('${player_name} activates ${icon} ${role}'), [
       'i18n' => ['role'],
-      'icon' => $this->game->getRoleIcon($nun->role),
+      'icon' => $this->game->getRoleIcon($role),
       'player_id' => $currentPlayerId,
       'player_name' => $this->game->getPlayerNameById($currentPlayerId),
       'role' => $this->game->getRoleName($role),
     ]);
-    return NunPathMultiState::class;
+
+    $this->setCurrentNun($role);
+  }
+
+  private function setCurrentNun(string $role)
+  {
+    $nuns = $this->game->getNunList();
+    $nun = $nuns->get($role);
+    $nun->move = new Move();
+    $nun->move->current = true;
+    $nun->move->start = $nun->location;
+    $this->game->saveNuns($nuns);
+    $this->gamestate->changeActivePlayer($nun->playerId);
+    $this->gamestate->setAllPlayersNonMultiactive(NunPathPlayerState::class);
   }
 
   /**

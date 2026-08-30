@@ -11,45 +11,38 @@ use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\Game;
 
-class NunPathMultiState extends GameState
+class NunMovePlayerState extends GameState
 {
   function __construct(
     protected Game $game,
   ) {
     parent::__construct(
       $game,
-      id: 31,
-      type: StateType::MULTIPLE_ACTIVE_PLAYER,
-      description: clienttranslate('Nuns must choose a path for ${icon} ${role}'),
-      descriptionMyTurn: clienttranslate('${you} must choose a path for ${icon} ${role}'),
+      id: 32,
+      type: StateType::ACTIVE_PLAYER,
+      description: clienttranslate('${player_name} must move ${icon} ${role}'),
+      descriptionMyTurn: clienttranslate('${you} must move ${icon} ${role}'),
     );
   }
 
   public function getArgs(): array
   {
     $nun = $this->game->getNunList()->getCurrentNun();
+    $distance = count($nun->move->spaces);
+    $actions = $this->game->board->getNunActions();
+    $actionsForNow = $this->game->board->getActionsForDistance($actions, $distance);
+    foreach ($actions as $action => &$info) {
+      $info['disabled'] = !in_array($action, $actionsForNow);
+    }
     return [
       'i18n' => ['role'],
+      'actions' => $actions,
       'icon' => $this->game->getRoleIcon($nun->role),
-      'paths' => [],
+      'player_id' => $nun->playerId,
+      'player_name' => $nun->playerName,
+      'possible' => $this->game->board->getNunPossibleMoves($nun),
       'role' => $this->game->getRoleName($nun->role),
     ];
-  }
-
-  #[PossibleAction]
-  public function actPath(int $playerId, array $args, int $path)
-  {
-    $nun = $this->game->getNunList()->getCurrentNun();
-    $nun->path = [];
-    $this->game->saveNun($nun);
-
-    $this->bga->notify->all("move", clienttranslate('${player_name} choose a path for ${role}'), [
-      'path' => $nun->path,
-      'player_id' => $playerId,
-      'player_name' => $this->game->getPlayerNameById($playerId),
-      'role' => $this->game->getRoleName($nun->role),
-    ]);
-    return NunMoveMultiState::class;
   }
 
   /**

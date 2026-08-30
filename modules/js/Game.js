@@ -12,7 +12,8 @@ import { NoviceTurnMultiState } from "./States/NoviceTurnMultiState.js";
 import { NoviceMovePrivateState } from "./States/NoviceMovePrivateState.js";
 import { NoviceNoisePrivateState } from "./States/NoviceNoisePrivateState.js";
 import { NunChoiceMultiState } from "./States/NunChoiceMultiState.js";
-import { NunPathMultiState } from "./States/NunPathMultiState.js";
+import { NunPathPlayerState } from "./States/NunPathPlayerState.js";
+import { NunMovePlayerState } from "./States/NunMovePlayerState.js";
 
 export class Game {
   constructor(bga) {
@@ -23,7 +24,8 @@ export class Game {
     this.bga.states.register("NoviceMovePrivateState", new NoviceMovePrivateState(this, bga));
     this.bga.states.register("NoviceNoisePrivateState", new NoviceNoisePrivateState(this, bga));
     this.bga.states.register("NunChoiceMultiState", new NunChoiceMultiState(this, bga));
-    this.bga.states.register("NunPathMultiState", new NunPathMultiState(this, bga));
+    this.bga.states.register("NunPathPlayerState", new NunPathPlayerState(this, bga));
+    this.bga.states.register("NunMovePlayerState", new NunMovePlayerState(this, bga));
 
     this.classLocations = [];
     for (let i = 1; i <= 155; i++) {
@@ -78,7 +80,7 @@ export class Game {
         novice.move.noiseTokens.forEach((locationId) => {
           let holderEl = document.getElementById(`notr-noise-holder-${locationId}`);
           if (holderEl == null) {
-            boardEl.insertAdjacentHTML("beforeend", this.html_noiseContainer(locationId));
+            boardEl.insertAdjacentHTML("beforeend", this.html_noiseHolder(locationId));
             holderEl = document.getElementById(`notr-noise-holder-${locationId}`);
           }
           holderEl.insertAdjacentHTML("beforeend", this.html_noiseToken(novice));
@@ -90,10 +92,11 @@ export class Game {
   setupPanels() {
     Object.values(this.gamedatas.novices).forEach((novice) => {
       const panelEl = this.bga.playerPanels.getElement(novice.playerId);
+      const statusText = novice.caught ? _("Caught") : _("On The Run");
       panelEl.insertAdjacentHTML(
         "beforeend",
         `<div class="notr-panel notr-${novice.color}">
-  <div class="notr-caught notr-caught-${novice.caught}">${_(novice.statusText)}</div>
+  <div class="notr-caught notr-caught-${novice.caught}">${statusText}</div>
   <div class="notr-move">
     <div class="notr-move-title">${_("Movement")}</div>
     <div class="notr-move-icon notr-move-${novice.move || "unknown"}" title="${_(novice.move || "?")}"></div>
@@ -144,7 +147,7 @@ export class Game {
     const boardEl = document.getElementById("notr-board");
     let holderEl = document.getElementById(`notr-noise-holder-${args.noiseLocation}`);
     if (holderEl == null) {
-      boardEl.insertAdjacentHTML("beforeend", this.html_noiseContainer(args.noiseLocation));
+      boardEl.insertAdjacentHTML("beforeend", this.html_noiseHolder(args.noiseLocation));
       holderEl = document.getElementById(`notr-noise-holder-${args.noiseLocation}`);
     }
     holderEl.insertAdjacentHTML("beforeend", this.html_noiseToken(novice));
@@ -161,12 +164,20 @@ export class Game {
     return `<div id="notr-nun-${nun.role}" class="notr-player notr-${nun.color} notr-${nun.location}" style="background-image: url(${nun.avatarUrl})" title="${nun.playerName} (${_(nun.role)})"></div>`;
   }
 
-  html_noiseContainer(locationId) {
+  html_noiseHolder(locationId) {
     return `<div id="notr-noise-holder-${locationId}" class="notr-noise-holder notr-${locationId}"></div>`;
   }
 
   html_noiseToken(novice) {
     return `<div class="notr-noise notr-${novice.color}" title="${novice.playerName}"><span class="notr-icon notr-icon-noise"></span></div>`;
+  }
+
+  html_pathHolder(locationId) {
+    return `<div id="notr-path-holder-${locationId}" class="notr-path-holder notr-${locationId}"></div>`;
+  }
+
+  html_pathToken(path) {
+    return `<div id="notr-path-${path.id}" class="notr-path notr-${path.color}"><span class="notr-icon notr-icon-path"></span>${path.destination}</div>`;
   }
 
   html_dice() {
@@ -178,6 +189,17 @@ export class Game {
   <div class="face face-5"><div class="pip pip-1"></div><div class="pip pip-2"></div><div class="pip pip-3"></div><div class="pip pip-4"></div><div class="pip pip-5"></div></div>
   <div class="face face-6"><div class="pip pip-1"></div><div class="pip pip-2"></div><div class="pip pip-3"></div><div class="pip pip-4"></div><div class="pip pip-5"></div><div class="pip pip-6"></div></div>
 </div>`;
+  }
+
+  emoji(arg) {
+    switch (arg) {
+      case "white":
+      case "prioress":
+        return "⚪";
+      case "black":
+      case "abbess":
+        return "⚫";
+    }
   }
 
   bgaFormatText(log, args) {
@@ -194,7 +216,12 @@ export class Game {
           args.startLocation = `<b>🚩${args.startLocation}</b>`;
         }
         if (args.noiseLocation) {
-          args.noiseLocation = `<span class="notr-icon notr-icon-noise"></span> <b>${args.noiseLocation}</b>`;
+          const novice = this.gamedatas.novices[args.player_id] || {};
+          args.noiseLocation = `<span class="notr-noise notr-${novice.color}"><span class="notr-icon notr-icon-noise"></span> ${args.noiseLocation}</span>`;
+        }
+        if (args.pathLocation) {
+          args.pathLocation = `<span class="notr-path notr-${args.pathColor}"><span class="notr-icon notr-icon-path"></span> ${args.pathStart}▸${args.pathLocation}</span>`;
+          log += `<div class="notr-notify notr-path-image notr-path-${args.path}"></div>`;
         }
         if (args.wishIcon) {
           log += `<div class="notr-notify notr-wish">

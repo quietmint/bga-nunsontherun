@@ -102,7 +102,8 @@
   }
 }
 
-.notr-noise-holder {
+.notr-noise-holder,
+.notr-path-holder {
   align-content: flex-start;
   display: flex;
   flex-wrap: wrap;
@@ -112,35 +113,25 @@
   width: 7%;
 }
 
-.notr-noise {
-  background: white;
-  border-radius: 2px;
-  box-shadow:
-    1px 1px 0 black,
-    0 0 0.5cqw black;
-  color: black;
+.notr-noise-holder {
   font-size: 2.4cqw;
-  font-weight: bold;
-  padding: 0 3px;
-  text-align: center;
 
-  &.notr-blue {
-    background: $color-light-blue-500;
+  .notr-noise {
+    box-shadow:
+      1px 1px 0 black,
+      0 0 0.5cqw black;
   }
-  &.notr-green {
-    background: $color-light-green-500;
-  }
-  &.notr-orange {
-    background: $color-orange-500;
-  }
-  &.notr-purple {
-    background: $color-purple-500;
-  }
-  &.notr-red {
-    background: $color-pink-500;
-  }
-  &.notr-yellow {
-    background: $color-yellow-500;
+}
+
+.notr-path-holder {
+  font-size: 2cqw;
+
+  .notr-path {
+    box-shadow:
+      1px 1px 0 black,
+      0 0 0.5cqw black;
+    cursor: pointer;
+    margin: 2px 0;
   }
 }
 

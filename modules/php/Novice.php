@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bga\Games\NunsOnTheRun;
 
-class Novice implements \JsonSerializable
+class Novice
 {
 	public bool $caught = false;
 	public string $color;
@@ -38,25 +38,6 @@ class Novice implements \JsonSerializable
 	public function __toString()
 	{
 		return 'Novice(' . $this->playerId . ')';
-	}
-
-	public function jsonSerialize(): array
-	{
-		return [
-			'caught' => $this->caught,
-			'color' => $this->color,
-			'hasKey' => $this->hasKey,
-			'hasWish' => $this->hasWish,
-			'keyLocation' => $this->getKeyLocation(),
-			'location' => $this->location,
-			'move' => $this->move,
-			'moves' => $this->moves,
-			'playerId' => $this->playerId,
-			'playerName' => $this->playerName,
-			'statusText' => $this->getStatusText(),
-			'wish' => $this->wish,
-			'wishLocation' => $this->getWishLocation(),
-		];
 	}
 
 	public function getKeyLocation(): ?int
@@ -105,12 +86,5 @@ class Novice implements \JsonSerializable
 			default:
 				return null;
 		}
-	}
-
-	public function getStatusText(): string
-	{
-		return $this->caught
-			? \clienttranslate('Caught')
-			: \clienttranslate('On The Run');
 	}
 }
