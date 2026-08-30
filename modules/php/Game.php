@@ -22,6 +22,7 @@ namespace Bga\Games\NunsOnTheRun;
 
 use Bga\GameFramework\Components\Counters\PlayerCounter;
 use Bga\Games\NunsOnTheRun\States\NoviceTurnMultiState;
+use Bga\Games\NunsOnTheRun\States\NunMovePlayerState;
 
 class Game extends \Bga\GameFramework\Table
 {
@@ -69,8 +70,8 @@ class Game extends \Bga\GameFramework\Table
    */
   public function getGameProgression()
   {
-    $playerCount = (int) $this->getUniqueValueFromDB('SELECT COUNT(1) FROM `player`');
-    $caughtProgression = round($this->getCaught() / $playerCount * 100);
+    $caughtGoal = $this->getCaughtGoal();
+    $caughtProgression = round($this->getCaught() / $caughtGoal * 100);
     $roundProgression = round(($this->getRound() - 1) / 0.15);
     return max($caughtProgression, $roundProgression);
   }
@@ -115,14 +116,17 @@ class Game extends \Bga\GameFramework\Table
      */
   protected function getAllDatas(int $currentPlayerId): array
   {
-    $result = [];
-    $result['players'] = $this->getCollectionFromDb(
-      'SELECT `player_id` AS `id`, `player_score` AS `score`, `colorName` FROM `player`'
-    );
-    $result['caught'] = $this->getCaught();
-    $result['novices'] = $this->getNoviceList();
-    $result['nuns'] = $this->getNunList();
-    $result['round'] = $this->getRound();
+    $state = $this->gamestate->getCurrentMainStateClass();
+    $nuns = $this->getNunList();
+    $novices = $this->getNoviceList();
+    $result = [
+      'caught' => $this->getCaught(),
+      'caughtGoal' => $this->getCaughtGoal(),
+      'novices' => $novices->getAllDatas($currentPlayerId, $state, $nuns),
+      'nuns' => $nuns->getAllDatas($currentPlayerId, $state),
+      'players' => $this->getCollectionFromDb('SELECT `player_id` AS `id`, `player_score` AS `score`, `colorName` FROM `player`'),
+      'round' => $this->getRound(),
+    ];
     return $result;
   }
 
@@ -214,9 +218,9 @@ class Game extends \Bga\GameFramework\Table
   {
     switch ($role) {
       case 'abbess':
-        return clienttranslate('The Abbess');
+        return clienttranslate('Abbess');
       case 'prioress':
-        return clienttranslate('The Prioress');
+        return clienttranslate('Prioress');
       default:
         return null;
     }
@@ -300,13 +304,15 @@ class Game extends \Bga\GameFramework\Table
       $nuns->add($nun);
       $this->bga->notify->all(
         'message',
-        clienttranslate('${player_name} (${role}) starts at ${location}.'),
+        clienttranslate('${roleIcon} ${roleName} ${player_name} starts at ${location}'),
         [
-          'i18n' => ['role'],
+          'i18n' => ['roleName'],
           'location' => $nun->location,
           'player_id' => $nun->playerId,
           'player_name' => $nun->playerName,
           'role' => $nun->role,
+          'roleIcon' => $this->getRoleIcon($nun->role),
+          'roleName' => $this->getRoleName($nun->role),
         ]
       );
       $this->bga->playerStats->set('caught', 0, $playerId);
@@ -333,11 +339,13 @@ class Game extends \Bga\GameFramework\Table
       $novice->location = $location++;
       $novice->playerId = $playerId;
       $novice->playerName = $player['player_name'];
+      $novice->room = $this->board->getRoomId($novice->location);
+      $novice->startLocation = $novice->location;
       $novice->wish = array_shift($wishes);
       $novices->add($novice);
       $this->bga->notify->all(
         'message',
-        clienttranslate('${player_name} (${role}) starts at ${location}.'),
+        clienttranslate('${player_name} starts at ${location}'),
         [
           'i18n' => ['role'],
           'location' => $novice->location,
@@ -387,6 +395,16 @@ class Game extends \Bga\GameFramework\Table
   public function getCaught(): int
   {
     return $this->tableStats->get('caught');
+  }
+
+  public function getCaughtGoal(): int
+  {
+    // TODO: game option
+    // "If it turns out that the nuns’ task is too difficult, you can reduce
+    // the number of novices they need to catch to win to the number of novices
+    // in the game (instead of the total number of players)."
+    $playerCount = (int) $this->getUniqueValueFromDB('SELECT COUNT(1) FROM `player`');
+    return $playerCount;
   }
 
   public function getRound(): int

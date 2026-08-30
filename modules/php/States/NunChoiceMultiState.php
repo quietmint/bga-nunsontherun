@@ -49,14 +49,15 @@ class NunChoiceMultiState extends GameState
   }
 
   #[PossibleAction]
-  public function actChoose(int $currentPlayerId, array $args, string $role)
+  public function actChoose(int $currentPlayerId, string $role)
   {
-    $this->bga->notify->all('message', clienttranslate('${player_name} activates ${icon} ${role}'), [
-      'i18n' => ['role'],
-      'icon' => $this->game->getRoleIcon($role),
+    $this->bga->notify->all('message', clienttranslate('${roleIcon} ${roleName} ${player_name} activates'), [
+      'i18n' => ['roleName'],
       'player_id' => $currentPlayerId,
       'player_name' => $this->game->getPlayerNameById($currentPlayerId),
-      'role' => $this->game->getRoleName($role),
+      'role' => $role,
+      'roleIcon' => $this->game->getRoleIcon($role),
+      'roleName' => $this->game->getRoleName($role),
     ]);
 
     $this->setCurrentNun($role);

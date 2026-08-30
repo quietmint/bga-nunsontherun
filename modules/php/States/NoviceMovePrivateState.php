@@ -56,12 +56,14 @@ class NoviceMovePrivateState extends GameState
     $nuns = $this->game->getNunList();
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $oldSpaceId = $novice->location;
-    $oldVisible = $nuns->isRoomVisible($this->game->board->getRoomId($novice->location));
+    $oldVisible = $nuns->isNoviceVisible($novice);
     foreach ($spaces as $spaceId) {
-      $visible = $nuns->isRoomVisible($this->game->board->getRoomId($spaceId));
+      $novice->location = $spaceId;
+      $novice->room = $this->game->board->getRoomId($novice->location);
+      $visible = $nuns->isNoviceVisible($novice);
       if ($visible && !$oldVisible) {
-        $this->bga->notify->player($currentPlayerId, 'noviceAppear', clienttranslate('You appear at ${appearLocation}, visible to the nuns'), [
-          'appearLocation' => $spaceId,
+        $this->bga->notify->player($currentPlayerId, 'message', clienttranslate('You are visible at ${location}'), [
+          'location' => $spaceId,
           'player_id' => $currentPlayerId,
         ]);
       } else if (!$visible && $oldVisible) {
@@ -77,7 +79,6 @@ class NoviceMovePrivateState extends GameState
       $oldSpaceId = $spaceId;
       $oldVisible = $visible;
     }
-    $novice->location = $location;
     array_push($novice->move->spaces, ...$spaces);
     $this->game->saveNovice($novice);
 
@@ -120,7 +121,7 @@ class NoviceMovePrivateState extends GameState
       'location' => $novice->location,
       'startLocation' => $novice->move->start,
     ]);
-    $this->game->bga->notify->player($currentPlayerId, 'noviceRoll', clienttranslate('You roll ${roll} for noise'), [
+    $this->bga->notify->player($currentPlayerId, 'noviceRoll', clienttranslate('You roll ${roll} for noise'), [
       'player_id' => $currentPlayerId,
       'roll' => $novice->move->noiseRoll,
     ]);
@@ -133,10 +134,11 @@ class NoviceMovePrivateState extends GameState
   {
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $novice->location = $novice->move->start;
+    $novice->room = $this->game->board->getRoomId($novice->location);
     $novice->move->action = null;
     $novice->move->spaces = [];
     $this->game->saveNovice($novice);
-    $this->notify->player($currentPlayerId, 'noviceMove', clienttranslate('You restart your turn'), [
+    $this->bga->notify->player($currentPlayerId, 'noviceMove', clienttranslate('You restart your turn'), [
       'location' => $novice->location,
       'player_id' => $currentPlayerId,
     ]);

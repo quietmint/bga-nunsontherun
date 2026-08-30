@@ -15,19 +15,23 @@ class Novice
 	public array $moves = [];
 	public int $playerId;
 	public string $playerName;
+	public int $room;
+	public int $startLocation;
 	public string $wish;
 
 	public function __construct(?\stdClass $data = null)
 	{
 		if ($data != null) {
-			$this->caught = property_exists($data, 'caught') && $data->caught;
+			$this->caught = $data->caught;
 			$this->color = $data->color;
-			$this->hasKey = property_exists($data, 'hasKey') && $data->hasKey;
-			$this->hasWish = property_exists($data, 'hasWish') && $data->hasWish;
+			$this->hasKey = $data->hasKey;
+			$this->hasWish = $data->hasWish;
 			$this->location = $data->location;
 			$this->move = property_exists($data, 'move') && !is_null($data->move) ? new Move($data->move) : null;
 			$this->playerId = $data->playerId;
 			$this->playerName = $data->playerName;
+			$this->room = $data->room;
+			$this->startLocation = $data->startLocation;
 			$this->wish = $data->wish;
 			foreach ($data->moves as $move) {
 				array_push($this->moves, new Move($move));

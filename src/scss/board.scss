@@ -22,7 +22,8 @@
   position: absolute;
   translate: -50% -50%;
   transition: all 0.25s ease-out;
-  width: 3.5%;
+  width: 4%;
+  z-index: 10;
 
   &.notr-blue {
     border-color: $color-light-blue-500;
@@ -44,9 +45,11 @@
   }
   &.notr-black {
     border-color: black;
+    z-index: 11;
   }
   &.notr-white {
     border-color: white;
+    z-index: 11;
   }
 }
 
@@ -61,12 +64,13 @@
   cursor: pointer;
   font-size: 2.4cqw;
   font-weight: bold;
-  line-height: 3.5cqw;
+  line-height: 3.4cqw;
   position: absolute;
   text-align: center;
   text-shadow: 1px 1px white;
   translate: -50% -50%;
-  width: 3.5%;
+  width: 3.4%;
+  z-index: 20;
 
   &.notr-possible-stand {
     background: linear-gradient(315deg, $color-blue-200, $color-blue-500, $color-blue-200);

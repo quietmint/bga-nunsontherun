@@ -20,8 +20,8 @@ class NunMovePlayerState extends GameState
       $game,
       id: 32,
       type: StateType::ACTIVE_PLAYER,
-      description: clienttranslate('${player_name} must move ${icon} ${role}'),
-      descriptionMyTurn: clienttranslate('${you} must move ${icon} ${role}'),
+      description: clienttranslate('${roleIcon} ${roleName} ${player_name} must move'),
+      descriptionMyTurn: clienttranslate('${you} (${roleIcon} ${roleName}) must move'),
     );
   }
 
@@ -35,14 +35,125 @@ class NunMovePlayerState extends GameState
       $info['disabled'] = !in_array($action, $actionsForNow);
     }
     return [
-      'i18n' => ['role'],
+      'i18n' => ['roleName'],
       'actions' => $actions,
-      'icon' => $this->game->getRoleIcon($nun->role),
       'player_id' => $nun->playerId,
       'player_name' => $nun->playerName,
       'possible' => $this->game->board->getNunPossibleMoves($nun),
-      'role' => $this->game->getRoleName($nun->role),
+      'role' => $nun->role,
+      'roleIcon' => $this->game->getRoleIcon($nun->role),
+      'roleName' => $this->game->getRoleName($nun->role),
     ];
+  }
+
+  #[PossibleAction]
+  public function actMove(int $currentPlayerId, array $args, int $location)
+  {
+    // Check location
+    if (!array_key_exists($location, $args['possible'])) {
+      throw new UserException("Cannot move to location $location");
+    }
+    $possible = $args['possible'][$location];
+    $spaces = $possible->spaces;
+    array_shift($spaces);
+
+    $nuns = $this->game->getNunList();
+    $nun = &$nuns->getCurrentNun();
+    $novices = $this->game->getNoviceList();
+    $locationsWithNovices = $novices->getLocationsWithNovices();
+    $oldSpaceId = $nun->location;
+    $oldRoomId = $nun->room;
+    $oldNovicesVisible = $nuns->getNovicesVisible($novices);
+    $this->game->debug("old room $oldRoomId space $oldSpaceId oldNovicesVisible: " . json_encode($oldNovicesVisible) . ' // ');
+    foreach ($spaces as $spaceId) {
+      $nun->location = $location;
+      $nun->room = $this->game->board->getRoomId($nun->location);
+      $this->bga->notify->all('nunMove', clienttranslate('${roleIcon} ${roleName} ${player_name} moves to ${location}'), [
+        'i18n' => ['roleName'],
+        'location' => $spaceId,
+        'player_id' => $nun->playerId,
+        'player_name' => $nun->playerName,
+        'role' => $nun->role,
+        'roleIcon' => $this->game->getRoleIcon($nun->role),
+        'roleName' => $this->game->getRoleName($nun->role),
+      ]);
+
+      if (array_key_exists($spaceId, $locationsWithNovices)) {
+        foreach ($locationsWithNovices[$spaceId] as $playerId) {
+          $novice = $novices->get($playerId);
+          if (!$novice->caught) {
+            $novice->caught = true;
+            $novice->hasWish = false;
+            $this->game->saveNovice($novice);
+            $this->bga->playerStats->inc('caught', 1, $nun->playerId, true);
+            $this->bga->playerStats->inc('caughtTimes', 1, $novice->playerId);
+            $this->bga->notify->all('noviceCaught', clienttranslate('${roleIcon} ${roleName} ${player_name} catches ${player_name2} at ${location}!'), [
+              'i18n' => ['roleName'],
+              'location' => $spaceId,
+              'player_id' => $nun->playerId,
+              'player_id2' => $novice->playerId,
+              'player_name' => $nun->playerName,
+              'player_name2' => $novice->playerName,
+              'role' => $nun->role,
+              'roleIcon' => $this->game->getRoleIcon($nun->role),
+              'roleName' => $this->game->getRoleName($nun->role),
+            ]);
+          }
+        }
+      }
+
+      if ($nun->room != $oldRoomId) {
+        $novicesVisible = $nuns->getNovicesVisible($novices);
+        $this->game->debug("new room {$nun->room} space $spaceId novicesVisible: " . json_encode($novicesVisible) . ' // ');
+        foreach ($novicesVisible as $playerId => $visible) {
+          $novice = $novices->get($playerId);
+          $oldVisible = $oldNovicesVisible[$playerId];
+          if ($visible && !$oldVisible) {
+            $this->bga->notify->all('noviceMove', clienttranslate('${player_name} is visible at ${location}'), [
+              'location' => $novice->location,
+              'player_id' => $novice->playerId,
+              'player_name' => $novice->playerName,
+            ]);
+          } else if (!$visible && $oldVisible) {
+            $this->bga->notify->all('noviceMove', '', [
+              'location' => $novice->startLocation,
+              'player_id' => $novice->playerId,
+              'player_name' => $novice->playerName,
+            ]);
+          }
+        }
+        $oldNovicesVisible = $novicesVisible;
+      }
+      $oldSpaceId = $spaceId;
+      $oldRoomId = $nun->room;
+    }
+    array_push($nun->move->spaces, ...$spaces);
+    $this->game->saveNuns($nuns);
+
+    return NunMovePlayerState::class;
+  }
+
+  #[PossibleAction]
+  public function actReset()
+  {
+    $nuns = $this->game->getNunList();
+    $nun = $nuns->getCurrentNun();
+    $nun->location = $nun->move->start;
+    $nun->room = $this->game->board->getRoomId($nun->location);
+    $nun->move->action = null;
+    $nun->move->spaces = [];
+    $this->game->saveNuns($nuns);
+    $this->bga->notify->all('nunMove', clienttranslate('${roleIcon} ${roleName} ${player_name} restarts their turn'), [
+      'i18n' => ['roleName'],
+      'location' => $nun->location,
+      'player_id' => $nun->playerId,
+      'player_name' => $nun->playerName,
+      'role' => $nun->role,
+      'roleIcon' => $this->game->getRoleIcon($nun->role),
+      'roleName' => $this->game->getRoleName($nun->role),
+    ]);
+
+    return NunMovePlayerState::class;
   }
 
   /**

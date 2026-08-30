@@ -45,7 +45,7 @@ class NoviceRecapGameState extends GameState
 					$message = clienttranslate('${player_name} runs');
 					break;
 			}
-			$this->game->bga->notify->all('noviceRecap', $message, [
+			$this->bga->notify->all('noviceRecap', $message, [
 				'preserve' => ['player_id', 'recap'],
 				'player_id' => $novice->playerId,
 				'player_name' => $novice->playerName,
@@ -59,9 +59,9 @@ class NoviceRecapGameState extends GameState
 				$visible = $nuns->isRoomVisible($this->game->board->getRoomId($spaceId));
 				if ($visible) {
 					if (!$oldVisible) {
-						$this->bga->notify->all('noviceAppear', clienttranslate('${player_name} appears at ${appearLocation}, visible to the nuns'), [
+						$this->bga->notify->all('noviceRecap', clienttranslate('${player_name} is visible at ${location}'), [
 							'preserve' => ['player_id', 'recap'],
-							'appearLocation' => $spaceId,
+							'location' => $spaceId,
 							'player_id' => $novice->playerId,
 							'player_name' => $novice->playerName,
 							'recap' => true,
@@ -75,7 +75,7 @@ class NoviceRecapGameState extends GameState
 						'recap' => true,
 					]);
 				} else if ($oldVisible) {
-					$this->bga->notify->all('noviceVanish', clienttranslate('${player_name} vanishes at ${vanishLocation}, invisible to the nuns'), [
+					$this->bga->notify->all('noviceVanish', clienttranslate('${player_name} vanishes at ${vanishLocation}'), [
 						'preserve' => ['player_id', 'recap'],
 						'player_id' => $novice->playerId,
 						'player_name' => $novice->playerName,
@@ -88,7 +88,7 @@ class NoviceRecapGameState extends GameState
 			}
 
 			// Notify each novice's noise
-			$this->game->bga->notify->all('noviceRoll', clienttranslate('${player_name} rolls ${roll} for noise'), [
+			$this->bga->notify->all('noviceRoll', clienttranslate('${player_name} rolls ${roll} for noise'), [
 				'preserve' => ['player_id', 'recap'],
 				'player_id' => $novice->playerId,
 				'player_name' => $novice->playerName,
@@ -97,7 +97,7 @@ class NoviceRecapGameState extends GameState
 			]);
 			if (!empty($novice->move->noiseTokens)) {
 				foreach ($novice->move->noiseTokens as $noiseLocation) {
-					$this->game->bga->notify->all('noviceNoise', clienttranslate('${player_name} places a noise token at ${noiseLocation}'), [
+					$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} places a noise token at ${noiseLocation}'), [
 						'preserve' => ['player_id', 'recap'],
 						'noiseLocation' => $noiseLocation,
 						'player_id' => $novice->playerId,

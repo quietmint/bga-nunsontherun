@@ -20,8 +20,8 @@ class NunPathPlayerState extends GameState
       $game,
       id: 31,
       type: StateType::ACTIVE_PLAYER,
-      description: clienttranslate('${player_name} must choose a path for ${icon} ${role}'),
-      descriptionMyTurn: clienttranslate('${you} must choose a path for ${icon} ${role}'),
+      description: clienttranslate('${roleIcon} ${roleName} ${player_name} must choose a path'),
+      descriptionMyTurn: clienttranslate('${you} (${roleIcon} ${roleName}) must choose a path'),
     );
   }
 
@@ -31,12 +31,13 @@ class NunPathPlayerState extends GameState
     $nun = $nuns->getCurrentNun();
     $possible = $this->game->board->getNunPossiblePaths($nuns, $nun);
     return [
-      'i18n' => ['role'],
-      'icon' => $this->game->getRoleIcon($nun->role),
+      'i18n' => ['roleName'],
       'player_id' => $nun->playerId,
       'player_name' => $nun->playerName,
       'possible' => $possible,
-      'role' => $this->game->getRoleName($nun->role),
+      'role' => $nun->role,
+      'roleIcon' => $this->game->getRoleIcon($nun->role),
+      'roleName' => $this->game->getRoleName($nun->role),
       'start' => $nun->location,
     ];
   }
@@ -58,16 +59,18 @@ class NunPathPlayerState extends GameState
     $nun->path = $path;
     $this->game->saveNuns($nuns);
 
-    $this->bga->notify->all('nunPath', clienttranslate('${player_name} chooses path ${pathLocation} for ${icon} ${role}'), [
+    $this->bga->notify->all('nunPath', clienttranslate('${player_name} (${roleIcon} ${roleName}) chooses path ${pathLocation}'), [
+      'i18n' => ['roleName'],
       'preserve' => ['path', 'pathColor', 'pathStart'],
-      'icon' => $this->game->getRoleIcon($nun->role),
       'path' => $nun->path,
       'pathColor' => $color,
       'pathLocation' => $destination,
       'pathStart' => $nun->location,
       'player_id' => $currentPlayerId,
       'player_name' => $this->game->getPlayerNameById($currentPlayerId),
-      'role' => $this->game->getRoleName($nun->role),
+      'role' => $nun->role,
+      'roleIcon' => $this->game->getRoleIcon($nun->role),
+      'roleName' => $this->game->getRoleName($nun->role),
     ]);
     return NunMovePlayerState::class;
   }

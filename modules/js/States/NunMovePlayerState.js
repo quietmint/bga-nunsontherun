@@ -9,7 +9,7 @@ export class NunMovePlayerState {
       // Actions
       for (const action in args.actions) {
         const info = args.actions[action];
-        const noiseText = info.noise > 0 ? "+" + info.noise : info.noise;
+        const noiseText = info.noise ? _("Yes") : _("No");
         const distances = info.min == info.max ? info.min : `${info.min} - ${info.max}`;
         this.bga.statusBar.addActionButton(
           `<div class="notr-move-action">

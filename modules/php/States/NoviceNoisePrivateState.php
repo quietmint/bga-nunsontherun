@@ -53,7 +53,7 @@ class NoviceNoisePrivateState extends GameState
     array_push($novice->move->noiseTokens, $location);
     $this->game->saveNovice($novice);
 
-    $this->game->bga->notify->player($currentPlayerId, 'noviceNoise', clienttranslate('You place a noise token at ${noiseLocation}'), [
+    $this->bga->notify->player($currentPlayerId, 'noviceNoise', clienttranslate('You place a noise token at ${noiseLocation}'), [
       'noiseLocation' => $location,
       'player_id' => $currentPlayerId,
     ]);

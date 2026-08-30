@@ -54,9 +54,6 @@ export class Game {
     this.gamedatas = gamedatas;
     console.log("Setup", gamedatas);
 
-    // Object.values(gamedatas.players).forEach((player) => {
-    //   player.avatarUrl = this.bga.players.getPlayerAvatarUrl(player.id);
-    // });
     Object.values(gamedatas.novices).forEach((novice) => {
       novice.avatarUrl = this.bga.players.getPlayerAvatarUrl(novice.playerId);
     });
@@ -96,7 +93,7 @@ export class Game {
       panelEl.insertAdjacentHTML(
         "beforeend",
         `<div class="notr-panel notr-${novice.color}">
-  <div class="notr-caught notr-caught-${novice.caught}">${statusText}</div>
+  <div id="notr-caught-${novice.playerId}" class="notr-caught notr-caught-${novice.caught}">${statusText}</div>
   <div class="notr-move">
     <div class="notr-move-title">${_("Movement")}</div>
     <div class="notr-move-icon notr-move-${novice.move || "unknown"}" title="${_(novice.move || "?")}"></div>
@@ -118,12 +115,19 @@ export class Game {
     this.bga.notifications.setupPromiseNotifications({
       logger: console.log,
     });
-    this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceAppear", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceMove", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceNoise", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceRecap", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceRoll", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceVanish", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
+  }
+
+  async notif_noviceCaught(args) {
+    console.log("doing notif_noviceCaught", args);
+    const caughtEl = document.getElementById(`notr-caught-${args.player_id2}`);
+    caughtEl.innerText = _("Caught");
+    caughtEl.classList.remove("notr-caught-false");
+    caughtEl.classList.add("notr-caught-true");
   }
 
   async notif_noviceMove(args) {
@@ -143,7 +147,7 @@ export class Game {
       // ignore
       return;
     }
-    const novice = this.getNovice(args.playerId);
+    const novice = this.getNovice(args.player_id);
     const boardEl = document.getElementById("notr-board");
     let holderEl = document.getElementById(`notr-noise-holder-${args.noiseLocation}`);
     if (holderEl == null) {
@@ -151,6 +155,17 @@ export class Game {
       holderEl = document.getElementById(`notr-noise-holder-${args.noiseLocation}`);
     }
     holderEl.insertAdjacentHTML("beforeend", this.html_noiseToken(novice));
+  }
+
+  async notif_nunMove(args) {
+    console.log("doing notif_nunMove", args);
+    const nunEl = document.getElementById("notr-nun-" + args.role);
+    if (nunEl == null) {
+      console.error(`notr-nun-${args.role} not found`);
+      return;
+    }
+    nunEl.classList.remove(...this.classLocations);
+    nunEl.classList.add("notr-" + args.location);
   }
 
   ///////////////////////////////////////////////////
@@ -161,7 +176,9 @@ export class Game {
   }
 
   html_playerNun(nun) {
-    return `<div id="notr-nun-${nun.role}" class="notr-player notr-${nun.color} notr-${nun.location}" style="background-image: url(${nun.avatarUrl})" title="${nun.playerName} (${_(nun.role)})"></div>`;
+    const roleIcon = nun.role == "abbess" ? "⚫" : "⚪";
+    const roleName = nun.role == "abbess" ? _("Abbess") : _("Prioress");
+    return `<div id="notr-nun-${nun.role}" class="notr-player notr-${nun.color} notr-${nun.location}" style="background-image: url(${nun.avatarUrl})" title="${nun.playerName} (${roleIcon} ${roleName})"></div>`;
   }
 
   html_noiseHolder(locationId) {
@@ -210,10 +227,10 @@ export class Game {
         //   args.keyLocation = `<b>🔑${args.keyLocation}</b>`;
         // }
         if (args.location) {
-          args.location = `<b>🚩${args.location}</b>`;
+          args.location = `<b>${args.location}</b>`;
         }
         if (args.startLocation) {
-          args.startLocation = `<b>🚩${args.startLocation}</b>`;
+          args.startLocation = `<b>${args.startLocation}</b>`;
         }
         if (args.noiseLocation) {
           const novice = this.gamedatas.novices[args.player_id] || {};

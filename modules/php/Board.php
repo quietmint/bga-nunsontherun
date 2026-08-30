@@ -6,6 +6,9 @@ namespace Bga\Games\NunsOnTheRun;
 
 use Bga\GameFramework\VisibleSystemException;
 
+const TRAVERSE_UNLOCKED = 1;
+const TRAVERSE_SINGLE_ROOM = 2;
+
 class Board
 {
 	private Game $game;
@@ -410,7 +413,8 @@ class Board
 			$impassable[$nun->location] = true;
 		}
 
-		$possible = $this->traverse($novice->location, $distance, $maxDistance, $novice->hasKey, $impassable);
+		$flags = $novice->hasKey ? 0 : TRAVERSE_UNLOCKED;
+		$possible = $this->traverse($novice->location, $distance, $maxDistance, $impassable, $flags);
 		$actions = $this->getNoviceActions($round);
 		foreach ($possible as $location => &$p) {
 			$p->actions = $this->getActionsForDistance($actions, $p->distance);
@@ -426,7 +430,7 @@ class Board
 	{
 		// Check each nun's hearing
 		$nunHearing = [];
-		$traverse = $this->traverse($novice->location, 0, $novice->move->noiseTotal, true, []);
+		$traverse = $this->traverse($novice->location, 0, $novice->move->noiseTotal, [], 0);
 		foreach ($nuns as $nun) {
 			if (array_key_exists($nun->location, $traverse)) {
 				// Determine the closest neighbor
@@ -477,6 +481,10 @@ class Board
 
 	public function getNoviceActions(int $round): array
 	{
+		// TODO: game option
+		// "If the novices are winning too easily, you can give them a handicap. In the
+		// first round, the novices may only move once (instead of the usual two times)."
+
 		$multi = $round == 1 ? 2 : 1;
 		return [
 			'stand' => [
@@ -508,6 +516,11 @@ class Board
 
 	public function getNunActions(): array
 	{
+		// TODO: game option
+		// "If an experienced nun player is playing against a few inexperienced
+		// novices,you can give the nun player a handicap. The nun player may move
+		// a maximum of 5 spaces per round."
+
 		return [
 			'walk' => [
 				'min' => 3,
@@ -571,7 +584,7 @@ class Board
 		$distance = count($nun->move->spaces);
 		$maxDistance = 6;
 
-		$possible = $this->traverse($nun->location, $distance, $maxDistance, true, []);
+		$possible = $this->traverse($nun->location, $distance, $maxDistance, [], TRAVERSE_SINGLE_ROOM);
 		$actions = $this->getNunActions();
 		foreach ($possible as $location => &$p) {
 			$p->actions = $this->getActionsForDistance($actions, $p->distance);
@@ -583,9 +596,10 @@ class Board
 		return $possible;
 	}
 
-	private function traverse(int $start, int $distance, int $maxDistance, bool $key, array $impassable): array
+	private function traverse(int $start, int $distance, int $maxDistance, array $impassable, int $flags): array
 	{
 		$possible = [];
+		$startRoom = $this->getRoomId($start);
 		$queue = [new PossibleMove($distance, [], $start, [])];
 		$visited = [];
 		while (!empty($queue)) {
@@ -605,17 +619,22 @@ class Board
 					$possible[$location] = $move;
 				}
 				$space = $this->spaces[$location];
+				$room = $space->roomId;
 				foreach ($space->neighbors as $neighborId => $neighbor) {
 					if (in_array($neighborId, $move->spaces)) {
 						// Ignore backtracking
 						continue;
 					}
-					if (!$key && $neighbor['locked']) {
+					if ($flags & TRAVERSE_UNLOCKED && $neighbor['locked']) {
 						// Ignore locked doors
 						continue;
 					}
 					if (array_key_exists($neighborId, $impassable)) {
 						// Ignore impassable spaces
+						continue;
+					}
+					if ($flags & TRAVERSE_SINGLE_ROOM && $room != $startRoom) {
+						// Ignore new rooms
 						continue;
 					}
 					$nextQueue[] = new PossibleMove($distance + 1, [], $neighborId, $move->spaces);

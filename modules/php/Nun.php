@@ -34,4 +34,9 @@ class Nun
 			}
 		}
 	}
+
+	public function __toString()
+	{
+		return 'Nun(' . $this->playerId . '/' . $this->role . ')';
+	}
 }
