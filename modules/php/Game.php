@@ -21,7 +21,7 @@ declare(strict_types=1);
 namespace Bga\Games\NunsOnTheRun;
 
 use Bga\GameFramework\Components\Counters\PlayerCounter;
-use Bga\Games\NunsOnTheRun\States\Novices;
+use Bga\Games\NunsOnTheRun\States\NoviceTurnMultiState;
 
 class Game extends \Bga\GameFramework\Table
 {
@@ -126,14 +126,17 @@ class Game extends \Bga\GameFramework\Table
     return $result;
   }
 
+  function getPlayerIds(int $dbNun): array
+  {
+    return $this->getObjectListFromDB(
+      "SELECT `player_id` FROM `player` WHERE `nun` = $dbNun AND `player_zombie` = 0 AND `player_eliminated` = 0",
+      true
+    );
+  }
+
   function getNoviceList(): NoviceList
   {
     return new NoviceList($this->bga->globals->get('novices'));
-  }
-
-  function getNovice(int $playerId): Novice
-  {
-    return $this->getNoviceList()->get($playerId);
   }
 
   function saveNovice(Novice $novice)
@@ -153,22 +156,12 @@ class Game extends \Bga\GameFramework\Table
     return new NunList($this->bga->globals->get('nuns'));
   }
 
-  function getNun(string $type): ?Nun
+  function saveNun(Nun $nun)
   {
-    return $this->getNunList()->get($type);
+    $nunList = $this->getNunList();
+    $nunList->add($nun);
+    $this->saveNuns($nunList);
   }
-
-  function getNunRoomIds(): array
-  {
-    $roomIds = [];
-    $nuns = $this->getNunList();
-    foreach ($nuns as $nun) {
-      $nun->location;
-    }
-    return $roomIds;
-  }
-
-  function saveNun(Nun $nun) {}
 
   function saveNuns(NunList $nunList)
   {
@@ -178,12 +171,12 @@ class Game extends \Bga\GameFramework\Table
   function getSpecificColorPairings(): array
   {
     return [
-      'f07f16' /* Orange */      => 'ff5722', // deep-orange-500
+      'f07f16' /* Orange */      => 'ff9800', // orange-500
       '0000ff' /* Blue */        => '03a9f4', // light-blue-500
       'ff0000' /* Red */         => 'e91e63', // pink-500
       '008000' /* Green */       => '8bc34a', // light-green-500
       '982fff' /* Purple */      => '9c27b0', // purple-500
-      'ffa500' /* Yellow */      => 'ffc107', // amber-500
+      'ffa500' /* Yellow */      => 'ffeb3b', // yellow-500
     ];
   }
 
@@ -191,7 +184,7 @@ class Game extends \Bga\GameFramework\Table
   {
     switch ($color) {
       case 'f07f16': // bga orange
-      case 'ff5722': // deep-orange-500
+      case 'ff9800': // orange-500
         return 'orange';
       case '0000ff': // bga blue
       case '03a9f4': // light-blue-500
@@ -206,12 +199,36 @@ class Game extends \Bga\GameFramework\Table
       case '9c27b0': // purple-500
         return 'purple';
       case 'ffa500': // bga yellow
-      case 'ffc107': // amber-500
+      case 'ffeb3b': // yellow-500
         return 'yellow';
       case '000000':
         return 'black';
       case 'ffffff':
         return 'white';
+      default:
+        return null;
+    }
+  }
+
+  public function getRoleName(string $role): ?string
+  {
+    switch ($role) {
+      case 'abbess':
+        return clienttranslate('The Abbess');
+      case 'prioress':
+        return clienttranslate('The Prioress');
+      default:
+        return null;
+    }
+  }
+
+  public function getRoleIcon(string $role): ?string
+  {
+    switch ($role) {
+      case 'abbess':
+        return '⚫';
+      case 'prioress':
+        return '⚪';
       default:
         return null;
     }
@@ -279,6 +296,7 @@ class Game extends \Bga\GameFramework\Table
       $nun->playerId = $playerId;
       $nun->playerName = $player['player_name'];
       $nun->role = $role;
+      $nun->room = $this->board->getRoomId($nun->location);
       $nuns->add($nun);
       $this->bga->notify->all(
         'message',
@@ -363,7 +381,7 @@ class Game extends \Bga\GameFramework\Table
     // Table statistics
     $this->bga->tableStats->init('round', 1);
 
-    return Novices::class;
+    return NoviceTurnMultiState::class;
   }
 
   public function getCaught(): int

@@ -314,6 +314,65 @@ class Board
 			],
 		];
 
+		$paths = [
+			'blue-26-84' => [
+				'color' => 'blue',
+				'path' => [26, 19, 18, 17, 16, 15, 14, 13, 12, 31, 34, 33, 55, 56, 83, 84],
+			],
+			'blue-26-147' => [
+				'color' => 'blue',
+				'path' => [26, 40, 41, 46, 68, 73, 94, 99, 120, 125, 126, 127, 138, 147],
+			],
+			'blue-84-122' => [
+				'color' => 'blue',
+				'path' => [84, 85, 86, 80, 79, 78, 77, 76, 90, 91, 92, 93, 94, 95, 96, 97, 122],
+			],
+			'green-26-84' => [
+				'color' => 'green',
+				'path' => [26, 19, 18, 17, 16, 15, 30, 35, 51, 52, 53, 58, 80, 86, 85, 84],
+			],
+			'green-26-101' => [
+				'color' => 'green',
+				'path' => [26, 40, 41, 46, 68, 73, 94, 93, 100, 101],
+			],
+			'green-101-122' => [
+				'color' => 'green',
+				'path' => [101, 92, 91, 102, 117, 128, 127, 126, 125, 124, 123, 122],
+			],
+			'pink-84-101' => [
+				'color' => 'pink',
+				'path' => [84, 85, 108, 111, 112, 113, 114, 115, 116, 117, 102, 91, 92, 101],
+			],
+			'pink-101-147' => [
+				'color' => 'pink',
+				'path' => [101, 100, 93, 94, 99, 120, 125, 126, 139, 146, 147],
+			],
+			'red-26-122' => [
+				'color' => 'red',
+				'path' => [26, 25, 24, 42, 45, 69, 70, 71, 96, 97, 122],
+			],
+			'red-26-147' => [
+				'color' => 'red',
+				'path' => [26, 40, 39, 38, 37, 49, 50, 51, 60, 78, 105, 114, 115, 116, 117, 128, 127, 138, 147],
+			],
+			'red-122-147' => [
+				'color' => 'red',
+				'path' => [122, 123, 142, 143, 144, 145, 146, 147],
+			],
+			'yellow-26-101' => [
+				'color' => 'yellow',
+				'path' => [26, 40, 39, 38, 37, 49, 62, 76, 90, 91, 92, 101],
+			],
+			'yellow-26-122' => [
+				'color' => 'yellow',
+				'path' => [26, 19, 20, 21, 22, 23, 43, 44, 70, 71, 96, 97, 122],
+			],
+			'yellow-84-147' => [
+				'color' => 'yellow',
+				'path' =>  [84, 85, 108, 111, 112, 113, 131, 134, 150, 135, 149, 136, 137, 128, 127, 138,	147],
+			],
+		];
+
 		// Create spaces
 		foreach ($rooms as $roomId => $room) {
 			foreach ($room as $location => $neighborIds) {
@@ -409,12 +468,11 @@ class Board
 
 	public function getNovicePossibleNoise(Novice $novice, NunList $nuns): array
 	{
-		$possible = [];
+		// Check each nun's hearing
+		$nunHearing = [];
 		$traverse = $this->traverse($novice->location, 0, $novice->move->noiseTotal, true, []);
 		foreach ($nuns as $nun) {
 			if (array_key_exists($nun->location, $traverse)) {
-				// Heard by the nun, but how?
-				// $possible[$nun->location] = $traverse[$nun->location];
 				// Determine the closest neighbor
 				$neighbors = [];
 				foreach ($this->spaces[$nun->location]->neighbors as $neighborId => $n) {
@@ -428,10 +486,34 @@ class Board
 					$this->game->debug("min distance is $min // ");
 					foreach ($neighbors as $neighborId => $distance) {
 						if ($distance == $min) {
-							$possible[$nun->role][$neighborId] = true;
+							$nunHearing[$nun->role][$neighborId] = true;
 						}
 					}
 				}
+			}
+		}
+		$this->game->debug("nunHearing before tokens: " . json_encode($nunHearing) . " // ");
+
+		// Check existing noise tokens
+		if (!empty($novice->move->noiseTokens)) {
+			foreach ($novice->move->noiseTokens as $locationId) {
+				foreach ($nunHearing as $role => $x) {
+					if (array_key_exists($locationId, $nunHearing[$role])) {
+						unset($nunHearing[$role]);
+					}
+				}
+			}
+		}
+		$this->game->debug("nunHearing after tokens: " . json_encode($nunHearing) . " // ");
+
+
+		// Reformat by location ID
+		$possible = [];
+		foreach ($nunHearing as $role => $locations) {
+			$this->game->debug("-- foreach nunHearing as $role => " . json_encode($locations) . " // ");
+			foreach ($locations as $locationId => $x) {
+				$this->game->debug("---- foreach locations as $locationId => $x // ");
+				$possible[$locationId][] = $role;
 			}
 		}
 		return $possible;

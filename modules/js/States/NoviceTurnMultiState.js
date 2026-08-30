@@ -1,4 +1,4 @@
-export class Novices {
+export class NoviceTurnMultiState {
   constructor(game, bga) {
     this.game = game;
     this.bga = bga;

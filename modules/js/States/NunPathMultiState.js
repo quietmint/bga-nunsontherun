@@ -1,4 +1,4 @@
-export class Nuns {
+export class NunPathMultiState {
   constructor(game, bga) {
     this.game = game;
     this.bga = bga;

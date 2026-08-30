@@ -7,47 +7,49 @@ namespace Bga\Games\NunsOnTheRun\States;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
+use Bga\GameFramework\SystemException;
+use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\Game;
 
-class Nuns extends GameState
+class NunPathMultiState extends GameState
 {
   function __construct(
     protected Game $game,
   ) {
     parent::__construct(
       $game,
-      id: 20,
+      id: 31,
       type: StateType::MULTIPLE_ACTIVE_PLAYER,
-      description: clienttranslate('Nuns must take their turns'),
-      initialPrivate: NunMove::class,
+      description: clienttranslate('Nuns must choose a path for ${icon} ${role}'),
+      descriptionMyTurn: clienttranslate('${you} must choose a path for ${icon} ${role}'),
     );
   }
 
-  public function onEnteringState(): void
+  public function getArgs(): array
   {
-    $playerIds = $players = $this->game->getObjectListFromDB(
-      "SELECT `player_id` FROM `player` WHERE `nun` = 1",
-      true
-    );
-    $this->gamestate->setPlayersMultiactive($playerIds, '');
-    $this->gamestate->initializePrivateStateForAllActivePlayers();
+    $nun = $this->game->getNunList()->getCurrentNun();
+    return [
+      'i18n' => ['role'],
+      'icon' => $this->game->getRoleIcon($nun->role),
+      'paths' => [],
+      'role' => $this->game->getRoleName($nun->role),
+    ];
   }
 
   #[PossibleAction]
-  public function actReset(int $playerId)
+  public function actPath(int $playerId, array $args, int $path)
   {
-    $novice = $this->game->getNovice($playerId);
-    $novice->move = null;
-    $novice->location = 1;
-    $this->game->saveNovice($novice);
-    $this->notify->all("move", clienttranslate('${player_name} restarts their turn, returning to ${location}'), [
-      "player_id" => $playerId,
-      "player_name" => $novice->playerName, // remove this line if you uncomment notification decorator
-      "location" => $novice->location,
-    ]);
+    $nun = $this->game->getNunList()->getCurrentNun();
+    $nun->path = [];
+    $this->game->saveNun($nun);
 
-    $this->gamestate->setPlayersMultiactive([$playerId], '');
-    $this->gamestate->initializePrivateState($playerId);
+    $this->bga->notify->all("move", clienttranslate('${player_name} choose a path for ${role}'), [
+      'path' => $nun->path,
+      'player_id' => $playerId,
+      'player_name' => $this->game->getPlayerNameById($playerId),
+      'role' => $this->game->getRoleName($nun->role),
+    ]);
+    return NunMoveMultiState::class;
   }
 
   /**
@@ -65,6 +67,6 @@ class Nuns extends GameState
    */
   function zombie(int $playerId)
   {
-    return NextPlayer::class;
+    throw new SystemException($this::class . " zombie function not implemented");
   }
 }

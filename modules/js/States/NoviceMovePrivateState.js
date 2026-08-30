@@ -1,4 +1,4 @@
-export class NoviceMove {
+export class NoviceMovePrivateState {
   constructor(game, bga) {
     this.game = game;
     this.bga = bga;
@@ -11,6 +11,7 @@ export class NoviceMove {
       // Actions
       for (const action in args.actions) {
         const info = args.actions[action];
+        const noiseText = info.noise > 0 ? "+" + info.noise : info.noise;
         const distances = info.min == info.max ? info.min : `${info.min} - ${info.max}`;
         this.bga.statusBar.addActionButton(
           `<div class="notr-move-action">
@@ -18,7 +19,7 @@ export class NoviceMove {
   <div>
     <div>${info.name}</div>
     <div class="notr-move-info">${_("Distance")}: ${distances}</div>
-    <div class="notr-move-info">${_("Noise")}: ${info.noise}</div>
+    <div class="notr-move-info">${_("Noise")}: ${noiseText}</div>
   </div>
 </div>`,
           () => this.bga.actions.performAction("actConfirm", { confirmAction: action }),

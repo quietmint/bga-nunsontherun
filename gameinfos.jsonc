@@ -73,7 +73,7 @@
     "e91e63", // Red (was ff0000) - starts at 3
     "8bc34a", // Green (was 008000) - starts at 4
     "9c27b0", // Purple (was 982fff) - starts at 5
-    "ffc107", // Yellow (was ffa500) - starts at 6
+    "ffeb3b", // Yellow (was ffa500) - starts at 6
   ],
 
   // Favorite colors support : if set to "true", support attribution of favorite colors based on player's preferences (see reattributeColorsBasedOnPreferences PHP method)

@@ -7,10 +7,11 @@ namespace Bga\Games\NunsOnTheRun\States;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
+use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\Game;
 
-class NoviceMove extends GameState
+class NoviceMovePrivateState extends GameState
 {
   function __construct(
     protected Game $game,
@@ -25,7 +26,7 @@ class NoviceMove extends GameState
 
   public function getArgs(int $playerId): array
   {
-    $novice = $this->game->getNovice($playerId);
+    $novice = $this->game->getNoviceList()->get($playerId);
     $nuns = $this->game->getNunList();
     $round = $this->game->getRound();
     $possible = $this->game->board->getNovicePossibleMoves($novice, $nuns, $round);
@@ -52,35 +53,41 @@ class NoviceMove extends GameState
     $spaces = $possible->spaces;
     array_shift($spaces);
 
-    $roomIds = $this->game->getNunRoomIds();
-    $novice = $this->game->getNovice($currentPlayerId);
-    $roomId = $this->game->board->getRoomId($novice->location);
-    $oldVisible = array_key_exists($roomId, $roomIds);
+    $nuns = $this->game->getNunList();
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
+    $oldSpaceId = $novice->location;
+    $oldVisible = $nuns->isRoomVisible($this->game->board->getRoomId($novice->location));
     foreach ($spaces as $spaceId) {
-      $roomId = $this->game->board->getRoomId($spaceId);
-      $newVisible = array_key_exists($roomId, $roomIds);
-      $this->bga->notify->player($currentPlayerId, "noviceMove", clienttranslate('You move to ${location}'), [
-        "player_id" => $currentPlayerId,
-        "location" => $spaceId
-      ]);
-      if ($newVisible && !$oldVisible) {
-        $this->bga->notify->player($currentPlayerId, "message", clienttranslate('You appear on the board, visible to the nuns'));
-      } else if (!$newVisible && $oldVisible) {
-        $this->bga->notify->player($currentPlayerId, "message", clienttranslate('You vanish from the board, invisible to the nuns'));
+      $visible = $nuns->isRoomVisible($this->game->board->getRoomId($spaceId));
+      if ($visible && !$oldVisible) {
+        $this->bga->notify->player($currentPlayerId, 'noviceAppear', clienttranslate('You appear at ${appearLocation}, visible to the nuns'), [
+          'appearLocation' => $spaceId,
+          'player_id' => $currentPlayerId,
+        ]);
+      } else if (!$visible && $oldVisible) {
+        $this->bga->notify->player($currentPlayerId, 'noviceVanish', clienttranslate('You vanish at ${vanishLocation}, invisible to the nuns'), [
+          'player_id' => $currentPlayerId,
+          'vanishLocation' => $oldSpaceId,
+        ]);
       }
-      $oldVisible = $newVisible;
-      $novice->location = $location;
+      $this->bga->notify->player($currentPlayerId, 'noviceMove', clienttranslate('You move to ${location}'), [
+        'location' => $spaceId,
+        'player_id' => $currentPlayerId,
+      ]);
+      $oldSpaceId = $spaceId;
+      $oldVisible = $visible;
     }
+    $novice->location = $location;
     array_push($novice->move->spaces, ...$spaces);
     $this->game->saveNovice($novice);
 
-    $this->gamestate->nextPrivateState($currentPlayerId, NoviceMove::class);
+    $this->gamestate->nextPrivateState($currentPlayerId, NoviceMovePrivateState::class);
   }
 
   #[PossibleAction]
   public function actConfirm(int $currentPlayerId, string $confirmAction)
   {
-    $novice = $this->game->getNovice($currentPlayerId);
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $round = $this->game->getRound();
     $distance = count($novice->move->spaces);
     $actions = $this->game->board->getNoviceActions($round);
@@ -107,30 +114,31 @@ class NoviceMove extends GameState
         $message = clienttranslate('You run from ${startLocation} to ${location}');
         break;
     }
-    $this->bga->notify->player($currentPlayerId, "message", $message, [
-      "i18n" => ["action"],
-      "action" => $novice->move->action,
-      "location" => $novice->location,
-      "startLocation" => $novice->move->start,
+    $this->bga->notify->player($currentPlayerId, 'message', $message, [
+      'i18n' => ['action'],
+      'action' => $novice->move->action,
+      'location' => $novice->location,
+      'startLocation' => $novice->move->start,
     ]);
-    $this->game->bga->notify->player($currentPlayerId, "noviceRoll", clienttranslate('You roll ${roll} for noise'), [
-      "roll" => $novice->move->noiseRoll
+    $this->game->bga->notify->player($currentPlayerId, 'noviceRoll', clienttranslate('You roll ${roll} for noise'), [
+      'player_id' => $currentPlayerId,
+      'roll' => $novice->move->noiseRoll,
     ]);
 
-    $this->gamestate->nextPrivateState($currentPlayerId, NoviceNoise::class);
+    $this->gamestate->nextPrivateState($currentPlayerId, NoviceNoisePrivateState::class);
   }
 
   #[PossibleAction]
   public function actReset(int $currentPlayerId)
   {
-    $novice = $this->game->getNovice($currentPlayerId);
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $novice->location = $novice->move->start;
     $novice->move->action = null;
     $novice->move->spaces = [];
     $this->game->saveNovice($novice);
-    $this->notify->player($currentPlayerId, "noviceMove", clienttranslate('You restart your turn'), [
-      "player_id" => $currentPlayerId,
-      "location" => $novice->location,
+    $this->notify->player($currentPlayerId, 'noviceMove', clienttranslate('You restart your turn'), [
+      'location' => $novice->location,
+      'player_id' => $currentPlayerId,
     ]);
 
     $this->gamestate->setPlayersMultiactive([$currentPlayerId], '');
@@ -152,6 +160,6 @@ class NoviceMove extends GameState
    */
   function zombie(int $playerId)
   {
-    return $this->actDone($playerId, $this->getArgs($playerId), 'stand');
+    throw new SystemException($this::class . " zombie function not implemented");
   }
 }

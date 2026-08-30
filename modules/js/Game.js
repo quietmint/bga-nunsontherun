@@ -8,20 +8,22 @@
  * -----
  */
 
-import { Novices } from "./States/Novices.js";
-import { NoviceMove } from "./States/NoviceMove.js";
-import { NoviceNoise } from "./States/NoviceNoise.js";
-import { Nuns } from "./States/Nuns.js";
+import { NoviceTurnMultiState } from "./States/NoviceTurnMultiState.js";
+import { NoviceMovePrivateState } from "./States/NoviceMovePrivateState.js";
+import { NoviceNoisePrivateState } from "./States/NoviceNoisePrivateState.js";
+import { NunChoiceMultiState } from "./States/NunChoiceMultiState.js";
+import { NunPathMultiState } from "./States/NunPathMultiState.js";
 
 export class Game {
   constructor(bga) {
     console.log("Nuns on the Run!");
     this.bga = bga;
     this.bga.states.logger = console.log;
-    this.bga.states.register("Novices", new Novices(this, bga));
-    this.bga.states.register("NoviceMove", new NoviceMove(this, bga));
-    this.bga.states.register("NoviceNoise", new NoviceNoise(this, bga));
-    this.bga.states.register("Nuns", new Nuns(this, bga));
+    this.bga.states.register("NoviceTurnMultiState", new NoviceTurnMultiState(this, bga));
+    this.bga.states.register("NoviceMovePrivateState", new NoviceMovePrivateState(this, bga));
+    this.bga.states.register("NoviceNoisePrivateState", new NoviceNoisePrivateState(this, bga));
+    this.bga.states.register("NunChoiceMultiState", new NunChoiceMultiState(this, bga));
+    this.bga.states.register("NunPathMultiState", new NunPathMultiState(this, bga));
 
     this.classLocations = [];
     for (let i = 1; i <= 155; i++) {
@@ -50,8 +52,14 @@ export class Game {
     this.gamedatas = gamedatas;
     console.log("Setup", gamedatas);
 
-    Object.values(gamedatas.players).forEach((player) => {
-      player.avatarUrl = this.bga.players.getPlayerAvatarUrl(player.id);
+    // Object.values(gamedatas.players).forEach((player) => {
+    //   player.avatarUrl = this.bga.players.getPlayerAvatarUrl(player.id);
+    // });
+    Object.values(gamedatas.novices).forEach((novice) => {
+      novice.avatarUrl = this.bga.players.getPlayerAvatarUrl(novice.playerId);
+    });
+    Object.values(gamedatas.nuns).forEach((nun) => {
+      nun.avatarUrl = this.bga.players.getPlayerAvatarUrl(nun.playerId);
     });
     this.setupBoard();
     this.setupPanels();
@@ -62,18 +70,25 @@ export class Game {
     this.bga.gameArea.getElement().insertAdjacentHTML("beforeend", `<div id="notr-board"></div>`);
     const boardEl = document.getElementById("notr-board");
     Object.values(this.gamedatas.nuns).forEach((nun) => {
-      const player = this.gamedatas.players[nun.playerId];
-      boardEl.insertAdjacentHTML("beforeend", `<div id="notr-nun-${nun.role}" class="notr-player notr-${nun.color} notr-${nun.location}" style="background-image: url(${player.avatarUrl})" title="${player.name} (${_(nun.role)})"></div>`);
+      boardEl.insertAdjacentHTML("beforeend", this.html_playerNun(nun));
     });
     Object.values(this.gamedatas.novices).forEach((novice) => {
-      const player = this.gamedatas.players[novice.playerId];
-      boardEl.insertAdjacentHTML("beforeend", `<div id="notr-novice-${novice.playerId}" class="notr-player notr-${novice.color} notr-${novice.location}" style="background-image: url(${player.avatarUrl})" title="${player.name}"></div>`);
+      boardEl.insertAdjacentHTML("beforeend", this.html_playerNovice(novice));
+      if (novice.move && novice.move.noiseTokens && novice.move.noiseTokens.length > 0) {
+        novice.move.noiseTokens.forEach((locationId) => {
+          let holderEl = document.getElementById(`notr-noise-holder-${locationId}`);
+          if (holderEl == null) {
+            boardEl.insertAdjacentHTML("beforeend", this.html_noiseContainer(locationId));
+            holderEl = document.getElementById(`notr-noise-holder-${locationId}`);
+          }
+          holderEl.insertAdjacentHTML("beforeend", this.html_noiseToken(novice));
+        });
+      }
     });
   }
 
   setupPanels() {
     Object.values(this.gamedatas.novices).forEach((novice) => {
-      const player = this.gamedatas.players[novice.playerId];
       const panelEl = this.bga.playerPanels.getElement(novice.playerId);
       panelEl.insertAdjacentHTML(
         "beforeend",
@@ -100,9 +115,16 @@ export class Game {
     this.bga.notifications.setupPromiseNotifications({
       logger: console.log,
     });
+    this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceAppear", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
+    this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceMove", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
+    this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceNoise", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
+    this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceRecap", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
+    this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceRoll", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
+    this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceVanish", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
   }
 
   async notif_noviceMove(args) {
+    console.log("doing notif_noviceMove", args);
     const noviceEl = document.getElementById("notr-novice-" + args.player_id);
     if (noviceEl == null) {
       console.error(`notr-novice-${args.player_id} not found`);
@@ -112,8 +134,51 @@ export class Game {
     noviceEl.classList.add("notr-" + args.location);
   }
 
+  async notif_noviceNoise(args) {
+    console.log("doing notif_noviceNoise", args);
+    if (args.recap && args.player_id == this.bga.players.getCurrentPlayerId()) {
+      // ignore
+      return;
+    }
+    const novice = this.getNovice(args.playerId);
+    const boardEl = document.getElementById("notr-board");
+    let holderEl = document.getElementById(`notr-noise-holder-${args.noiseLocation}`);
+    if (holderEl == null) {
+      boardEl.insertAdjacentHTML("beforeend", this.html_noiseContainer(args.noiseLocation));
+      holderEl = document.getElementById(`notr-noise-holder-${args.noiseLocation}`);
+    }
+    holderEl.insertAdjacentHTML("beforeend", this.html_noiseToken(novice));
+  }
+
   ///////////////////////////////////////////////////
   //// Utility methods
+
+  html_playerNovice(novice) {
+    return `<div id="notr-novice-${novice.playerId}" class="notr-player notr-${novice.color} notr-${novice.location}" style="background-image: url(${novice.avatarUrl})" title="${novice.playerName}"></div>`;
+  }
+
+  html_playerNun(nun) {
+    return `<div id="notr-nun-${nun.role}" class="notr-player notr-${nun.color} notr-${nun.location}" style="background-image: url(${nun.avatarUrl})" title="${nun.playerName} (${_(nun.role)})"></div>`;
+  }
+
+  html_noiseContainer(locationId) {
+    return `<div id="notr-noise-holder-${locationId}" class="notr-noise-holder notr-${locationId}"></div>`;
+  }
+
+  html_noiseToken(novice) {
+    return `<div class="notr-noise notr-${novice.color}" title="${novice.playerName}"><span class="notr-icon notr-icon-noise"></span></div>`;
+  }
+
+  html_dice() {
+    return `<div id="notr-die" class="notr-die">
+  <div class="face face-1"><div class="pip pip-1"></div></div>
+  <div class="face face-2"><div class="pip pip-1"></div><div class="pip pip-2"></div></div>
+  <div class="face face-3"><div class="pip pip-1"></div><div class="pip pip-2"></div><div class="pip pip-3"></div></div>
+  <div class="face face-4"><div class="pip pip-1"></div><div class="pip pip-2"></div><div class="pip pip-3"></div><div class="pip pip-4"></div></div>
+  <div class="face face-5"><div class="pip pip-1"></div><div class="pip pip-2"></div><div class="pip pip-3"></div><div class="pip pip-4"></div><div class="pip pip-5"></div></div>
+  <div class="face face-6"><div class="pip pip-1"></div><div class="pip pip-2"></div><div class="pip pip-3"></div><div class="pip pip-4"></div><div class="pip pip-5"></div><div class="pip pip-6"></div></div>
+</div>`;
+  }
 
   bgaFormatText(log, args) {
     try {
@@ -129,7 +194,7 @@ export class Game {
           args.startLocation = `<b>🚩${args.startLocation}</b>`;
         }
         if (args.noiseLocation) {
-          args.noiseLocation = `<b>👂${args.noiseLocation}</b>`;
+          args.noiseLocation = `<span class="notr-icon notr-icon-noise"></span> <b>${args.noiseLocation}</b>`;
         }
         if (args.wishIcon) {
           log += `<div class="notr-notify notr-wish">

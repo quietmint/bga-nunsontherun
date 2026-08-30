@@ -20,7 +20,7 @@
   border: 0.4cqw solid black;
   box-shadow: 0 0 1cqw black;
   position: absolute;
-  transform: translate(-50%, -50%);
+  translate: -50% -50%;
   transition: all 0.25s ease-out;
   width: 3.5%;
 
@@ -31,7 +31,7 @@
     border-color: $color-light-green-500;
   }
   &.notr-orange {
-    border-color: $color-deep-orange-500;
+    border-color: $color-orange-500;
   }
   &.notr-purple {
     border-color: $color-purple-500;
@@ -40,7 +40,7 @@
     border-color: $color-pink-500;
   }
   &.notr-yellow {
-    border-color: $color-amber-500;
+    border-color: $color-yellow-500;
   }
   &.notr-black {
     border-color: black;
@@ -52,10 +52,11 @@
 
 .notr-possible {
   aspect-ratio: 1;
-  background: linear-gradient(0deg, $color-grey-500, white);
+  background: white;
   border-radius: 100%;
-  border: 1px solid black;
-  box-shadow: 0 0 1cqw black;
+  box-shadow:
+    1px 1px 0 black,
+    0 0 0.5cqw black;
   color: black;
   cursor: pointer;
   font-size: 2.4cqw;
@@ -64,23 +65,82 @@
   position: absolute;
   text-align: center;
   text-shadow: 1px 1px white;
-  transform: translate(-50%, -50%);
+  translate: -50% -50%;
   width: 3.5%;
 
   &.notr-possible-stand {
-    background: linear-gradient(315deg, $color-blue-200, $color-blue-500);
+    background: linear-gradient(315deg, $color-blue-200, $color-blue-500, $color-blue-200);
   }
 
   &.notr-possible-sneak {
-    background: linear-gradient(315deg, $color-green-200, $color-green-500);
+    background: linear-gradient(315deg, $color-green-200, $color-green-500, $color-green-200);
   }
 
   &.notr-possible-walk {
-    background: linear-gradient(315deg, $color-amber-200, $color-amber-500);
+    background: linear-gradient(315deg, $color-amber-200, $color-amber-500, $color-amber-200);
   }
 
   &.notr-possible-run {
-    background: linear-gradient(315deg, $color-red-200, $color-red-500);
+    background: linear-gradient(315deg, $color-red-200, $color-red-500, $color-red-200);
+  }
+
+  &.notr-possible-abbess {
+    background: linear-gradient(315deg, $color-grey-800, black, $color-grey-800);
+    box-shadow:
+      1px 1px 0 white,
+      0 0 0.5cqw white;
+    color: white;
+    text-shadow: 1px 1px black;
+  }
+
+  &.notr-possible-prioress {
+    background: linear-gradient(315deg, $color-grey-400, white, $color-grey-400);
+  }
+
+  .notr-icon {
+    height: 100%;
+  }
+}
+
+.notr-noise-holder {
+  align-content: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  position: absolute;
+  translate: -50% -50%;
+  width: 7%;
+}
+
+.notr-noise {
+  background: white;
+  border-radius: 2px;
+  box-shadow:
+    1px 1px 0 black,
+    0 0 0.5cqw black;
+  color: black;
+  font-size: 2.4cqw;
+  font-weight: bold;
+  padding: 0 3px;
+  text-align: center;
+
+  &.notr-blue {
+    background: $color-light-blue-500;
+  }
+  &.notr-green {
+    background: $color-light-green-500;
+  }
+  &.notr-orange {
+    background: $color-orange-500;
+  }
+  &.notr-purple {
+    background: $color-purple-500;
+  }
+  &.notr-red {
+    background: $color-pink-500;
+  }
+  &.notr-yellow {
+    background: $color-yellow-500;
   }
 }
 

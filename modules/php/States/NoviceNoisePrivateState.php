@@ -7,10 +7,11 @@ namespace Bga\Games\NunsOnTheRun\States;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
+use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\Game;
 
-class NoviceNoise extends GameState
+class NoviceNoisePrivateState extends GameState
 {
   function __construct(
     protected Game $game,
@@ -25,7 +26,7 @@ class NoviceNoise extends GameState
 
   public function getArgs(int $playerId): array
   {
-    $novice = $this->game->getNovice($playerId);
+    $novice = $this->game->getNoviceList()->get($playerId);
     $nuns = $this->game->getNunList();
     $possible = $this->game->board->getNovicePossibleNoise($novice, $nuns);
     $action = $novice->move->action;
@@ -41,36 +42,37 @@ class NoviceNoise extends GameState
   }
 
   #[PossibleAction]
-  public function actBack(int $currentPlayerId)
-  {
-    $this->gamestate->nextPrivateState($currentPlayerId, NoviceMove::class);
-  }
-
-  #[PossibleAction]
   public function actNoise(int $currentPlayerId, array $args, int $location)
   {
+    // Check location
+    if (!array_key_exists($location, $args['possible'])) {
+      throw new UserException("Cannot make noise at location $location");
+    }
+
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
+    array_push($novice->move->noiseTokens, $location);
+    $this->game->saveNovice($novice);
+
     $this->game->bga->notify->player($currentPlayerId, 'noviceNoise', clienttranslate('You place a noise token at ${noiseLocation}'), [
-      'playerId' => $currentPlayerId,
       'noiseLocation' => $location,
+      'player_id' => $currentPlayerId,
     ]);
-    $this->gamestate->nextPrivateState($currentPlayerId, NoviceNoise::class);
+    $this->gamestate->nextPrivateState($currentPlayerId, NoviceNoisePrivateState::class);
   }
 
   #[PossibleAction]
-  public function actReset(int $currentPlayerId)
+  public function actBack(int $currentPlayerId)
   {
-    $novice = $this->game->getNovice($currentPlayerId);
-    $novice->location = $novice->move->start;
-    $novice->move->spaces = [];
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
+    $novice->move->noiseTokens = [];
     $this->game->saveNovice($novice);
-    $this->notify->player($currentPlayerId, "noviceMove", clienttranslate('${player_name} restarts their turn'), [
-      "player_id" => $currentPlayerId,
-      "player_name" => $novice->playerName,
-      "location" => $novice->location,
-    ]);
+    $this->gamestate->nextPrivateState($currentPlayerId, NoviceMovePrivateState::class);
+  }
 
-    $this->gamestate->setPlayersMultiactive([$currentPlayerId], '');
-    $this->gamestate->initializePrivateState($currentPlayerId);
+  #[PossibleAction]
+  public function actSilent(int $currentPlayerId)
+  {
+    $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
   }
 
   /**
@@ -88,6 +90,6 @@ class NoviceNoise extends GameState
    */
   function zombie(int $playerId)
   {
-    return $this->actDone($playerId, $this->getArgs($playerId), 'stand');
+    throw new SystemException($this::class . " zombie function not implemented");
   }
 }

@@ -8,10 +8,11 @@ use Bga\GameFramework\Actions\CheckAction;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
+use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
 use Bga\Games\NunsOnTheRun\Move;
 
-class Novices extends GameState
+class NoviceTurnMultiState extends GameState
 {
   function __construct(
     protected Game $game,
@@ -21,11 +22,11 @@ class Novices extends GameState
       id: 10,
       type: StateType::MULTIPLE_ACTIVE_PLAYER,
       description: clienttranslate('Novices must take their turns'),
-      initialPrivate: NoviceMove::class,
+      initialPrivate: NoviceMovePrivateState::class,
     );
   }
 
-  public function onEnteringState(): void
+  public function onEnteringState()
   {
     $novices = $this->game->getNoviceList();
     foreach ($novices as &$novice) {
@@ -40,20 +41,9 @@ class Novices extends GameState
     }
     $this->game->saveNovices($novices);
 
-    $playerIds = $this->game->getObjectListFromDB(
-      'SELECT `player_id` FROM `player` WHERE `nun` = 0 AND `player_zombie` = 0 AND `player_eliminated` = 0',
-      true
-    );
-    $this->gamestate->setPlayersMultiactive($playerIds, '');
+    // Activate all novices
+    $this->gamestate->setPlayersMultiactive($this->game->getPlayerIds(0), '', true);
     $this->gamestate->initializePrivateStateForAllActivePlayers();
-  }
-
-  #[CheckAction(false)]
-  #[PossibleAction]
-  public function actActivate(int $currentPlayerId)
-  {
-    $this->gamestate->setPlayersMultiactive([$currentPlayerId], '');
-    $this->gamestate->initializePrivateState($currentPlayerId);
   }
 
   /**
@@ -71,6 +61,6 @@ class Novices extends GameState
    */
   function zombie(int $playerId)
   {
-    return NextPlayer::class;
+    throw new SystemException($this::class . " zombie function not implemented");
   }
 }
