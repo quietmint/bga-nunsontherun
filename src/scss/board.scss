@@ -68,9 +68,14 @@
   position: absolute;
   text-align: center;
   text-shadow: 1px 1px white;
+  transition: opacity 0.25s ease-out;
   translate: -50% -50%;
   width: 3.4%;
   z-index: 20;
+
+  &:hover {
+    opacity: 0.1;
+  }
 
   &.notr-possible-stand {
     background: linear-gradient(315deg, $color-blue-200, $color-blue-500, $color-blue-200);
@@ -89,7 +94,7 @@
   }
 
   &.notr-possible-abbess {
-    background: linear-gradient(315deg, $color-grey-800, black, $color-grey-800);
+    background: linear-gradient(315deg, $color-grey-700, black, $color-grey-700);
     box-shadow:
       1px 1px 0 white,
       0 0 0.5cqw white;
@@ -115,6 +120,7 @@
   position: absolute;
   translate: -50% -50%;
   width: 7%;
+  z-index: 15;
 }
 
 .notr-noise-holder {

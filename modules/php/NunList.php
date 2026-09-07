@@ -54,30 +54,33 @@ class NunList implements \IteratorAggregate, \JsonSerializable
 		return $this->nuns[$role];
 	}
 
-	public function &getCurrentNun(): ?Nun
+	public function &getActiveNun(): ?Nun
 	{
-		return $this->get($this->getCurrentRole());
+		foreach ($this->nuns as &$nun) {
+			if ($nun->move != null && $nun->move->active) {
+				return $nun;
+			}
+		}
+		return null;
 	}
 
-	public function getCurrentRole(): ?string
+	public function &getInactiveNun(): ?Nun
 	{
-		if ($this->nuns['abbess']->move != null && $this->nuns['abbess']->move->current) {
-			return 'abbess';
-		} else if ($this->nuns['prioress']->move != null && $this->nuns['prioress']->move->current) {
-			return 'prioress';
-		} else {
-			return null;
+		foreach ($this->nuns as &$nun) {
+			if ($nun->move == null) {
+				return $nun;
+			}
 		}
+		return null;
 	}
 
 	public function getChoices(): array
 	{
 		$choices = [];
-		if ($this->nuns['abbess']->move == null) {
-			$choices[] = 'abbess';
-		}
-		if ($this->nuns['prioress']->move == null) {
-			$choices[] = 'prioress';
+		foreach ($this->nuns as $nun) {
+			if ($nun->move == null) {
+				$choices[] = $nun->role;
+			}
 		}
 		return $choices;
 	}

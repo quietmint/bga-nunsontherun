@@ -8,37 +8,43 @@ use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
-use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\Game;
+use Bga\Games\NunsOnTheRun\NunList;
 
-class NoviceNoisePrivateState extends GameState
+class NoviceNunNoisePrivateState extends GameState
 {
   function __construct(
     protected Game $game,
   ) {
     parent::__construct(
       $game,
-      id: 12,
+      id: 36,
       type: StateType::PRIVATE,
-      descriptionMyTurn: clienttranslate('${you} must place noise tokens'),
+      descriptionMyTurn: clienttranslate('${you} must make noise'),
     );
   }
 
   public function getArgs(int $playerId): array
   {
     $novice = $this->game->getNoviceList()->get($playerId);
-    $nuns = $this->game->getNunList();
-    $possible = $this->game->board->getNovicePossibleNoise($novice, $nuns);
-    $action = $novice->move->action;
-    $info = $this->game->board->getNoviceActions(0)[$action];
+    $nun = $this->game->getNunList()->getActiveNun();
+    $oneNuns = new NunList();
+    $oneNuns->add($nun);
+    $possible = $this->game->board->getNovicePossibleNoise($novice, $oneNuns);
     return [
-      'i18n' => ['action'],
-      'action' => $info['name'],
-      'formula' => ($info['noise'] > 0 ? "+ " : "- ") . abs($info['noise']),
       'noise' => $novice->move->noiseTotal,
       'possible' => $possible,
-      'roll' => $novice->move->noiseRoll,
+      'undo' => !empty($novice->move->noiseTokens),
     ];
+  }
+
+  #[PossibleAction]
+  public function actContinue(int $currentPlayerId, array $args)
+  {
+    if (!empty($args['possible'])) {
+      throw new SystemException("Not done yet. You must make more noise.");
+    }
+    $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NunRecapGameState::class);
   }
 
   #[PossibleAction]
@@ -46,33 +52,34 @@ class NoviceNoisePrivateState extends GameState
   {
     // Check location
     if (!array_key_exists($location, $args['possible'])) {
-      throw new UserException("Cannot make noise at location $location");
+      throw new SystemException("Cannot make noise at location $location");
     }
 
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
-    array_push($novice->move->noiseTokens, $location);
+    $nun = $this->game->getNunList()->getActiveNun();
+    $novice->move->noiseTokens[$location] = $nun->role;
     $this->game->saveNovice($novice);
 
-    $this->bga->notify->player($currentPlayerId, 'noviceNoise', clienttranslate('You place a noise token at ${noiseLocation}'), [
+    $this->bga->notify->player($currentPlayerId, 'noviceNoise', clienttranslate('You make noise at ${noiseLocation}'), [
       'noiseLocation' => $location,
       'player_id' => $currentPlayerId,
     ]);
-    $this->gamestate->nextPrivateState($currentPlayerId, NoviceNoisePrivateState::class);
+    $this->gamestate->nextPrivateState($currentPlayerId, NoviceNunNoisePrivateState::class);
   }
 
   #[PossibleAction]
-  public function actBack(int $currentPlayerId)
+  public function actUndo(int $currentPlayerId)
   {
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
-    $novice->move->noiseTokens = [];
+    $nun = $this->game->getNunList()->getActiveNun();
+    $novice->move->noiseTokens = array_diff($novice->move->noiseTokens, [$nun->role]);
     $this->game->saveNovice($novice);
-    $this->gamestate->nextPrivateState($currentPlayerId, NoviceMovePrivateState::class);
-  }
-
-  #[PossibleAction]
-  public function actSilent(int $currentPlayerId)
-  {
-    $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
+    unset($novice->move->noiseTokens['___bga_associative_array_flag']);
+    $this->bga->notify->player($currentPlayerId, 'noviceNoiseUndo', clienttranslate('You undo'), [
+      'player_id' => $novice->playerId,
+      'noiseTokens' => $novice->move->noiseTokens,
+    ]);
+    $this->gamestate->nextPrivateState($currentPlayerId, NoviceNunNoisePrivateState::class);
   }
 
   /**

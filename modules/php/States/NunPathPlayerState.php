@@ -8,7 +8,6 @@ use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
-use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\Game;
 
 class NunPathPlayerState extends GameState
@@ -20,15 +19,15 @@ class NunPathPlayerState extends GameState
       $game,
       id: 31,
       type: StateType::ACTIVE_PLAYER,
-      description: clienttranslate('${roleIcon} ${roleName} ${player_name} must choose a path'),
-      descriptionMyTurn: clienttranslate('${you} (${roleIcon} ${roleName}) must choose a path'),
+      description: clienttranslate('${roleName} ${player_name} must choose a path'),
+      descriptionMyTurn: clienttranslate('${you} (${roleName}) must choose a path'),
     );
   }
 
   public function getArgs(): array
   {
     $nuns = $this->game->getNunList();
-    $nun = $nuns->getCurrentNun();
+    $nun = $nuns->getActiveNun();
     $possible = $this->game->board->getNunPossiblePaths($nuns, $nun);
     return [
       'i18n' => ['roleName'],
@@ -36,8 +35,7 @@ class NunPathPlayerState extends GameState
       'player_name' => $nun->playerName,
       'possible' => $possible,
       'role' => $nun->role,
-      'roleIcon' => $this->game->getRoleIcon($nun->role),
-      'roleName' => $this->game->getRoleName($nun->role),
+      'roleName' => $nun->roleName,
       'start' => $nun->location,
     ];
   }
@@ -48,29 +46,33 @@ class NunPathPlayerState extends GameState
     if (!array_key_exists($path, $args['possible'])) {
       throw new SystemException("Path $path is not possible");
     }
-    $nuns = $this->game->getNunList();
-    $nun = $nuns->getCurrentNun();
+    $nun = $this->game->getNunList()->getActiveNun();
     $color = $args['possible'][$path]['color'];
-    $spaces = $args['possible'][$path]['path'];
-    $destination = $spaces[0];
-    if ($destination == $nun->location) {
-      $destination = end($spaces);
+    $spaces = $args['possible'][$path]['spaces'];
+    $origin = $spaces[0];
+    $destination = end($spaces);
+    if ($nun->location == $destination) {
+      $origin = $destination;
+      $destination = $spaces[0];
     }
     $nun->path = $path;
-    $this->game->saveNuns($nuns);
+    $nun->pathColor = $color;
+    $nun->pathOrigin = $origin;
+    $nun->pathDestination = $destination;
+    $this->game->saveNun($nun);
 
-    $this->bga->notify->all('nunPath', clienttranslate('${player_name} (${roleIcon} ${roleName}) chooses path ${pathLocation}'), [
+    $this->bga->notify->all('nunPath', clienttranslate('${roleName} ${player_name} chooses path ${pathName}'), [
       'i18n' => ['roleName'],
-      'preserve' => ['path', 'pathColor', 'pathStart'],
+      'preserve' => ['path', 'pathColor', 'pathDestination', 'pathOrigin', 'role'],
       'path' => $nun->path,
-      'pathColor' => $color,
-      'pathLocation' => $destination,
-      'pathStart' => $nun->location,
+      'pathColor' => $nun->pathColor,
+      'pathDestination' => $nun->pathDestination,
+      'pathName' => $nun->path,
+      'pathOrigin' => $nun->pathOrigin,
       'player_id' => $currentPlayerId,
       'player_name' => $this->game->getPlayerNameById($currentPlayerId),
       'role' => $nun->role,
-      'roleIcon' => $this->game->getRoleIcon($nun->role),
-      'roleName' => $this->game->getRoleName($nun->role),
+      'roleName' => $nun->roleName,
     ]);
     return NunMovePlayerState::class;
   }

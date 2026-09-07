@@ -4,42 +4,50 @@ declare(strict_types=1);
 
 namespace Bga\Games\NunsOnTheRun\States;
 
-use Bga\GameFramework\Actions\CheckAction;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
 use Bga\Games\NunsOnTheRun\Move;
+use Bga\Games\NunsOnTheRun\NunList;
 
-class NoviceTurnMultiState extends GameState
+class NunNoiseMultiState extends GameState
 {
   function __construct(
     protected Game $game,
   ) {
     parent::__construct(
       $game,
-      id: 10,
+      id: 35,
       type: StateType::MULTIPLE_ACTIVE_PLAYER,
-      description: clienttranslate('Novices must take their turns'),
-      initialPrivate: NoviceMovePrivateState::class,
+      description: clienttranslate('Novices must make noise'),
+      initialPrivate: NoviceNunNoisePrivateState::class,
     );
   }
 
-  public function onEnteringState()
+  function onEnteringState()
   {
+    $nun = $this->game->getNunList()->getActiveNun();
+    $oneNuns = new NunList();
+    $oneNuns->add($nun);
     $novices = $this->game->getNoviceList();
-    foreach ($novices as &$novice) {
-      // Create a new move
-      $move = new Move();
-      $move->start = $novice->location;
-      $novice->move = $move;
+    $noisyNovices = [];
+    foreach ($novices as $novice) {
+      $novice->move->noiseTotal = $nun->move->noiseTotal;
+      $possible = $this->game->board->getNovicePossibleNoise($novice, $oneNuns);
+      if (!empty($possible)) {
+        $noisyNovices[] = $novice->playerId;
+      }
     }
-    $this->game->saveNovices($novices);
-
-    // Activate all novices
-    $this->gamestate->setPlayersMultiactive($this->game->getPlayerIds(0), '', true);
-    $this->gamestate->initializePrivateStateForAllActivePlayers();
+    if (!empty($noisyNovices)) {
+      // Noisy novices add a noise token
+      $this->gamestate->setPlayersMultiactive($noisyNovices, '', true);
+      $this->gamestate->initializePrivateStateForAllActivePlayers();
+    } else {
+      // Nobody can be heard, go to the next nun
+      return NunNoiseGameState::class;
+    }
   }
 
   /**

@@ -6,17 +6,6 @@ export class NoviceNoisePrivateState {
 
   onEnteringState(args, isCurrentPlayerActive) {
     if (isCurrentPlayerActive) {
-      const totalText = this.bga.gameui.format_string(_("${noise} spaces away"), args);
-      // Die
-      const gaEl = document.getElementById("generalactions");
-      gaEl.insertAdjacentHTML(
-        "afterend",
-        `<div id="notr-roll">${this.game.html_dice()} ${args.formula} (${args.action}) = ${totalText}</div>`,
-      );
-      setTimeout(() => {
-        document.getElementById("notr-die").classList.add("show-" + args.roll);
-      }, 50);
-
       // Board possible noise
       const boardEl = document.getElementById("notr-board");
       for (const location in args.possible) {
@@ -27,10 +16,12 @@ export class NoviceNoisePrivateState {
       }
 
       if (args.possible.length == 0) {
-        this.bga.statusBar.addActionButton(_("No Noise Token"), () => this.bga.actions.performAction("actSilent"));
+        this.bga.statusBar.addActionButton(_("Continue"), () => this.bga.actions.performAction("actContinue"));
       }
 
-      this.bga.statusBar.addActionButton(_("Go Back"), () => this.bga.actions.performAction("actBack"), { color: "secondary" });
+      if (args.undo) {
+        this.bga.statusBar.addActionButton(_("Undo"), () => this.bga.actions.performAction("actUndo"), { color: "secondary" });
+      }
     }
   }
 

@@ -24,7 +24,9 @@ export class NoviceMovePrivateState {
           { disabled: info.disabled },
         );
       }
-      this.bga.statusBar.addActionButton(_("Restart Turn"), () => this.bga.actions.performAction("actReset"), { color: "red" });
+      if (args.undo) {
+        this.bga.statusBar.addActionButton(_("Undo"), () => this.bga.actions.performAction("actUndo"), { color: "secondary" });
+      }
 
       // Board possible moves
       const boardEl = document.getElementById("notr-board");

@@ -8,7 +8,6 @@ use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
-use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\Game;
 use Bga\Games\NunsOnTheRun\Move;
 
@@ -39,9 +38,23 @@ class NunChoiceMultiState extends GameState
   function onEnteringState(array $args)
   {
     if ($args['_no_notify']) {
-      $role = reset($args['choices']);
-      $this->setCurrentNun($role);
-      return;
+      if (empty($args['choices'])) {
+        // 2c. Remove noise and vanish tokens
+        $novices = $this->game->getNoviceList();
+        foreach ($novices as &$novice) {
+          $novice->move->noiseRoll = null;
+          $novice->move->noiseTokens = [];
+          $novice->move->noiseTotal = null;
+          $novice->move->vanishTokens = [];
+        }
+        $this->game->saveNovices($novices);
+        return NunNoiseGameState::class;
+      } else {
+        // Choose the other nun
+        $role = reset($args['choices']);
+        $this->actChoose($role);
+        return;
+      }
     }
 
     // Activate all nuns
@@ -49,28 +62,24 @@ class NunChoiceMultiState extends GameState
   }
 
   #[PossibleAction]
-  public function actChoose(int $currentPlayerId, string $role)
+  public function actChoose(string $role)
   {
-    $this->bga->notify->all('message', clienttranslate('${roleIcon} ${roleName} ${player_name} activates'), [
+    $novices = $this->game->getNoviceList();
+    $nun = $this->game->getNunList()->get($role);
+    $nun->move = new Move();
+    $nun->move->active = true;
+    $nun->move->deviate = $this->game->board->getNunDeviate($nun, $novices);
+    $nun->move->start = $nun->location;
+    $this->game->saveNun($nun);
+
+    $this->bga->notify->all('message', clienttranslate('${roleName} ${player_name} activates'), [
       'i18n' => ['roleName'],
-      'player_id' => $currentPlayerId,
-      'player_name' => $this->game->getPlayerNameById($currentPlayerId),
-      'role' => $role,
-      'roleIcon' => $this->game->getRoleIcon($role),
-      'roleName' => $this->game->getRoleName($role),
+      'player_id' => $nun->playerId,
+      'player_name' => $nun->playerName,
+      'role' => $nun->role,
+      'roleName' => $nun->roleName,
     ]);
 
-    $this->setCurrentNun($role);
-  }
-
-  private function setCurrentNun(string $role)
-  {
-    $nuns = $this->game->getNunList();
-    $nun = $nuns->get($role);
-    $nun->move = new Move();
-    $nun->move->current = true;
-    $nun->move->start = $nun->location;
-    $this->game->saveNuns($nuns);
     $this->gamestate->changeActivePlayer($nun->playerId);
     $this->gamestate->setAllPlayersNonMultiactive(NunPathPlayerState::class);
   }

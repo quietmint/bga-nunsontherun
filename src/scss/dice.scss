@@ -2,7 +2,7 @@
 
 .notr-die {
   display: inline-block;
-  font-size: 150%;
+  font-size: 125%;
   height: 1.5em;
   position: relative;
   transform-style: preserve-3d;
@@ -73,7 +73,7 @@
   .pip {
     background-color: $color-blue-grey-500; //$color-red-400; // #f25f5c;
     border-radius: 100%;
-    box-shadow: inset 2px 2px $color-blue-grey-900; //$color-red-a700; //#d90429;
+    box-shadow: inset 1px 2px $color-blue-grey-900; //$color-red-a700; //#d90429;
     height: 0.35em;
     position: absolute;
     translate: -50% -50%;

@@ -4,13 +4,9 @@ declare(strict_types=1);
 
 namespace Bga\Games\NunsOnTheRun\States;
 
-use Bga\GameFramework\Actions\CheckAction;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
-use Bga\GameFramework\States\PossibleAction;
-use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
-use Bga\Games\NunsOnTheRun\Move;
 
 class NoviceRecapGameState extends GameState
 {
@@ -87,17 +83,36 @@ class NoviceRecapGameState extends GameState
 				$oldVisible = $visible;
 			}
 
-			// Notify each novice's noise
-			$this->bga->notify->all('noviceRoll', clienttranslate('${player_name} rolls ${roll} for noise'), [
+			// Notify blessing
+			// TODO!
+			if (false) {
+				$this->bga->notify->all('blessing', clienttranslate('${player_name} uses a blessing to make less noise'), [
+					'preserve' => ['player_id', 'recap'],
+					'player_id' => $novice->playerId,
+					'player_name' => $novice->playerName,
+					'recap' => true,
+				]);
+
+				$this->bga->notify->all('blessing', clienttranslate('${player_name} uses a blessing to reroll'), [
+					'preserve' => ['player_id', 'recap'],
+					'player_id' => $novice->playerId,
+					'player_name' => $novice->playerName,
+					'recap' => true,
+				]);
+			}
+
+			// Notify noise
+			$this->bga->notify->all('noviceRoll', clienttranslate('${player_name} rolls ${roll} and makes noise ${noiseTotal} spaces away'), [
 				'preserve' => ['player_id', 'recap'],
+				'noiseTotal' => $novice->move->noiseTotal,
 				'player_id' => $novice->playerId,
 				'player_name' => $novice->playerName,
 				'recap' => true,
 				'roll' => $novice->move->noiseRoll,
 			]);
 			if (!empty($novice->move->noiseTokens)) {
-				foreach ($novice->move->noiseTokens as $noiseLocation) {
-					$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} places a noise token at ${noiseLocation}'), [
+				foreach ($novice->move->noiseTokens as $noiseLocation => $x) {
+					$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
 						'preserve' => ['player_id', 'recap'],
 						'noiseLocation' => $noiseLocation,
 						'player_id' => $novice->playerId,

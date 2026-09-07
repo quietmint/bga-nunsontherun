@@ -11,7 +11,7 @@ class Novice
 	public bool $hasKey = false;
 	public bool $hasWish = false;
 	public int $location;
-	public ?Move $move = null;
+	public ?Move $move;
 	public array $moves = [];
 	public int $playerId;
 	public string $playerName;

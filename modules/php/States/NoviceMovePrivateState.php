@@ -8,7 +8,6 @@ use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
-use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\Game;
 
 class NoviceMovePrivateState extends GameState
@@ -38,7 +37,9 @@ class NoviceMovePrivateState extends GameState
     }
     return [
       'actions' => $actions,
+      'distance' => $distance,
       'possible' => $possible,
+      'undo' => $distance > 0,
     ];
   }
 
@@ -47,8 +48,9 @@ class NoviceMovePrivateState extends GameState
   {
     // Check location
     if (!array_key_exists($location, $args['possible'])) {
-      throw new UserException("Cannot move to location $location");
+      throw new SystemException("Cannot move to location $location");
     }
+
     $possible = $args['possible'][$location];
     $spaces = $possible->spaces;
     array_shift($spaces);
@@ -71,6 +73,7 @@ class NoviceMovePrivateState extends GameState
           'player_id' => $currentPlayerId,
           'vanishLocation' => $oldSpaceId,
         ]);
+        $novice->move->vanishTokens[$oldSpaceId] = $this->game->board->getRoomId($oldSpaceId);
       }
       $this->bga->notify->player($currentPlayerId, 'noviceMove', clienttranslate('You move to ${location}'), [
         'location' => $spaceId,
@@ -86,20 +89,14 @@ class NoviceMovePrivateState extends GameState
   }
 
   #[PossibleAction]
-  public function actConfirm(int $currentPlayerId, string $confirmAction)
+  public function actConfirm(int $currentPlayerId, array $args, string $confirmAction)
   {
-    $novice = $this->game->getNoviceList()->get($currentPlayerId);
-    $round = $this->game->getRound();
-    $distance = count($novice->move->spaces);
-    $actions = $this->game->board->getNoviceActions($round);
-    $actionsForNow = $this->game->board->getActionsForDistance($actions, $distance);
-    if (!in_array($confirmAction, $actionsForNow)) {
-      throw new UserException("Cannot $confirmAction -- This move is not authorized now. Must be " . json_encode($actionsForNow));
+    if (!array_key_exists($confirmAction, $args['actions'])) {
+      throw new SystemException("$confirmAction is not possible. Possible actions: " . json_encode(array_keys($args['actions'])));
     }
 
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $novice->move->action = $confirmAction;
-    $novice->move->noiseRoll = \bga_rand(1, 6);
-    $novice->move->noiseTotal = max(0, $novice->move->noiseRoll + $actions[$novice->move->action]['noise']);
     $this->game->saveNovice($novice);
     switch ($confirmAction) {
       case 'stand':
@@ -116,21 +113,15 @@ class NoviceMovePrivateState extends GameState
         break;
     }
     $this->bga->notify->player($currentPlayerId, 'message', $message, [
-      'i18n' => ['action'],
-      'action' => $novice->move->action,
       'location' => $novice->location,
       'startLocation' => $novice->move->start,
     ]);
-    $this->bga->notify->player($currentPlayerId, 'noviceRoll', clienttranslate('You roll ${roll} for noise'), [
-      'player_id' => $currentPlayerId,
-      'roll' => $novice->move->noiseRoll,
-    ]);
 
-    $this->gamestate->nextPrivateState($currentPlayerId, NoviceNoisePrivateState::class);
+    $this->gamestate->nextPrivateState($currentPlayerId, NoviceRollPrivateState::class);
   }
 
   #[PossibleAction]
-  public function actReset(int $currentPlayerId)
+  public function actUndo(int $currentPlayerId)
   {
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $novice->location = $novice->move->start;

@@ -1,0 +1,128 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Bga\Games\NunsOnTheRun\States;
+
+use Bga\GameFramework\StateType;
+use Bga\GameFramework\States\GameState;
+use Bga\GameFramework\States\PossibleAction;
+use Bga\GameFramework\SystemException;
+use Bga\Games\NunsOnTheRun\Game;
+use Bga\Games\NunsOnTheRun\Novice;
+
+class NoviceRollPrivateState extends GameState
+{
+  function __construct(
+    protected Game $game,
+  ) {
+    parent::__construct(
+      $game,
+      id: 12,
+      type: StateType::PRIVATE,
+      descriptionMyTurn: clienttranslate('${you} roll ${roll} and make noise ${noise} spaces away'),
+    );
+  }
+
+  public static function noviceRoll(Game $game, Novice $novice)
+  {
+    $actions = $game->board->getNoviceActions($game->getRound());
+    $novice->move->noiseRoll = \bga_rand(1, 6);
+    $novice->move->noiseTotal = max(0, $novice->move->noiseRoll + $actions[$novice->move->action]['noise']);
+    $game->saveNovice($novice);
+
+    $game->bga->notify->player($novice->playerId, 'noviceRoll', clienttranslate('${you} roll ${roll} and make noise ${noise} spaces away'), [
+      'i18n' => ['you'],
+      'noise' => $novice->move->noiseTotal,
+      'player_id' => $novice->playerId,
+      'roll' => $novice->move->noiseRoll,
+      'you' => clienttranslate('You'),
+    ]);
+  }
+
+  public function getArgs(int $playerId): array
+  {
+    $this->game->debug("NoviceRollPrivateState getArgs // ");
+    $novice = $this->game->getNoviceList()->get($playerId);
+    $nuns = $this->game->getNunList();
+    $possible = $this->game->board->getNovicePossibleNoise($novice, $nuns);
+    $info = $this->game->board->getNoviceActions(0)[$novice->move->action];
+    return [
+      'i18n' => ['action'],
+      'action' => $info['name'],
+      'heard' => !empty($possible),
+      'noise' => $novice->move->noiseTotal,
+      'possible' => $possible,
+      'roll' => $novice->move->noiseRoll,
+      'rollAnimate' => true,
+    ];
+  }
+
+  public function onEnteringState(int $currentPlayerId)
+  {
+    $this->game->debug("NoviceRollPrivateState onEnteringState // ");
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
+    if (is_null($novice->move->noiseRoll)) {
+      $actions = $this->game->board->getNoviceActions($this->game->getRound());
+      $novice->move->noiseRoll = \bga_rand(1, 6);
+      $novice->move->noiseTotal = max(0, $novice->move->noiseRoll + $actions[$novice->move->action]['noise']);
+      $this->game->debug("noiseRoll = " . $novice->move->noiseRoll . ", noiseTotal = " . $novice->move->noiseTotal . " // ");
+      $this->game->saveNovice($novice);
+
+      $this->bga->notify->player($currentPlayerId, 'noviceRoll', clienttranslate('${you} roll ${roll} and make noise ${noise} spaces away'), [
+        'i18n' => ['you'],
+        'noise' => $novice->move->noiseTotal,
+        'player_id' => $currentPlayerId,
+        'roll' => $novice->move->noiseRoll,
+        'you' => clienttranslate('You'),
+      ]);
+    }
+  }
+
+  #[PossibleAction]
+  public function actBlessingAdjust(int $currentPlayerId)
+  {
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
+    $novice->move->noiseTotal = max(0, $novice->move->noiseTotal - 1);
+    $this->game->saveNovice($novice);
+    $this->bga->notify->player($currentPlayerId, 'message', clienttranslate('You use a blessing to make less noise'));
+    $this->gamestate->nextPrivateState($currentPlayerId, NoviceRollPrivateState::class);
+  }
+
+  #[PossibleAction]
+  public function actBlessingReroll(int $currentPlayerId)
+  {
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
+    $this->bga->notify->player($currentPlayerId, 'message', clienttranslate('You use a blessing to reroll'));
+    self::noviceRoll($this->game, $novice);
+    $this->gamestate->nextPrivateState($currentPlayerId, NoviceRollPrivateState::class);
+  }
+
+  #[PossibleAction]
+  public function actContinue(int $currentPlayerId, array $args)
+  {
+    if (empty($args['possible'])) {
+      $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
+    } else {
+      $this->gamestate->nextPrivateState($currentPlayerId, NoviceOwnNoisePrivateState::class);
+    }
+  }
+
+  /**
+   * This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
+   * You can do whatever you want in order to make sure the turn of this player ends appropriately
+   * (ex: play a random card).
+   * 
+   * See more about Zombie Mode: https://en.doc.boardgamearena.com/Zombie_Mode
+   *
+   * Important: your zombie code will be called when the player leaves the game. This action is triggered
+   * from the main site and propagated to the gameserver from a server, not from a browser.
+   * As a consequence, there is no current player associated to this action. In your zombieTurn function,
+   * you must _never_ use `getCurrentPlayerId()` or `getCurrentPlayerName()`, 
+   * but use the $playerId passed in parameter and $this->game->getPlayerNameById($playerId) instead.
+   */
+  function zombie(int $playerId)
+  {
+    throw new SystemException($this::class . " zombie function not implemented");
+  }
+}

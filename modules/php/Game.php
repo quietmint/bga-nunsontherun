@@ -214,30 +214,6 @@ class Game extends \Bga\GameFramework\Table
     }
   }
 
-  public function getRoleName(string $role): ?string
-  {
-    switch ($role) {
-      case 'abbess':
-        return clienttranslate('Abbess');
-      case 'prioress':
-        return clienttranslate('Prioress');
-      default:
-        return null;
-    }
-  }
-
-  public function getRoleIcon(string $role): ?string
-  {
-    switch ($role) {
-      case 'abbess':
-        return '⚫';
-      case 'prioress':
-        return '⚪';
-      default:
-        return null;
-    }
-  }
-
   /**
    * This method is called only once, when a new game is launched. In this method, you must setup the game
    *  according to the game rules, so that the game is ready to be played.
@@ -304,15 +280,15 @@ class Game extends \Bga\GameFramework\Table
       $nuns->add($nun);
       $this->bga->notify->all(
         'message',
-        clienttranslate('${roleIcon} ${roleName} ${player_name} starts at ${location}'),
+        clienttranslate('${roleName} ${player_name} starts at ${location}'),
         [
           'i18n' => ['roleName'],
+          'preserve' => ['role'],
           'location' => $nun->location,
           'player_id' => $nun->playerId,
           'player_name' => $nun->playerName,
           'role' => $nun->role,
-          'roleIcon' => $this->getRoleIcon($nun->role),
-          'roleName' => $this->getRoleName($nun->role),
+          'roleName' => $nun->roleName,
         ]
       );
       $this->bga->playerStats->set('caught', 0, $playerId);
@@ -387,7 +363,7 @@ class Game extends \Bga\GameFramework\Table
     $this->saveNovices($novices);
 
     // Table statistics
-    $this->bga->tableStats->init('round', 1);
+    $this->incRound();
 
     return NoviceTurnMultiState::class;
   }
@@ -412,6 +388,22 @@ class Game extends \Bga\GameFramework\Table
     return $this->tableStats->get('round');
   }
 
+  public function incRound(): int
+  {
+    $this->tableStats->inc('round', 1);
+    $round = $this->getRound();
+    $message = clienttranslate('Round ${round} of 15');
+    if ($round == 15) {
+      $message = clienttranslate('Round ${round} of 15. The novices are out of time!');
+    } else if ($round == 14) {
+      $message = clienttranslate('Round ${round} of 15. This is the final round!');
+    }
+    $this->bga->notify->all('round', $message, [
+      'round' => $round
+    ]);
+    return $round;
+  }
+
   public function getMoveNoise(string $move): ?int
   {
     switch ($move) {
@@ -427,6 +419,8 @@ class Game extends \Bga\GameFramework\Table
         return null;
     }
   }
+
+  public function winGame(int $dbNun) {}
 
   /**
    * Example of debug function.

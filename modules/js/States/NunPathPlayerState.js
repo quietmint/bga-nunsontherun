@@ -14,9 +14,9 @@ export class NunPathPlayerState {
       const boardEl = document.getElementById("notr-board");
       for (const path in args.possible) {
         const p = args.possible[path];
-        let destination = p.path[0];
+        let destination = p.spaces[0];
         if (destination == args.start) {
-          destination = p.path.at(-1);
+          destination = p.spaces.at(-1);
         }
         let holderEl = document.getElementById(`notr-path-holder-${destination}`);
         if (holderEl == null) {
