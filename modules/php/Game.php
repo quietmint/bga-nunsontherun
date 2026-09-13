@@ -8,21 +8,29 @@
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
- *
- * Game.php
- *
- * This is the main file for your game logic.
- *
- * In this PHP file, you are going to defines the rules of the game.
  */
 
 declare(strict_types=1);
 
 namespace Bga\Games\NunsOnTheRun;
 
-use Bga\GameFramework\Components\Counters\PlayerCounter;
+use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\States\NoviceTurnMultiState;
-use Bga\Games\NunsOnTheRun\States\NunMovePlayerState;
+
+const BGA_BLUE = '0000ff';
+const BGA_GREEN = '008000';
+const BGA_ORANGE = 'f07f16';
+const BGA_PURPLE = '982fff';
+const BGA_RED = 'ff0000';
+const BGA_YELLOW = 'ffa500';
+const COLOR_BLACK = '000000';
+const COLOR_BLUE = '039be5'; // light-blue-600
+const COLOR_GREEN = '43a047'; // green-600
+const COLOR_ORANGE = 'fb8c00'; // orange-600
+const COLOR_PURPLE = 'ab47bc'; // purple-400
+const COLOR_RED = 'e91e63'; // pink-500
+const COLOR_WHITE = 'ffffff';
+const COLOR_YELLOW = 'fdd835'; // yellow-600
 
 class Game extends \Bga\GameFramework\Table
 {
@@ -124,7 +132,7 @@ class Game extends \Bga\GameFramework\Table
       'caughtGoal' => $this->getCaughtGoal(),
       'novices' => $novices->getAllDatas($currentPlayerId, $state, $nuns),
       'nuns' => $nuns->getAllDatas($currentPlayerId, $state),
-      'players' => $this->getCollectionFromDb('SELECT `player_id` AS `id`, `player_score` AS `score`, `colorName` FROM `player`'),
+      'players' => $this->getCollectionFromDb('SELECT `player_id` AS `id`, `player_score` AS `score` FROM `player`'),
       'round' => $this->getRound(),
       'roundMax' => 15,
     ];
@@ -176,42 +184,42 @@ class Game extends \Bga\GameFramework\Table
   function getSpecificColorPairings(): array
   {
     return [
-      'f07f16' /* Orange */      => 'ff9800', // orange-500
-      '0000ff' /* Blue */        => '03a9f4', // light-blue-500
-      'ff0000' /* Red */         => 'e91e63', // pink-500
-      '008000' /* Green */       => '8bc34a', // light-green-500
-      '982fff' /* Purple */      => '9c27b0', // purple-500
-      'ffa500' /* Yellow */      => 'ffeb3b', // yellow-500
+      BGA_ORANGE => COLOR_ORANGE,
+      BGA_BLUE => COLOR_BLUE,
+      BGA_RED => COLOR_RED,
+      BGA_GREEN => COLOR_GREEN,
+      BGA_PURPLE => COLOR_PURPLE,
+      BGA_YELLOW => COLOR_YELLOW,
     ];
   }
 
   public function getColorName(string $color): ?string
   {
     switch ($color) {
-      case 'f07f16': // bga orange
-      case 'ff9800': // orange-500
+      case BGA_ORANGE:
+      case COLOR_ORANGE:
         return 'orange';
-      case '0000ff': // bga blue
-      case '03a9f4': // light-blue-500
+      case BGA_BLUE:
+      case COLOR_BLUE:
         return 'blue';
-      case 'ff0000': // bga red
-      case 'e91e63': // pink-500
+      case BGA_RED:
+      case COLOR_RED:
         return 'red';
-      case '008000': // bga green
-      case '8bc34a': // light-green-500
+      case BGA_GREEN:
+      case COLOR_GREEN:
         return 'green';
-      case '982fff': // bga purple
-      case '9c27b0': // purple-500
+      case BGA_PURPLE:
+      case COLOR_PURPLE:
         return 'purple';
-      case 'ffa500': // bga yellow
-      case 'ffeb3b': // yellow-500
+      case BGA_YELLOW:
+      case COLOR_YELLOW:
         return 'yellow';
-      case '000000':
+      case COLOR_BLACK:
         return 'black';
-      case 'ffffff':
+      case COLOR_WHITE:
         return 'white';
       default:
-        return null;
+        throw new SystemException("Unknown color: $color");
     }
   }
 
@@ -221,17 +229,18 @@ class Game extends \Bga\GameFramework\Table
    */
   protected function setupNewGame($players, $options = [])
   {
-    $insert = [];
+    $r = new \Random\Randomizer();
+    $gameinfos = $this->getGameinfos();
 
     // Assign nun colors
-    $r = new \Random\Randomizer();
+    $insertNuns = [];
     $nunColors = ['000000', 'ffffff'];
     $nunCount = count($players) == 8 ? 2 : 1;
     $nunIds = $r->pickArrayKeys($players, $nunCount);
     foreach ($nunIds as $playerId) {
       $player = $players[$playerId];
       $color = array_shift($nunColors);
-      $insert[] = vsprintf("(%s, '%s', '%s', 1)", [
+      $insertNuns[] = vsprintf("(%s, '%s', '%s', 1)", [
         $playerId,
         $color,
         addslashes($player['player_name']),
@@ -240,79 +249,34 @@ class Game extends \Bga\GameFramework\Table
     }
 
     // Assign novice colors
-    $gameinfos = $this->getGameinfos();
+    $insertNovices = [];
+    $colors = $gameinfos['player_colors'];
     foreach ($players as $playerId => $player) {
-      // Now you can access both $player_id and $player array
-      $color = array_shift($gameinfos['player_colors']);
-      $insert[] = vsprintf("(%s, '%s', '%s', 0)", [
+      $color = array_shift($colors);
+      $insertNovices[] = vsprintf("(%s, '%s', '%s', 0)", [
         $playerId,
         $color,
         addslashes($player["player_name"]),
       ]);
     }
 
-    // Create players
-    static::DbQuery(sprintf("INSERT INTO `player` (`player_id`, `player_color`, `player_name`, `nun`) VALUES %s", implode(",", $insert)));
+    // Create novices
+    static::DbQuery(sprintf("INSERT INTO `player` (`player_id`, `player_color`, `player_name`, `nun`) VALUES %s", implode(",", $insertNovices)));
     $this->reattributeColorsBasedOnPreferences($players, $gameinfos['player_colors']);
-    $this->reloadPlayersBasicInfos();
 
-    // Setup nuns
-    $nuns = new NunList();
-    $nunColors = ['000000', 'ffffff'];
-    if (count($nunIds) == 1) {
-      $nunIds[1] = $nunIds[0];
-    }
-    $players = $this->getCollectionFromDb(
-      "SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 1 ORDER BY `player_no`"
-    );
-    foreach (['abbess', 'prioress'] as $role) {
-      $playerId = array_shift($nunIds);
-      $player = $players[$playerId];
-      $color = array_shift($nunColors);
-      $colorName = $this->getColorName($color);
-      $this->DbQuery("UPDATE `player` SET `colorName` = '$colorName' WHERE `player_color` = '$color'");
-      $nun = new Nun();
-      $nun->color = $colorName;
-      $nun->location = 26;
-      $nun->playerId = $playerId;
-      $nun->playerName = $player['player_name'];
-      $nun->role = $role;
-      $nun->room = $this->board->getRoomId($nun->location);
-      $nuns->add($nun);
-      $this->bga->notify->all(
-        'message',
-        clienttranslate('${roleName} ${player_name} starts at ${location}'),
-        [
-          'i18n' => ['roleName'],
-          'preserve' => ['role'],
-          'location' => $nun->location,
-          'player_id' => $nun->playerId,
-          'player_name' => $nun->playerName,
-          'role' => $nun->role,
-          'roleName' => $nun->roleName,
-        ]
-      );
-      $this->bga->playerStats->set('caught', 0, $playerId);
-      $this->bga->playerStats->set('role', 1, $playerId);
-      $this->bga->playerStats->set('runMove', 0, $playerId);
-      $this->bga->playerStats->set('spaces', 0, $playerId);
-      $this->bga->playerStats->set('walkMove', 0, $playerId);
-    }
-    $this->saveNuns($nuns);
+    // Create nuns
+    static::DbQuery(sprintf("INSERT INTO `player` (`player_id`, `player_color`, `player_name`, `nun`) VALUES %s", implode(",", $insertNuns)));
+    $this->reloadPlayersBasicInfos();
 
     // Setup novices
     $novices = new NoviceList();
-    $players = $this->getCollectionFromDb(
-      "SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 0 ORDER BY `player_no`"
-    );
+    $novicePlayers = $this->getCollectionFromDb("SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 0 ORDER BY `player_no`");
     $wishes = $r->shuffleArray(['dessert', 'game', 'letter', 'magazine', 'makeup', 'perfume', 'phone', 'wine']);
     $location = 1;
-    foreach ($players as $playerId => $player) {
+    foreach ($novicePlayers as $playerId => $player) {
       $color = $player['player_color'];
-      $colorName = $this->getColorName($color);
-      $this->DbQuery("UPDATE `player` SET `colorName` = '$colorName' WHERE `player_color` = '$color'");
       $novice = new Novice();
-      $novice->color = $colorName;
+      $novice->color = $this->getColorName($color);
       $novice->location = $location++;
       $novice->playerId = $playerId;
       $novice->playerName = $player['player_name'];
@@ -364,6 +328,46 @@ class Game extends \Bga\GameFramework\Table
       $this->bga->playerStats->set('wishObtained', 0, $playerId);
     }
     $this->saveNovices($novices);
+
+    // Setup nuns
+    $nuns = new NunList();
+    $nunColors = ['000000', 'ffffff'];
+    if (count($nunIds) == 1) {
+      $nunIds[1] = $nunIds[0];
+    }
+    $nunPlayers = $this->getCollectionFromDb("SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 1 ORDER BY `player_no`");
+    foreach (['abbess', 'prioress'] as $role) {
+      $playerId = array_shift($nunIds);
+      $player = $nunPlayers[$playerId];
+      $color = array_shift($nunColors);
+      $nun = new Nun();
+      $nun->color = $this->getColorName($color);
+      $nun->location = 26;
+      $nun->playerId = $playerId;
+      $nun->playerName = $player['player_name'];
+      $nun->role = $role;
+      $nun->room = $this->board->getRoomId($nun->location);
+      $nuns->add($nun);
+      $this->bga->notify->all(
+        'message',
+        clienttranslate('${roleName} ${player_name} starts at ${location}'),
+        [
+          'i18n' => ['roleName'],
+          'preserve' => ['role'],
+          'location' => $nun->location,
+          'player_id' => $nun->playerId,
+          'player_name' => $nun->playerName,
+          'role' => $nun->role,
+          'roleName' => $nun->roleName,
+        ]
+      );
+      $this->bga->playerStats->set('caught', 0, $playerId);
+      $this->bga->playerStats->set('role', 1, $playerId);
+      $this->bga->playerStats->set('runMove', 0, $playerId);
+      $this->bga->playerStats->set('spaces', 0, $playerId);
+      $this->bga->playerStats->set('walkMove', 0, $playerId);
+    }
+    $this->saveNuns($nuns);
 
     // Table statistics
     $this->incRound();
