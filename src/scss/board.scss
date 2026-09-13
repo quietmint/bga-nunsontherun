@@ -22,27 +22,9 @@
   position: absolute;
   translate: -50% -50%;
   transition: all 0.25s ease-out;
-  width: 4%;
+  width: 6%;
   z-index: 10;
 
-  &.notr-blue {
-    border-color: $color-light-blue-500;
-  }
-  &.notr-green {
-    border-color: $color-light-green-500;
-  }
-  &.notr-orange {
-    border-color: $color-orange-500;
-  }
-  &.notr-purple {
-    border-color: $color-purple-500;
-  }
-  &.notr-red {
-    border-color: $color-pink-500;
-  }
-  &.notr-yellow {
-    border-color: $color-yellow-500;
-  }
   &.notr-black {
     border-color: black;
     z-index: 11;
@@ -53,7 +35,36 @@
   }
 }
 
-.notr-possible {
+.notr-player,
+.notr-my {
+  &.notr-blue {
+    border-color: $color-light-blue-500;
+    color: $color-light-blue-500;
+  }
+  &.notr-green {
+    border-color: $color-light-green-500;
+    color: $color-light-green-500;
+  }
+  &.notr-orange {
+    border-color: $color-orange-500;
+    color: $color-orange-500;
+  }
+  &.notr-purple {
+    border-color: $color-purple-500;
+    color: $color-purple-500;
+  }
+  &.notr-red {
+    border-color: $color-pink-500;
+    color: $color-pink-500;
+  }
+  &.notr-yellow {
+    border-color: $color-yellow-500;
+    color: $color-yellow-500;
+  }
+}
+
+.notr-possible,
+.notr-my {
   aspect-ratio: 1;
   background: white;
   border-radius: 100%;
@@ -61,7 +72,6 @@
     1px 1px 0 black,
     0 0 0.5cqw black;
   color: black;
-  cursor: pointer;
   font-size: 2.4cqw;
   font-weight: bold;
   line-height: 3.4cqw;
@@ -71,11 +81,19 @@
   transition: opacity 0.25s ease-out;
   translate: -50% -50%;
   width: 3.4%;
-  z-index: 20;
 
   &:hover {
     opacity: 0.1;
   }
+
+  .notr-icon {
+    height: 100%;
+  }
+}
+
+.notr-possible {
+  cursor: pointer;
+  z-index: 20;
 
   &.notr-possible-stand {
     background: linear-gradient(315deg, $color-blue-200, $color-blue-500, $color-blue-200);
@@ -105,43 +123,35 @@
   &.notr-possible-prioress {
     background: linear-gradient(315deg, $color-grey-400, white, $color-grey-400);
   }
-
-  .notr-icon {
-    height: 100%;
-  }
 }
 
-.notr-noise-holder,
-.notr-path-holder {
+.notr-my {
+  background: black;
+  border: 0.4cqw solid black;
+  font-size: 3cqw;
+  width: 4%;
+  z-index: 9;
+}
+
+.notr-holder {
   align-content: flex-start;
   display: flex;
   flex-wrap: wrap;
+  font-size: 2.4cqw;
   justify-content: center;
   position: absolute;
   translate: -50% -50%;
   width: 7%;
   z-index: 15;
-}
 
-.notr-noise-holder {
-  font-size: 2.4cqw;
-
-  .notr-noise {
+  .notr-tag {
     box-shadow:
       1px 1px 0 black,
       0 0 0.5cqw black;
   }
-}
 
-.notr-path-holder {
-  font-size: 2cqw;
-
-  .notr-path {
-    box-shadow:
-      1px 1px 0 black,
-      0 0 0.5cqw black;
+  .notr-tag-path {
     cursor: pointer;
-    margin: 2px 0;
   }
 }
 

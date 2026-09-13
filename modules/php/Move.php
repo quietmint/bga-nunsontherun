@@ -14,6 +14,7 @@ class Move
 	public ?int $noiseTotal;
 	public array $spaces = [];
 	public int $start;
+	public ?array $undo;
 	public array $vanishTokens = [];
 
 	public function __construct(?\stdClass $data = null)
@@ -27,6 +28,7 @@ class Move
 			$this->noiseTotal = property_exists($data, 'noiseTotal') ? $data->noiseTotal : null;
 			$this->spaces = $data->spaces;
 			$this->start = $data->start;
+			$this->undo = property_exists($data, 'undo') ? $data->undo : null;
 			$this->vanishTokens = property_exists($data, 'vanishTokens') ? $data->vanishTokens : [];
 		}
 	}

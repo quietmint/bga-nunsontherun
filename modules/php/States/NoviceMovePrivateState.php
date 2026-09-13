@@ -64,12 +64,12 @@ class NoviceMovePrivateState extends GameState
       $novice->room = $this->game->board->getRoomId($novice->location);
       $visible = $nuns->isNoviceVisible($novice);
       if ($visible && !$oldVisible) {
-        $this->bga->notify->player($currentPlayerId, 'message', clienttranslate('You are visible at ${location}'), [
-          'location' => $spaceId,
+        $this->bga->notify->player($currentPlayerId, 'noviceVisible', clienttranslate('You are visible at ${visibleLocation}'), [
           'player_id' => $currentPlayerId,
+          'visibleLocation' => $spaceId,
         ]);
       } else if (!$visible && $oldVisible) {
-        $this->bga->notify->player($currentPlayerId, 'noviceVanish', clienttranslate('You vanish at ${vanishLocation}, invisible to the nuns'), [
+        $this->bga->notify->player($currentPlayerId, 'noviceVanish', clienttranslate('You vanish at ${vanishLocation}'), [
           'player_id' => $currentPlayerId,
           'vanishLocation' => $oldSpaceId,
         ]);
@@ -97,7 +97,6 @@ class NoviceMovePrivateState extends GameState
 
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $novice->move->action = $confirmAction;
-    $this->game->saveNovice($novice);
     switch ($confirmAction) {
       case 'stand':
         $message = clienttranslate('You stand still at ${location}');
@@ -117,6 +116,22 @@ class NoviceMovePrivateState extends GameState
       'startLocation' => $novice->move->start,
     ]);
 
+    if (!$novice->hasKey && $novice->location == $novice->keyLocation) {
+      $novice->hasKey = true;
+      $this->bga->notify->player($currentPlayerId, 'noviceKey', clienttranslate('You pick up your key at ${keyLocation}'), [
+        'preserve' => ['player_id'],
+        'keyLocation' => $novice->keyLocation,
+        'player_id' => $novice->playerId,
+      ]);
+    } else  if (!$novice->hasWish && $novice->location == $novice->wishLocation) {
+      $novice->hasWish = true;
+      $this->bga->notify->player($currentPlayerId, 'noviceWish', clienttranslate('You pick up your secret wish at ${wishLocation}'), [
+        'preserve' => ['player_id'],
+        'player_id' => $novice->playerId,
+        'wishLocation' => $novice->wishLocation,
+      ]);
+    }
+    $this->game->saveNovice($novice);
     $this->gamestate->nextPrivateState($currentPlayerId, NoviceRollPrivateState::class);
   }
 
@@ -127,10 +142,13 @@ class NoviceMovePrivateState extends GameState
     $novice->location = $novice->move->start;
     $novice->room = $this->game->board->getRoomId($novice->location);
     $novice->move->action = null;
+    $novice->move->noiseTokens = array_diff($novice->move->noiseTokens, ['novice']);
     $novice->move->spaces = [];
+    $novice->move->vanishTokens = [];
     $this->game->saveNovice($novice);
-    $this->bga->notify->player($currentPlayerId, 'noviceMove', clienttranslate('You restart your turn'), [
+    $this->bga->notify->player($currentPlayerId, 'noviceUndo', clienttranslate('You return to ${location} (undo)'), [
       'location' => $novice->location,
+      'noiseTokens' => $novice->move->noiseTokens,
       'player_id' => $currentPlayerId,
     ]);
 

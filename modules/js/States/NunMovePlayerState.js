@@ -7,6 +7,7 @@ export class NunMovePlayerState {
   onEnteringState(args, isCurrentPlayerActive) {
     if (isCurrentPlayerActive) {
       // Actions
+      const nun = this.game.getNun(args.role);
       for (const action in args.actions) {
         const info = args.actions[action];
         const noiseText = info.noise ? _("Yes") : _("No");
@@ -33,7 +34,11 @@ export class NunMovePlayerState {
       for (const i in args.possible) {
         const move = args.possible[i];
         const action = move.actions[0];
-        boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${move.location}" class="notr-possible notr-possible-${action} notr-${move.location}">${move.distance}</div>`);
+        let str = move.distance;
+        if (move.location == nun.pathDestination) {
+          str = `<span class="notr-icon notr-icon-path-${nun.pathColor}"></span>`;
+        }
+        boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${move.location}" class="notr-possible notr-possible-${action} notr-${move.location}">${str}</div>`);
         const el = document.getElementById(`notr-possible-${move.location}`);
         el.addEventListener("click", () => this.bga.actions.performAction("actMove", { location: move.location }));
       }
@@ -47,6 +52,4 @@ export class NunMovePlayerState {
       el.remove();
     }
   }
-
-  onPlayerActivationChange(args, isCurrentPlayerActive) {}
 }

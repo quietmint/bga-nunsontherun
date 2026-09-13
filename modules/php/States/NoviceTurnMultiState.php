@@ -28,15 +28,6 @@ class NoviceTurnMultiState extends GameState
 
   public function onEnteringState()
   {
-    $novices = $this->game->getNoviceList();
-    foreach ($novices as &$novice) {
-      // Create a new move
-      $move = new Move();
-      $move->start = $novice->location;
-      $novice->move = $move;
-    }
-    $this->game->saveNovices($novices);
-
     // Activate all novices
     $this->gamestate->setPlayersMultiactive($this->game->getPlayerIds(0), '', true);
     $this->gamestate->initializePrivateStateForAllActivePlayers();

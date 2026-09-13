@@ -58,6 +58,8 @@ class NunRecapGameState extends GameState
 				}
 			}
 		}
+		$nun->move->active = false;
+		$this->game->saveNun($nun);
 		return NunNoiseGameState::class;
 	}
 }

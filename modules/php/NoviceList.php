@@ -39,9 +39,13 @@ class NoviceList implements \IteratorAggregate, \JsonSerializable
 			$json = json_decode(json_encode($novice), true);
 			unset($json['moves']);
 			if ($playerId != $currentPlayerId) {
-				unset($json['hasKey'], $json['hasWish'], $json['room'], $json['wish']);
+				unset($json['hasKey'], $json['hasWish'], $json['keyLocation'], $json['room'], $json['wish'], $json['wishLocation']);
 				if ($state instanceof NoviceTurnMultiState) {
+					$noiseTokens = array_diff($json['move']['noiseTokens'], ['novice']);
 					unset($json['move']);
+					if (!empty($noiseTokens)) {
+						$json['move']['noiseTokens'] = $noiseTokens;
+					}
 				}
 				if (!$visible[$playerId]) {
 					$json['location'] = $json['startLocation'];

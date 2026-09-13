@@ -33,7 +33,7 @@ class NunNoiseMultiState extends GameState
     $oneNuns->add($nun);
     $novices = $this->game->getNoviceList();
     $noisyNovices = [];
-    foreach ($novices as $novice) {
+    foreach ($novices as &$novice) {
       $novice->move->noiseTotal = $nun->move->noiseTotal;
       $possible = $this->game->board->getNovicePossibleNoise($novice, $oneNuns);
       if (!empty($possible)) {
@@ -42,10 +42,13 @@ class NunNoiseMultiState extends GameState
     }
     if (!empty($noisyNovices)) {
       // Noisy novices add a noise token
+      $this->game->saveNovices($novices);
       $this->gamestate->setPlayersMultiactive($noisyNovices, '', true);
       $this->gamestate->initializePrivateStateForAllActivePlayers();
     } else {
       // Nobody can be heard, go to the next nun
+      $nun->move->active = false;
+      $this->game->saveNun($nun);
       return NunNoiseGameState::class;
     }
   }

@@ -33,10 +33,7 @@ class NunMovePlayerState extends GameState
     foreach ($actions as $action => &$info) {
       $info['disabled'] = !in_array($action, $actionsForNow);
     }
-    $undo = false;
-    if (!empty($nun->move->spaces)) {
-      $undo = true;
-    }
+    $undo = $nun->move->undo != $nun->move->spaces;
     return [
       'i18n' => ['roleName'],
       'actions' => $actions,
@@ -71,12 +68,13 @@ class NunMovePlayerState extends GameState
     $oldNovicesVisible = $nuns->getNovicesVisible($novices);
     $this->game->debug("old room $oldRoomId space $oldSpaceId oldNovicesVisible: " . json_encode($oldNovicesVisible) . ' // ');
     foreach ($spaces as $spaceId) {
-      $nun->location = $location;
+      $nun->location = $spaceId;
+      $nun->move->spaces[] = $nun->location;
       $nun->room = $this->game->board->getRoomId($nun->location);
       $this->bga->notify->all('nunMove', clienttranslate('${roleName} ${player_name} moves to ${location}'), [
         'i18n' => ['roleName'],
         'preserve' => ['role'],
-        'location' => $spaceId,
+        'location' => $nun->location,
         'player_id' => $nun->playerId,
         'player_name' => $nun->playerName,
         'role' => $nun->role,
@@ -88,6 +86,7 @@ class NunMovePlayerState extends GameState
           $novice = $novices->get($playerId);
           if (!$novice->caught) {
             $nun->move->deviate = true;
+            $nun->move->undo = $nun->move->spaces;
             $novice->caught = true;
             $novice->hasWish = false;
             $this->game->saveNovice($novice);
@@ -109,6 +108,7 @@ class NunMovePlayerState extends GameState
       }
 
       if ($nun->room != $oldRoomId) {
+        $nun->move->undo = $nun->move->spaces;
         $novicesVisible = $nuns->getNovicesVisible($novices);
         $this->game->debug("new room {$nun->room} space $spaceId novicesVisible: " . json_encode($novicesVisible) . ' // ');
         foreach ($novicesVisible as $playerId => $visible) {
@@ -116,10 +116,10 @@ class NunMovePlayerState extends GameState
           $oldVisible = $oldNovicesVisible[$playerId];
           if ($visible && !$oldVisible) {
             $nun->move->deviate = true;
-            $this->bga->notify->all('noviceMove', clienttranslate('${player_name} is visible at ${location}'), [
-              'location' => $novice->location,
+            $this->bga->notify->all('noviceMove', clienttranslate('${player_name} is visible at ${visibleLocation}'), [
               'player_id' => $novice->playerId,
               'player_name' => $novice->playerName,
+              'visibleLocation' => $novice->location,
             ]);
           } else if (!$visible && $oldVisible) {
             $this->bga->notify->all('noviceMove', '', [
@@ -133,10 +133,13 @@ class NunMovePlayerState extends GameState
       }
       $oldSpaceId = $spaceId;
       $oldRoomId = $nun->room;
-    }
-    array_push($nun->move->spaces, ...$spaces);
-    $this->game->saveNuns($nuns);
 
+      if ($nun->location == $nun->pathDestination) {
+        $this->game->saveNuns($nuns);
+        return NunPathPlayerState::class;
+      }
+    }
+    $this->game->saveNuns($nuns);
     return NunMovePlayerState::class;
   }
 
@@ -173,13 +176,20 @@ class NunMovePlayerState extends GameState
     if (!$args['undo']) {
       throw new SystemException("Action undo is not possible now");
     }
+
     $nun = $this->game->getNunList()->getActiveNun();
-    $nun->location = $nun->move->start;
-    $nun->room = $this->game->board->getRoomId($nun->location);
+    $nun->location = empty($nun->move->undo) ? $nun->move->start : end($nun->move->undo);
     $nun->move->action = null;
-    $nun->move->spaces = [];
+    $nun->move->spaces = $nun->move->undo;
+    // $position = array_search($nun->move->undo, $nun->move->spaces);
+    // $this->bga->notify->all('message', 'undo position = ' . $position . ' within spaces ' . json_encode($nun->move->spaces));
+    // if ($position === false) {
+    //   throw new SystemException("Not found undo " . $nun->move->undo . " in spaces " . json_encode($nun->move->spaces));
+    // }
+    // $nun->move->spaces = array_slice($nun->move->spaces, 0, $position + 1);
     $this->game->saveNun($nun);
-    $this->bga->notify->all('nunMove', clienttranslate('${roleName} ${player_name} undo'), [
+
+    $this->bga->notify->all('nunMove', clienttranslate('${roleName} ${player_name} returns to ${location} (undo)'), [
       'i18n' => ['roleName'],
       'preserve' => ['role'],
       'location' => $nun->location,

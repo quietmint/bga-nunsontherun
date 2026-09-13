@@ -1,10 +1,22 @@
+.notr-center {
+  text-align: center;
+}
+
 .notr-path-image {
   aspect-ratio: 1;
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
 
-  &.notr-notify {
+  .action-button & {
+    width: 175px;
+  }
+
+  .dijitTooltip & {
+    width: 450px;
+  }
+
+  .log & {
     margin-top: 8px;
   }
 

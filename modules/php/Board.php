@@ -428,6 +428,11 @@ class Board
 
 	public function getNovicePossibleNoise(Novice $novice, NunList $nuns): array
 	{
+		// Caught novices make no noise
+		if ($novice->caught) {
+			return [];
+		}
+
 		// Check each nun's hearing
 		$nunHearing = [];
 		$traverse = $this->traverse($novice->location, 0, $novice->move->noiseTotal, TRAVERSE_ZERO);
@@ -563,12 +568,34 @@ class Board
 			foreach (['repeat-1', 'repeat-2'] as $pathId) {
 				if (array_key_exists($pathId, $possible)) {
 					$possible[$pathId] = $this->paths[$nun->path];
+					$possible[$pathId]['path'] = $nun->path;
 					$otherId = $pathId == 'repeat-1' ? 'repeat-2' : 'repeat-1';
 					unset($possible[$otherId]);
 					break;
 				}
 			}
 		}
+
+		// Add origin and destination
+		foreach ($possible as $pathId => &$path) {
+			$spaces = $path['spaces'];
+			if (!array_key_exists('path', $path)) {
+				$path['path'] = $pathId;
+			}
+			$path['origin'] = $spaces[0];
+			$path['destination'] = end($spaces);
+			if ($nun->location == $path['destination']) {
+				$path['origin'] = $path['destination'];
+				$path['destination'] = $spaces[0];
+			}
+		}
+
+		// Sort by destination, color
+		uasort($possible, function ($a, $b) {
+			return ($a['destination'] <=> $b['destination'])
+				?? ($a['color'] <=> $b['color']);
+		});
+
 		return $possible;
 	}
 

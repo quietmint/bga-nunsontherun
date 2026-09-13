@@ -25,12 +25,11 @@ class NunNoiseGameState extends GameState
     $nuns = $this->game->getNunList();
     foreach ($nuns as &$nun) {
       if ($nun->move->action == 'walk' && is_null($nun->move->noiseRoll)) {
-        $nun->move->active = true;
         NunRollPlayerState::nunRoll($this->game, $nun);
         $this->gamestate->changeActivePlayer($nun->playerId);
         return NunRollPlayerState::class;
       }
     }
-    return EndRoundGameState::class;
+    return NextRoundGameState::class;
   }
 }

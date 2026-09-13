@@ -19,6 +19,54 @@ class Novice
 	public int $startLocation;
 	public string $wish;
 
+	public ?int $keyLocation {
+		&get {
+			$keyLocation = null;
+			if ($this->wish == 'dessert') {
+				$keyLocation = 36;
+			} else if ($this->wish == 'game') {
+				$keyLocation = 67;
+			} else if ($this->wish == 'letter') {
+				$keyLocation = 72;
+			} else if ($this->wish == 'magazine') {
+				$keyLocation = 107;
+			} else if ($this->wish == 'makeup') {
+				$keyLocation = 130;
+			} else if ($this->wish == 'perfume') {
+				$keyLocation = 149;
+			} else if ($this->wish == 'phone') {
+				$keyLocation = 82;
+			} else if ($this->wish == 'wine') {
+				$keyLocation = 36;
+			}
+			return $keyLocation;
+		}
+	}
+
+	public ?int $wishLocation {
+		&get {
+			$wishLocation = null;
+			if ($this->wish == 'dessert') {
+				$wishLocation = 148;
+			} else if ($this->wish == 'game') {
+				$wishLocation = 109;
+			} else if ($this->wish == 'letter') {
+				$wishLocation = 110;
+			} else if ($this->wish == 'magazine') {
+				$wishLocation = 119;
+			} else if ($this->wish == 'makeup') {
+				$wishLocation = 121;
+			} else if ($this->wish == 'perfume') {
+				$wishLocation = 121;
+			} else if ($this->wish == 'phone') {
+				$wishLocation = 118;
+			} else if ($this->wish == 'wine') {
+				$wishLocation = 155;
+			}
+			return $wishLocation;
+		}
+	}
+
 	public function __construct(?\stdClass $data = null)
 	{
 		if ($data != null) {
@@ -42,53 +90,5 @@ class Novice
 	public function __toString()
 	{
 		return 'Novice(' . $this->playerId . ')';
-	}
-
-	public function getKeyLocation(): ?int
-	{
-		switch ($this->wish) {
-			case 'dessert':
-				return 36;
-			case 'game':
-				return 67;
-			case 'letter':
-				return 72;
-			case 'magazine':
-				return 107;
-			case 'makeup':
-				return 130;
-			case 'perfume':
-				return 149;
-			case 'phone':
-				return 82;
-			case 'wine':
-				return 36;
-			default:
-				return null;
-		}
-	}
-
-	public function getWishLocation(): ?int
-	{
-		switch ($this->wish) {
-			case 'dessert':
-				return 148;
-			case 'game':
-				return 109;
-			case 'letter':
-				return 110;
-			case 'magazine':
-				return 119;
-			case 'makeup':
-				return 121;
-			case 'perfume':
-				return 121;
-			case 'phone':
-				return 118;
-			case 'wine':
-				return 155;
-			default:
-				return null;
-		}
 	}
 }

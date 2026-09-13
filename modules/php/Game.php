@@ -126,6 +126,7 @@ class Game extends \Bga\GameFramework\Table
       'nuns' => $nuns->getAllDatas($currentPlayerId, $state),
       'players' => $this->getCollectionFromDb('SELECT `player_id` AS `id`, `player_score` AS `score`, `colorName` FROM `player`'),
       'round' => $this->getRound(),
+      'roundMax' => 15,
     ];
     return $result;
   }
@@ -318,6 +319,8 @@ class Game extends \Bga\GameFramework\Table
       $novice->room = $this->board->getRoomId($novice->location);
       $novice->startLocation = $novice->location;
       $novice->wish = array_shift($wishes);
+      $novice->move = new Move();
+      $novice->move->start = $novice->location;
       $novices->add($novice);
       $this->bga->notify->all(
         'message',
@@ -336,7 +339,7 @@ class Game extends \Bga\GameFramework\Table
         clienttranslate('Your secret wish is ${wish}'),
         [
           'i18n' => ['wish'],
-          'keyLocation' => $novice->getKeyLocation(),
+          'keyLocation' => $novice->keyLocation,
           'preserve' => [
             'keyLocation',
             'wishIcon',
@@ -344,11 +347,11 @@ class Game extends \Bga\GameFramework\Table
           ],
           'wish' => $novice->wish,
           'wishIcon' => $novice->wish,
-          'wishLocation' => $novice->getWishLocation(),
+          'wishLocation' => $novice->wishLocation,
         ]
       );
       $this->bga->playerStats->set('caughtTimes', 0, $playerId);
-      $this->bga->playerStats->set('keyLocation', $novice->getKeyLocation(), $playerId);
+      $this->bga->playerStats->set('keyLocation', $novice->keyLocation, $playerId);
       $this->bga->playerStats->set('keyObtained', 0, $playerId);
       $this->bga->playerStats->set('role', 0, $playerId);
       $this->bga->playerStats->set('runMove', 0, $playerId);
@@ -357,7 +360,7 @@ class Game extends \Bga\GameFramework\Table
       $this->bga->playerStats->set('standMove', 0, $playerId);
       $this->bga->playerStats->set('startLocation', $novice->location, $playerId);
       $this->bga->playerStats->set('walkMove', 0, $playerId);
-      $this->bga->playerStats->set('wishLocation', $novice->getKeyLocation(), $playerId);
+      $this->bga->playerStats->set('wishLocation', $novice->wishLocation, $playerId);
       $this->bga->playerStats->set('wishObtained', 0, $playerId);
     }
     $this->saveNovices($novices);
@@ -390,16 +393,18 @@ class Game extends \Bga\GameFramework\Table
 
   public function incRound(): int
   {
+    $roundMax = 15;
     $this->tableStats->inc('round', 1);
     $round = $this->getRound();
-    $message = clienttranslate('Round ${round} of 15');
-    if ($round == 15) {
-      $message = clienttranslate('Round ${round} of 15. The novices are out of time!');
-    } else if ($round == 14) {
-      $message = clienttranslate('Round ${round} of 15. This is the final round!');
+    $message = clienttranslate('Round ${round} of ${roundMax}');
+    if ($round == $roundMax) {
+      $message = clienttranslate('Round ${round} of ${roundMax}. The novices are out of time!');
+    } else if ($round == $roundMax - 1) {
+      $message = clienttranslate('Round ${round} of ${roundMax}. This is the final round!');
     }
     $this->bga->notify->all('round', $message, [
-      'round' => $round
+      'round' => $round,
+      'roundMax' => $roundMax,
     ]);
     return $round;
   }

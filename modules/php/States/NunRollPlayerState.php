@@ -28,6 +28,7 @@ class NunRollPlayerState extends GameState
 
   public static function nunRoll(Game $game, Nun $nun)
   {
+    $nun->move->active = true;
     $nun->move->noiseRoll = \bga_rand(1, 6);
     $nun->move->noiseTotal = $nun->move->noiseRoll;
     $game->saveNun($nun);
@@ -49,6 +50,8 @@ class NunRollPlayerState extends GameState
     return [
       'i18n' => ['roleName'],
       'noise' => $nun->move->noiseTotal,
+      'player_id' => $nun->playerId,
+      'player_name' => $nun->playerName,
       'role' => $nun->role,
       'roleName' => $nun->roleName,
       'roll' => $nun->move->noiseRoll,

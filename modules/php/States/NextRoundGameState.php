@@ -7,8 +7,9 @@ namespace Bga\Games\NunsOnTheRun\States;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
+use Bga\Games\NunsOnTheRun\Move;
 
-class EndRoundGameState extends \Bga\GameFramework\States\GameState
+class NextRoundGameState extends \Bga\GameFramework\States\GameState
 {
   function __construct(
     protected Game $game,
@@ -47,6 +48,7 @@ class EndRoundGameState extends \Bga\GameFramework\States\GameState
     foreach ($nuns as &$nun) {
       if ($nun->move != null) {
         $nun->move->active = false;
+        $nun->move->undo = null;
         $nun->moves[] = $nun->move;
       }
       $nun->move = null;
@@ -54,10 +56,13 @@ class EndRoundGameState extends \Bga\GameFramework\States\GameState
     $this->game->saveNuns($nuns);
     $novices = $this->game->getNoviceList();
     foreach ($novices as &$novice) {
+      $oldMove = $novice->move;
       if ($novice->move != null) {
-        $novice->moves[] = $novice->move;
+        $novice->moves[] = $oldMove;
       }
-      $novice->move = null;
+      $novice->move = new Move();
+      $novice->move->start = $novice->location;
+      $novice->move->noiseTokens = array_diff($oldMove->noiseTokens, ['novice']);
     }
     $this->game->saveNovices($novices);
 

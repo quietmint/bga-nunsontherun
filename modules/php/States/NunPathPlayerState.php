@@ -56,6 +56,7 @@ class NunPathPlayerState extends GameState
       $destination = $spaces[0];
     }
     $nun->path = $path;
+    $nun->paths[] = $path;
     $nun->pathColor = $color;
     $nun->pathOrigin = $origin;
     $nun->pathDestination = $destination;

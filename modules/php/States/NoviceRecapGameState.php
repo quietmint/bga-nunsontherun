@@ -54,21 +54,12 @@ class NoviceRecapGameState extends GameState
 			foreach ($novice->move->spaces as $spaceId) {
 				$visible = $nuns->isRoomVisible($this->game->board->getRoomId($spaceId));
 				if ($visible) {
-					if (!$oldVisible) {
-						$this->bga->notify->all('noviceRecap', clienttranslate('${player_name} is visible at ${location}'), [
-							'preserve' => ['player_id', 'recap'],
-							'location' => $spaceId,
-							'player_id' => $novice->playerId,
-							'player_name' => $novice->playerName,
-							'recap' => true,
-						]);
-					}
-					$this->bga->notify->all('noviceMove', clienttranslate('${player_name} moves to ${location}'), [
+					$this->bga->notify->all('noviceMove', clienttranslate('${player_name} is visible at ${visibleLocation}'), [
 						'preserve' => ['player_id', 'recap'],
-						'location' => $spaceId,
 						'player_id' => $novice->playerId,
 						'player_name' => $novice->playerName,
 						'recap' => true,
+						'visibleLocation' => $spaceId,
 					]);
 				} else if ($oldVisible) {
 					$this->bga->notify->all('noviceVanish', clienttranslate('${player_name} vanishes at ${vanishLocation}'), [

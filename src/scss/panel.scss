@@ -37,3 +37,13 @@
     grid-area: wish;
   }
 }
+
+.notr-panel-nun {
+  background: rgb(0 0 0 / 15%);
+  padding: 5px;
+  margin-top: 5px;
+
+  .notr-panel-title {
+    font-weight: bold;
+  }
+}

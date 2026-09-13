@@ -70,6 +70,7 @@ class NunChoiceMultiState extends GameState
     $nun->move->active = true;
     $nun->move->deviate = $this->game->board->getNunDeviate($nun, $novices);
     $nun->move->start = $nun->location;
+    $nun->move->undo = [];
     $this->game->saveNun($nun);
 
     $this->bga->notify->all('message', clienttranslate('${roleName} ${player_name} activates'), [
@@ -81,7 +82,11 @@ class NunChoiceMultiState extends GameState
     ]);
 
     $this->gamestate->changeActivePlayer($nun->playerId);
-    $this->gamestate->setAllPlayersNonMultiactive(NunPathPlayerState::class);
+    if ($nun->path == null) {
+      $this->gamestate->setAllPlayersNonMultiactive(NunPathPlayerState::class);
+    } else {
+      $this->gamestate->setAllPlayersNonMultiactive(NunMovePlayerState::class);
+    }
   }
 
   /**

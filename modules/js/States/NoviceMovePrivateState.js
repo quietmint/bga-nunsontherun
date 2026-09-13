@@ -6,6 +6,7 @@ export class NoviceMovePrivateState {
 
   onEnteringState(args, isCurrentPlayerActive) {
     if (isCurrentPlayerActive) {
+      const novice = this.game.getNovice();
       // Actions
       for (const action in args.actions) {
         const info = args.actions[action];
@@ -33,20 +34,50 @@ export class NoviceMovePrivateState {
       for (const i in args.possible) {
         const move = args.possible[i];
         const action = move.actions[0];
-        boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${move.location}" class="notr-possible notr-possible-${action} notr-${move.location}">${move.distance}</div>`);
+        let str = move.distance;
+        if (!novice.hasKey && move.location == novice.keyLocation) {
+          str = `<span class="notr-icon notr-icon-key"></span>`;
+        } else if (!novice.hasWish && move.location == novice.wishLocation) {
+          str = `<span class="notr-icon notr-icon-wish"></span>`;
+        }
+        boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${move.location}" class="notr-possible notr-possible-${action} notr-${move.location}">${str}</div>`);
         const el = document.getElementById(`notr-possible-${move.location}`);
-        el.addEventListener("click", () => this.bga.actions.performAction("actMove", { location: move.location }));
+        el.addEventListener("click", () => {
+          let dialog = null;
+          console.log("novice.location", novice.location, "novice.keyLocation", novice.keyLocation, "novice.wishLocation", novice.wishLocation);
+          if (!novice.hasKey && novice.location == novice.keyLocation) {
+            dialog = this.bga.gameui.format_string(
+              _("If you keep moving, you won't pick up your key at ${keyLocation}."),
+              this.game.bgaFormatText("", {
+                keyLocation: novice.keyLocation,
+              }).args,
+            );
+          } else if (!novice.hasWish && novice.location == novice.wishLocation) {
+            dialog = this.bga.gameui.format_string(
+              _("If you keep moving, you won't pick up your secret wish at ${wishLocation}."),
+              this.game.bgaFormatText("", {
+                wishLocation: novice.wishLocation,
+              }),
+            );
+          }
+          if (dialog) {
+            this.bga.dialogs.confirmation(dialog).then((result) => {
+              if (result) {
+                this.bga.actions.performAction("actMove", { location: move.location });
+              }
+            });
+          } else {
+            this.bga.actions.performAction("actMove", { location: move.location });
+          }
+        });
       }
     }
   }
 
   onLeavingState(args, isCurrentPlayerActive) {
-    // Cleanup board possible moves
     const boardEl = document.getElementById("notr-board");
     for (const el of boardEl.querySelectorAll(".notr-possible")) {
       el.remove();
     }
   }
-
-  onPlayerActivationChange(args, isCurrentPlayerActive) {}
 }
