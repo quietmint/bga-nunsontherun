@@ -25,6 +25,9 @@ export class NunMovePlayerState {
           { disabled: info.disabled },
         );
       }
+      if (args.blessing == "move") {
+        this.bga.statusBar.addActionButton(_("Blessing: +1"), () => this.bga.actions.performAction("actBlessingMove"), { color: "secondary" });
+      }
       if (args.undo) {
         this.bga.statusBar.addActionButton(_("Undo"), () => this.bga.actions.performAction("actUndo"), { color: "secondary" });
       }

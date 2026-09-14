@@ -41,14 +41,16 @@ class NoviceRecapGameState extends GameState
 					$message = clienttranslate('${player_name} runs');
 					break;
 			}
-			$this->bga->notify->all('noviceRecap', $message, [
-				'preserve' => ['player_id', 'recap'],
+			$this->bga->notify->all('noviceAction', $message, [
+				'preserve' => ['action', 'actionName', 'player_id', 'recap'],
+				'action' => $novice->move->action,
+				'actionName' => $novice->move->actionName,
 				'player_id' => $novice->playerId,
 				'player_name' => $novice->playerName,
 				'recap' => true,
 			]);
 
-			// Notify when the novice appears/vanishes
+			// Notify when the novice is visible/vanishes
 			$oldSpaceId = $novice->move->start;
 			$oldVisible = $nuns->isRoomVisible($this->game->board->getRoomId($novice->location));
 			foreach ($novice->move->spaces as $spaceId) {
@@ -74,42 +76,54 @@ class NoviceRecapGameState extends GameState
 				$oldVisible = $visible;
 			}
 
-			// Notify blessing
-			// TODO!
-			if (false) {
-				$this->bga->notify->all('blessing', clienttranslate('${player_name} uses a blessing to make less noise'), [
-					'preserve' => ['player_id', 'recap'],
-					'player_id' => $novice->playerId,
-					'player_name' => $novice->playerName,
-					'recap' => true,
-				]);
-
-				$this->bga->notify->all('blessing', clienttranslate('${player_name} uses a blessing to reroll'), [
-					'preserve' => ['player_id', 'recap'],
-					'player_id' => $novice->playerId,
-					'player_name' => $novice->playerName,
-					'recap' => true,
-				]);
-			}
-
-			// Notify noise
-			$this->bga->notify->all('noviceRoll', clienttranslate('${player_name} rolls ${roll} and makes noise ${noiseTotal} spaces away'), [
-				'preserve' => ['player_id', 'recap'],
-				'noiseTotal' => $novice->move->noiseTotal,
-				'player_id' => $novice->playerId,
-				'player_name' => $novice->playerName,
-				'recap' => true,
-				'roll' => $novice->move->noiseRoll,
-			]);
-			if (!empty($novice->move->noiseTokens)) {
-				foreach ($novice->move->noiseTokens as $noiseLocation => $x) {
-					$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
-						'preserve' => ['player_id', 'recap'],
-						'noiseLocation' => $noiseLocation,
+			if ($novice->move->caught) {
+				if (!$novice->caught) {
+					$this->bga->notify->all('noviceCaught', clienttranslate('${player_name} is back on the run'), [
+						'preserve' => ['caught', 'player_id', 'recap'],
+						'caught' => $novice->caught,
 						'player_id' => $novice->playerId,
 						'player_name' => $novice->playerName,
 						'recap' => true,
 					]);
+				}
+			} else {
+				// Notify blessing
+				// TODO!
+				if ($novice->move->blessing) {
+					$this->bga->notify->all('blessing', clienttranslate('${player_name} uses a blessing to make less noise'), [
+						'preserve' => ['player_id', 'recap'],
+						'player_id' => $novice->playerId,
+						'player_name' => $novice->playerName,
+						'recap' => true,
+					]);
+
+					$this->bga->notify->all('blessing', clienttranslate('${player_name} uses a blessing to reroll'), [
+						'preserve' => ['player_id', 'recap'],
+						'player_id' => $novice->playerId,
+						'player_name' => $novice->playerName,
+						'recap' => true,
+					]);
+				}
+
+				// Notify noise
+				$this->bga->notify->all('noviceRoll', clienttranslate('${player_name} rolls ${roll} and makes noise ${noiseTotal} spaces away'), [
+					'preserve' => ['player_id', 'recap'],
+					'noiseTotal' => $novice->move->noiseTotal,
+					'player_id' => $novice->playerId,
+					'player_name' => $novice->playerName,
+					'recap' => true,
+					'roll' => $novice->move->noiseRoll,
+				]);
+				if (!empty($novice->move->noiseTokens)) {
+					foreach ($novice->move->noiseTokens as $noiseLocation) {
+						$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
+							'preserve' => ['player_id', 'recap'],
+							'noiseLocation' => $noiseLocation,
+							'player_id' => $novice->playerId,
+							'player_name' => $novice->playerName,
+							'recap' => true,
+						]);
+					}
 				}
 			}
 		}

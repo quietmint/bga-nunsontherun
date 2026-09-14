@@ -23,9 +23,8 @@ class NunRecapGameState extends GameState
 
 	public function onEnteringState()
 	{
-		$nun = $this->game->getNunList()->getActiveNun();
 		$novices = $this->game->getNoviceList();
-		foreach ($novices as &$novice) {
+		foreach ($novices as $novice) {
 			// Notify blessing
 			// TODO!
 			if (false) {
@@ -43,19 +42,19 @@ class NunRecapGameState extends GameState
 					'recap' => true,
 				]);
 			}
+		}
 
-			if (!empty($novice->move->noiseTokens)) {
-				foreach ($novice->move->noiseTokens as $noiseLocation => $role) {
-					if ($role == $nun->role) {
-						$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
-							'preserve' => ['player_id', 'recap'],
-							'noiseLocation' => $noiseLocation,
-							'player_id' => $novice->playerId,
-							'player_name' => $novice->playerName,
-							'recap' => true,
-						]);
-					}
-				}
+		$nun = $this->game->getNunList()->getActiveNun();
+		if (!empty($nun->noiseTokens)) {
+			foreach ($nun->noiseTokens as $playerId => $noiseLocation) {
+				$novice = $novices->get($playerId);
+				$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
+					'preserve' => ['player_id', 'recap'],
+					'noiseLocation' => $noiseLocation,
+					'player_id' => $novice->playerId,
+					'player_name' => $novice->playerName,
+					'recap' => true,
+				]);
 			}
 		}
 		$nun->move->active = false;

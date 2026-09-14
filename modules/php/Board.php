@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Bga\Games\NunsOnTheRun;
 
+use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\SystemException;
 
 const TRAVERSE_UNLOCKED = 1;
 const TRAVERSE_SINGLE_ROOM = 2;
 const TRAVERSE_ZERO = 4;
+const TRAVERSE_TARGET = 8;
 
 class Board
 {
@@ -407,17 +409,25 @@ class Board
 
 	public function getNovicePossibleMoves(Novice $novice, NunList $nuns, int $round): array
 	{
+		$actions = $this->getNoviceActions($novice, $round);
 		$distance = count($novice->move->spaces);
-		$maxDistance = $round == 1 ? 10 : 5;
-		$flags = $novice->hasKey ? 0 : TRAVERSE_UNLOCKED;
-		$impassable = [];
-		foreach ($nuns as $nun) {
-			$impassable[$nun->location] = true;
+		if ($novice->caught) {
+			$possible = $this->traverse($novice->location, $distance, 20, TRAVERSE_TARGET, [$novice->startLocation => true]);
+			$this->game->debug("caught traverse from location " . $novice->location . " to start location " . $novice->startLocation . ": " . json_encode($possible) . " // ");
+		} else {
+			$maxDistance = $round == 1 ? 10 : 5;
+			$flags = $novice->hasKey ? 0 : TRAVERSE_UNLOCKED;
+			$targets = [];
+			foreach ($nuns as $nun) {
+				$targets[$nun->location] = true;
+			}
+			$possible = $this->traverse($novice->location, $distance, $maxDistance, $flags, $targets);
 		}
-		$possible = $this->traverse($novice->location, $distance, $maxDistance, $flags, $impassable);
-		$actions = $this->getNoviceActions($round);
 		foreach ($possible as $location => &$p) {
 			$p->actions = $this->getActionsForDistance($actions, $p->distance);
+			if ($novice->caught && $location == $novice->startLocation && $p->distance < 3 && empty($p->actions)) {
+				$p->actions = ['walk'];
+			}
 			if (empty($p->actions)) {
 				// Ignore impossible moves (distance = 1 on round = 1)
 				unset($possible[$location]);
@@ -430,6 +440,11 @@ class Board
 	{
 		// Caught novices make no noise
 		if ($novice->caught) {
+			return [];
+		}
+
+		$nunMode = count($nuns) == 1;
+		if ($nunMode && array_key_exists($novice->playerId, $nuns->getActiveNun()->noiseTokens)) {
 			return [];
 		}
 
@@ -457,9 +472,9 @@ class Board
 		}
 
 		// Check existing noise tokens
-		if (!empty($novice->move->noiseTokens)) {
-			foreach ($novice->move->noiseTokens as $locationId => $x) {
-				foreach ($nunHearing as $role => $y) {
+		if (!$nunMode && !empty($novice->move->noiseTokens)) {
+			foreach ($novice->move->noiseTokens as $locationId) {
+				foreach ($nunHearing as $role => $x) {
 					if (array_key_exists($locationId, $nunHearing[$role])) {
 						unset($nunHearing[$role]);
 					}
@@ -477,14 +492,14 @@ class Board
 		return $possible;
 	}
 
-	public function getNoviceActions(int $round): array
+	public function getNoviceActions(Novice $novice, int $round): array
 	{
 		// TODO: game option
 		// "If the novices are winning too easily, you can give them a handicap. In the
 		// first round, the novices may only move once (instead of the usual two times)."
 
 		$multi = $round == 1 ? 2 : 1;
-		return [
+		$actions = [
 			'stand' => [
 				'min' => 0,
 				'max' => 0,
@@ -510,6 +525,10 @@ class Board
 				'noise' => 1,
 			],
 		];
+		if ($novice->caught) {
+			$actions = array_intersect_key($actions, ['walk' => true]);
+		}
+		return $actions;
 	}
 
 	public function getNunActions(): array
@@ -605,11 +624,6 @@ class Board
 		$maxDistance = 6;
 
 		$possible = $this->traverse($nun->location, $distance, $maxDistance, TRAVERSE_SINGLE_ROOM);
-		$actions = $this->getNunActions();
-		foreach ($possible as $location => &$p) {
-			$p->actions = $this->getActionsForDistance($actions, $p->distance);
-		}
-
 		if (!$nun->move->deviate) {
 			// Get the nun's path, with the destination at the end
 			$pathSpaces = $this->paths[$nun->path]['spaces'];
@@ -622,22 +636,17 @@ class Board
 			if ($onPath === false) {
 				// Nun has left the path
 				// Find the closest path space
-				$traverse = $this->traverse($nun->location, 0, $maxDistance);
-				$pathDistance = [];
-				foreach ($pathSpaces as $pathSpace) {
-					if (array_key_exists($pathSpace, $traverse)) {
-						$pathDistance[$pathSpace] = $traverse[$pathSpace]->distance;
-					}
+				$this->game->debug("$nun path: " . json_encode($pathSpaces) . " // ");
+				$this->game->debug("$nun path flip: " . json_encode(array_flip($pathSpaces)) . " // ");
+				$traverse = $this->traverse($nun->location, 0, 20, TRAVERSE_TARGET, array_flip($pathSpaces));
+				$this->game->debug("$nun traverse target to path: " . json_encode($traverse) . " // ");
+				if (!empty($traverse)) {
+					$this->game->debug("$nun possible normal: " . json_encode($possible) . " // ");
+					$possible = array_intersect_key($possible, $traverse);
+					$this->game->debug("$nun possible intersect: " . json_encode($possible) . " // ");
+				} else {
+					throw new SystemException("$nun has left the path and has no way back!");
 				}
-				if (!empty($pathDistance)) {
-					$min = min($pathDistance);
-					foreach ($pathDistance as $pathSpace => $distance) {
-						if ($distance > $min) {
-							unset($pathDistance[$pathSpace]);
-						}
-					}
-				}
-				$this->game->debug("Nun $nun closest path spaces: " . json_encode($pathDistance) . " // ");
 			} else {
 				// Nun is on the path
 				// Ignore prior path spaces
@@ -648,6 +657,11 @@ class Board
 					}
 				}
 			}
+
+			$actions = $this->getNunActions();
+			foreach ($possible as $location => &$p) {
+				$p->actions = $this->getActionsForDistance($actions, $p->distance);
+			}
 		}
 
 		return $possible;
@@ -655,33 +669,46 @@ class Board
 
 	public function getNunDeviate(Nun $nun, NoviceList $novices): bool
 	{
+		// https://boardgamegeek.com/thread/3764004/continue-movement-after-catching-a-novice-return-t
+		// "after a catch, the nun must use the remaining dots to return to the assigned route"
+		// (unless she still sees an uncaught novice)
+		$start = empty($nun->move->spaces);
+
 		// A nun can leave the path if:
 		$neighbors = array_keys($this->spaces[$nun->location]->neighbors);
 		$this->game->debug('getNunDeviate neighbors: ' . json_encode($neighbors) . ', nun room: ' . $nun->room . ' // ');
+
+		// A nun noise token is adjacent (at start of turn)
+		if ($start && !empty($nun->noiseTokens) && array_intersect($nun->noiseTokens, $neighbors)) {
+			$this->game->debug('getNunDeviate: nun noiseToken is adjacent // ');
+			return true;
+		}
+
 		foreach ($novices as $novice) {
-			// A novice is in this room
-			if ($novice->room == $nun->room) {
+			// An uncaught novice is in this room (at any time)
+			if (!$novice->caught && $novice->room == $nun->room) {
 				$this->game->debug('getNunDeviate: novice ' . $novice->playerId . ' is in the room // ');
 				return true;
 			}
 
-			// A vanish token is in this room
-			if (!empty($novice->move->vanishTokens) && !empty(array_intersect($novice->move->vanishTokens, [$nun->room]))) {
+			// A novice vanish token is in this room (at start of turn)
+			if ($start && !empty($novice->move->vanishTokens) && !empty(array_intersect($novice->move->vanishTokens, [$nun->room]))) {
 				$this->game->debug('getNunDeviate: vanishToken ' . $novice->playerId . ' is in the room // ');
 				return true;
 			}
 
-			// A noise token is adjacent
-			if (!empty($novice->move->noiseTokens) && !empty(array_intersect(array_keys($novice->move->noiseTokens), $neighbors))) {
+			// A novice noise token is adjacent (at start of turn)
+			if ($start && !empty($novice->move->noiseTokens) && !empty(array_intersect($novice->move->noiseTokens, $neighbors))) {
 				$this->game->debug('getNunDeviate: noiseToken ' . $novice->playerId . ' is adjacent // ');
 				return true;
 			}
 		}
+
 		// Otherwise, the nun must follow the path 
 		return false;
 	}
 
-	private function traverse(int $start, int $distance, int $maxDistance, int $flags = 0, array $impassable = []): array
+	private function traverse(int $start, int $distance, int $maxDistance, int $flags = 0, array $targets = []): array
 	{
 		$possible = [];
 		if ($maxDistance <= 0) {
@@ -717,9 +744,14 @@ class Board
 						// Ignore locked doors
 						continue;
 					}
-					if (array_key_exists($neighborId, $impassable)) {
-						// Ignore impassable spaces
-						continue;
+					if (array_key_exists($neighborId, $targets)) {
+						// Ignore target spaces
+						if ($flags & TRAVERSE_TARGET) {
+							$maxDistance = min($distance + 1, $maxDistance);
+							$this->game->debug("TRAVERSE_TARGET got to $neighborId in maxDistance = $maxDistance via " . json_encode($move->spaces) . " // ");
+						} else {
+							continue;
+						}
 					}
 					if ($flags & TRAVERSE_SINGLE_ROOM && $room != $startRoom) {
 						// Ignore new rooms
@@ -732,6 +764,19 @@ class Board
 		}
 		if (!($flags & TRAVERSE_ZERO)) {
 			unset($possible[$start]);
+		}
+		if ($flags & TRAVERSE_TARGET) {
+			$this->game->debug('TRAVERSE_TARGET possible = ' . json_encode($possible) . ' // ');
+			$keeps = [];
+			foreach ($targets as $target => $x) {
+				$keeps[] = $target;
+				if (array_key_exists($target, $possible)) {
+					array_push($keeps, ...$possible[$target]->spaces);
+				}
+			}
+			$keeps = array_flip($keeps);
+			$this->game->debug('TRAVERSE_TARGET keeps = ' . json_encode($keeps) . ' // ');
+			$possible = array_intersect_key($possible, $keeps);
 		}
 		return $possible;
 	}

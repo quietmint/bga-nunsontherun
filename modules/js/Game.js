@@ -8,13 +8,14 @@
  * -----
  */
 
-import { NoviceTurnMultiState } from "./States/NoviceTurnMultiState.js";
+import { NoviceCaughtPrivateState } from "./States/NoviceCaughtPrivateState.js";
 import { NoviceMovePrivateState } from "./States/NoviceMovePrivateState.js";
 import { NoviceNoisePrivateState } from "./States/NoviceNoisePrivateState.js";
 import { NoviceRollPrivateState } from "./States/NoviceRollPrivateState.js";
+import { NoviceTurnMultiState } from "./States/NoviceTurnMultiState.js";
 import { NunChoiceMultiState } from "./States/NunChoiceMultiState.js";
-import { NunPathPlayerState } from "./States/NunPathPlayerState.js";
 import { NunMovePlayerState } from "./States/NunMovePlayerState.js";
+import { NunPathPlayerState } from "./States/NunPathPlayerState.js";
 import { NunRollPlayerState } from "./States/NunRollPlayerState.js";
 
 export class Game {
@@ -22,17 +23,18 @@ export class Game {
     console.log("Nuns on the Run!");
     this.bga = bga;
     this.bga.states.logger = console.log;
-    this.bga.states.register("NoviceTurnMultiState", new NoviceTurnMultiState(this, bga));
+    this.bga.states.register("NoviceCaughtPrivateState", new NoviceCaughtPrivateState(this, bga));
     this.bga.states.register("NoviceMovePrivateState", new NoviceMovePrivateState(this, bga));
-    this.bga.states.register("NoviceRollPrivateState", new NoviceRollPrivateState(this, bga));
-    this.bga.states.register("NoviceOwnNoisePrivateState", new NoviceNoisePrivateState(this, bga));
     this.bga.states.register("NoviceNunNoisePrivateState", new NoviceNoisePrivateState(this, bga));
+    this.bga.states.register("NoviceOwnNoisePrivateState", new NoviceNoisePrivateState(this, bga));
+    this.bga.states.register("NoviceRollPrivateState", new NoviceRollPrivateState(this, bga));
+    this.bga.states.register("NoviceTurnMultiState", new NoviceTurnMultiState(this, bga));
     this.bga.states.register("NunChoiceMultiState", new NunChoiceMultiState(this, bga));
-    this.bga.states.register("NunPathPlayerState", new NunPathPlayerState(this, bga));
     this.bga.states.register("NunMovePlayerState", new NunMovePlayerState(this, bga));
+    this.bga.states.register("NunPathPlayerState", new NunPathPlayerState(this, bga));
     this.bga.states.register("NunRollPlayerState", new NunRollPlayerState(this, bga));
 
-    this.classLocations = [];
+    this.classLocations = ["notr-offset"];
     for (let i = 1; i <= 155; i++) {
       this.classLocations.push("notr-" + i);
     }
@@ -81,10 +83,26 @@ export class Game {
     this.bga.gameArea.getElement().insertAdjacentHTML("beforeend", `<div id="notr-board"></div>`);
     const boardEl = document.getElementById("notr-board");
     const playerId = this.bga.players.getCurrentPlayerId();
+
+    // Novices
     Object.values(this.gamedatas.novices).forEach((novice) => {
-      boardEl.insertAdjacentHTML("beforeend", `<div id="notr-novice-${novice.playerId}" class="notr-player notr-${novice.color} notr-${novice.location}" style="background-image: url(${novice.avatarUrl})" title="${novice.playerName}"></div>`);
+      boardEl.insertAdjacentHTML("beforeend", `<div id="notr-novice-${novice.playerId}" class="notr-player notr-player-${novice.color} notr-${novice.location}" title="${novice.playerName}"></div>`);
+      this.playerOffset(boardEl, novice.location);
+      if (novice.playerId == playerId) {
+        document.getElementById(`notr-novice-${novice.playerId}`).classList.add("notr-player-me");
+        this.addMyStart(boardEl, novice);
+        if (!novice.hasKey) {
+          this.addMyKey(boardEl, novice);
+        }
+        if (!novice.hasWish) {
+          this.addMyWish(boardEl, novice);
+        }
+      }
+
       if (novice.move && novice.move.noiseTokens) {
-        for (let location in novice.move.noiseTokens) {
+        console.log("novice noiseTokens", novice.move.noiseTokens);
+        for (let location of novice.move.noiseTokens) {
+          console.log("novice noiseToken location", location);
           this.addNoviceNoise(novice, location);
         }
       }
@@ -93,64 +111,82 @@ export class Game {
           this.addNoviceVanish(novice, location);
         }
       }
-      if (novice.playerId == playerId) {
-        boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-bed" class="notr-my notr-${novice.color} notr-${novice.startLocation}"><span class="notr-icon notr-icon-bed"></span></div>`);
-        if (!novice.hasKey) {
-          boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-key" class="notr-my notr-${novice.color} notr-${novice.keyLocation}"><span class="notr-icon notr-icon-key"></span></div>`);
-        }
-        if (!novice.hasWish) {
-          boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-wish" class="notr-my notr-${novice.color} notr-${novice.wishLocation}"><span class="notr-icon notr-icon-wish"></span></div>`);
-        }
-      }
     });
+
+    // Nuns
     Object.values(this.gamedatas.nuns).forEach((nun) => {
       const title = this.bga.gameui.format_string(_("${roleName} ${player_name}"), {
         roleName: this.emoji(nun.role) + _(nun.roleName),
         player_name: nun.playerName,
       });
-      boardEl.insertAdjacentHTML("beforeend", `<div id="notr-nun-${nun.role}" class="notr-player notr-${nun.color} notr-${nun.location}" style="background-image: url(${nun.avatarUrl})" title="${title}"></div>`);
+      boardEl.insertAdjacentHTML("beforeend", `<div id="notr-nun-${nun.role}" class="notr-player notr-player-${nun.color} notr-${nun.location}" title="${title}"></div>`);
+      this.playerOffset(boardEl, nun.location);
+      if (nun.playerId == playerId) {
+        document.getElementById(`notr-nun-${nun.role}`).classList.add("notr-player-me");
+      }
+
+      if (nun.noiseTokens) {
+        console.log("nun noiseTokens", nun.noiseTokens);
+        for (let playerId in nun.noiseTokens) {
+          const location = nun.noiseTokens[playerId];
+          console.log("nun noiseToken", playerId, location);
+          const novice = this.getNovice(playerId);
+          this.addNoviceNoise(novice, location);
+        }
+      }
     });
   }
 
   setupPanels() {
+    // Novices
     Object.values(this.gamedatas.novices).forEach((novice) => {
       const panelEl = this.bga.playerPanels.getElement(novice.playerId);
       const statusText = novice.caught ? _("Caught") : _("On The Run");
       panelEl.insertAdjacentHTML(
         "beforeend",
-        `<div id="notr-panel-${novice.playerId}" class="notr-panel notr-${novice.color}">
-  <div id="notr-caught-${novice.playerId}" class="notr-caught notr-caught-${novice.caught}">${statusText}</div>
-  <div class="notr-move">
-    <div class="notr-move-title">${_("Movement")}</div>
-    <div class="notr-move-icon notr-move-${novice.move || "unknown"}" title="${_(novice.move || "?")}"></div>
-    <div class="notr-move-distance" title="${_("Distance")}">👣${novice.moveDistance || "?"}</div>
-    <div class="notr-move-noise" title="${_("Noise Modifier")}">🔈${novice.moveNoise || "?"}</div>
-  </div>
-  <div class="notr-wish">
-    <div class="notr-wish-title">${_("Secret Wish")}</div>
-    <div class="notr-wish-icon notr-wish-${novice.wish || "unknown"}" title="${_(novice.wish || "?")}"></div>
-    <div class="notr-wish-key" title="${_("Key")}">🔑${novice.keyLocation || "?"}</div>
-    <div class="notr-wish-loc" title="${_("Secret Wish")}">🌟${novice.wishLocation || "?"}</div>
-  </div>
+        `<div id="notr-panel-${novice.playerId}" class="notr-panel  notr-panel-novice notr-player-${novice.color}">
+  <div class="notr-portrait"></div>
+  <div id="notr-title-${novice.playerId}" class="notr-title ${novice.caught ? "notr-caught" : ""}">${statusText}</div>
+  <div class="notr-locations">
+    <div title="${_("Current Location")}"><span class="notr-icon notr-icon-location"></span><div id="notr-panel-${novice.playerId}-location">${novice.location}</div></div>
+    <div title="${_("Key Location")}"><span class="notr-icon notr-icon-key"></span><br>${novice.keyLocation || "?"}</div>
+    <div title="${_("Secret Wish Location")}"><span class="notr-icon notr-icon-wish"></span><br>${novice.wishLocation || "?"}</div>
+    <div title="${_("Start Location")}"><span class="notr-icon notr-icon-start"></span><br>${novice.startLocation}</div>
+    </div>
+  <div class="notr-label">${_("Move")}:</div>
+  <div id="notr-panel-${novice.playerId}-move">?</div>
 </div>`,
       );
+      if (novice.move && novice.move.actionName) {
+        const el = document.getElementById(`notr-panel-${novice.playerId}-move`);
+        el.innerText = _(novice.move.actionName);
+      }
     });
 
+    // Nuns
     Object.values(this.gamedatas.nuns).forEach((nun) => {
       const panelEl = this.bga.playerPanels.getElement(nun.playerId);
-      let path = "?";
-      if (nun.path) {
-        path = this.html_pathTag(nun.pathColor, nun.pathOrigin, nun.pathDestination);
-      }
       panelEl.insertAdjacentHTML(
         "beforeend",
-        `<div id="notr-panel-${nun.role}" class="notr-panel-nun notr-${nun.color}">
-  <div class="notr-panel-title">${this.emoji(nun.role)}${_(nun.roleName)}</div>
-  <div class="notr-panel-path">${_("Path")}: <span id="notr-panel-${nun.role}-path">${path}</span></div>
+        `<div id="notr-panel-${nun.role}" class="notr-panel notr-panel-nun notr-player-${nun.color}">
+  <div class="notr-portrait"></div>
+  <div class="notr-title">${this.emoji(nun.role)}${_(nun.roleName)}</div>
+  <div class="notr-locations">
+    <div title="${_("Current Location")}"><span class="notr-icon notr-icon-location"></span><div id="notr-panel-${nun.role}-location">${nun.location}</div></div>
+    <div id="notr-panel-${nun.role}-path" title="${_("Path")}">${_("No Path")}</div>
+  </div>
+  <div class="notr-label">${_("Move")}:</div>
+  <div id="notr-panel-${nun.role}-move">?</div>
 </div>`,
       );
       if (nun.path) {
-        this.bga.gameui.addTooltipHtml(`notr-panel-${nun.role}-path`, `<div class="notr-path-image notr-path-${nun.path}"></div>`);
+        const el = document.getElementById(`notr-panel-${nun.role}-path`);
+        el.innerHTML = `<span class="notr-tag notr-path-${nun.pathColor}"><span class="notr-icon notr-icon-path-${nun.pathColor}"></span></span><div>${nun.pathOrigin}▸${nun.pathDestination}</div>`;
+        this.bga.gameui.addTooltipHtml(el.id, `<div class="notr-path-image notr-path-${nun.path}"></div>`);
+      }
+      if (nun.move && nun.move.actionName) {
+        const el = document.getElementById(`notr-panel-${nun.role}-move`);
+        el.innerText = _(nun.move.actionName);
       }
     });
   }
@@ -159,6 +195,8 @@ export class Game {
     this.bga.notifications.setupPromiseNotifications({
       logger: console.log,
     });
+    this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceAction", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
+    this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceCaught", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceMove", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceNoise", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceRecap", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
@@ -178,48 +216,85 @@ export class Game {
 
   addNoviceNoise(novice, location) {
     const holderEl = this.getHolderEl(location);
-    holderEl.insertAdjacentHTML("beforeend", `<div class="notr-tag notr-${novice.color} notr-noise-${novice.playerId}" title="${novice.playerName}"><span class="notr-icon notr-icon-noise"></span></div>`);
+    holderEl.insertAdjacentHTML("beforeend", `<div class="notr-tag notr-player-${novice.color} notr-noise notr-noise-${novice.playerId}" title="${novice.playerName}"><span class="notr-icon notr-icon-noise"></span></div>`);
   }
 
   addNoviceVanish(novice, location) {
     const holderEl = this.getHolderEl(location);
-    holderEl.insertAdjacentHTML("beforeend", `<div class="notr-tag notr-${novice.color} notr-vanish-${novice.playerId}" title="${novice.playerName}"><span class="notr-icon notr-icon-vanish"></span></div>`);
+    holderEl.insertAdjacentHTML("beforeend", `<div class="notr-tag notr-player-${novice.color} notr-vanish notr-vanish-${novice.playerId}" title="${novice.playerName}"><span class="notr-icon notr-icon-vanish"></span></div>`);
+  }
+
+  async notif_clearNoise(args) {
+    console.log("doing notif_clearNoise", args);
+    let els = document.getElementsByClassName("notr-noise");
+    while (els.length > 0) {
+      els[0].remove();
+    }
+    els = document.getElementsByClassName("notr-vanish");
+    while (els.length > 0) {
+      els[0].remove();
+    }
+  }
+
+  async notif_noviceAction(args) {
+    console.log("doing notif_noviceAction", args);
+    const el = document.getElementById(`notr-panel-${args.player_id}-move`);
+    el.innerText = _(args.actionName);
   }
 
   async notif_noviceCaught(args) {
     console.log("doing notif_noviceCaught", args);
-    const novice = this.getNovice(args.player_id2);
-    novice.hasWish = false;
-    novice.caught = true;
-
-    const caughtEl = document.getElementById(`notr-caught-${args.player_id2}`);
-    caughtEl.innerText = _("Caught");
-    caughtEl.classList.remove("notr-caught-false");
-    caughtEl.classList.add("notr-caught-true");
+    const novice = this.getNovice(args.player_id2 || args.player_id);
+    const caughtEl = document.getElementById(`notr-title-${novice.playerId}`);
+    novice.caught = args.caught;
+    if (novice.caught) {
+      novice.hasWish = false;
+      this.bga.sounds.play("caught");
+      this.bga.gameui.disableNextMoveSound();
+      if (novice.playerId == this.bga.players.getCurrentPlayerId()) {
+        const myWishEl = document.getElementById("notr-my-wish");
+        if (myWishEl == null) {
+          const boardEl = document.getElementById("notr-board");
+          this.addMyWish(boardEl, novice);
+        }
+      }
+      caughtEl.innerText = _("Caught");
+      caughtEl.classList.add("notr-caught");
+    } else {
+      caughtEl.innerText = _("On The Run");
+      caughtEl.classList.remove("notr-caught");
+    }
   }
 
   async notif_noviceKey(args) {
     const novice = this.getNovice(args.player_id);
-    novice.hasKey = true;
+    novice.hasKey = args.hasKey;
   }
 
   async notif_noviceMove(args) {
     console.log("doing notif_noviceMove", args);
-    const location = args.visibleLocation || args.location;
     const novice = this.getNovice(args.player_id);
-    novice.location = location;
+    const oldLocation = novice.location;
+    novice.location = args.visibleLocation || args.location;
 
-    const noviceEl = document.getElementById("notr-novice-" + args.player_id);
+    const locationEl = document.getElementById(`notr-panel-${novice.playerId}-location`);
+    locationEl.innerText = novice.location;
+    const noviceEl = document.getElementById("notr-novice-" + novice.playerId);
     if (noviceEl == null) {
-      console.error(`notr-novice-${args.player_id} not found`);
+      console.error(`#notr-novice-${novice.playerId} not found`);
       return;
     }
     noviceEl.classList.remove(...this.classLocations);
-    noviceEl.classList.add("notr-" + location);
+    noviceEl.classList.add("notr-" + novice.location);
+    const boardEl = document.getElementById("notr-board");
+    this.playerOffset(boardEl, oldLocation);
+    this.playerOffset(boardEl, novice.location);
   }
 
   async notif_noviceNoise(args) {
     console.log("doing notif_noviceNoise", args);
+    this.bga.sounds.play("noise" + (Math.floor(Math.random() * 4) + 1));
+    this.bga.gameui.disableNextMoveSound();
     const novice = this.getNovice(args.player_id);
     this.addNoviceNoise(novice, args.noiseLocation);
   }
@@ -228,14 +303,13 @@ export class Game {
     console.log("doing notif_noviceNoiseUndo", args);
     const noiseEls = document.getElementsByClassName(`notr-noise-${args.player_id}`);
     // Remove all noise
-    console.log("noiseEls", noiseEls.length);
     while (noiseEls.length > 0) {
       noiseEls[0].remove();
     }
     // Add remaining noise
     const novice = this.getNovice(args.player_id);
     if (args.noiseTokens) {
-      for (let location in args.noiseTokens) {
+      for (let location of args.noiseTokens) {
         this.addNoviceNoise(novice, location);
       }
     }
@@ -256,31 +330,54 @@ export class Game {
     console.log("doing notif_noviceVanish", args);
     const novice = this.getNovice(args.player_id);
     this.addNoviceVanish(novice, args.vanishLocation);
-    await this.notif_noviceMove({ player_id: args.player_id, location: novice.startLocation });
+    if (args.player_id != this.bga.players.getCurrentPlayerId()) {
+      await this.notif_noviceMove({ player_id: args.player_id, location: novice.startLocation });
+    }
   }
 
   async notif_noviceWish(args) {
     const novice = this.getNovice(args.player_id);
-    novice.hasWish = true;
+    novice.hasWish = args.hasWish;
+  }
+
+  async notif_nunAction(args) {
+    console.log("doing notif_nunAction", args);
+    const el = document.getElementById(`notr-panel-${args.role}-move`);
+    el.innerText = _(args.actionName);
   }
 
   async notif_nunPath(args) {
     console.log("doing notif_nunPath", args);
-    const el = document.getElementById(`notr-panel-${args.role}-path`);
-    el.innerHTML = this.html_pathTag(args.pathColor, args.pathOrigin, args.pathDestination);
+    const nun = this.getNun(args.role);
+    nun.path = args.path;
+    nun.pathColor = args.pathColor;
+    nun.pathDestination = args.pathDestination;
+    nun.pathOrigin = args.pathOrigin;
+
+    const el = document.getElementById(`notr-panel-${nun.role}-path`);
+    el.innerHTML = `<span class="notr-tag notr-path-${nun.pathColor}"><span class="notr-icon notr-icon-path-${nun.pathColor}"></span></span> ${nun.pathOrigin}▸${nun.pathDestination}`;
     this.bga.gameui.removeTooltip(el.id);
-    this.bga.gameui.addTooltipHtml(el.id, `<div class="notr-path-image notr-path-${args.path}"></div>`);
+    this.bga.gameui.addTooltipHtml(el.id, `<div class="notr-path-image notr-path-${nun.path}"></div>`);
   }
 
   async notif_nunMove(args) {
     console.log("doing notif_nunMove", args);
-    const nunEl = document.getElementById("notr-nun-" + args.role);
+    const nun = this.getNun(args.role);
+    const oldLocation = nun.location;
+    nun.location = args.location;
+
+    const locationEl = document.getElementById(`notr-panel-${nun.role}-location`);
+    locationEl.innerText = nun.location;
+    const nunEl = document.getElementById(`notr-nun-${nun.role}`);
     if (nunEl == null) {
-      console.error(`notr-nun-${args.role} not found`);
+      console.error(`#notr-nun-${nun.role} not found`);
       return;
     }
     nunEl.classList.remove(...this.classLocations);
-    nunEl.classList.add("notr-" + args.location);
+    nunEl.classList.add("notr-" + nun.location);
+    const boardEl = document.getElementById("notr-board");
+    this.playerOffset(boardEl, oldLocation);
+    this.playerOffset(boardEl, nun.location);
   }
 
   async notif_round(args) {
@@ -292,8 +389,20 @@ export class Game {
   ///////////////////////////////////////////////////
   //// Utility methods
 
-  html_pathTag(color, origin, destination) {
-    return `<span class="notr-tag notr-${color}"><span class="notr-icon notr-icon-path-${color}"></span> ${origin}▸${destination}</span>`;
+  addMyStart(boardEl, novice) {
+    boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-start" class="notr-my notr-player-${novice.color} notr-${novice.startLocation}" title="${_("Start Location")}"><span class="notr-icon notr-icon-start"></span></div>`);
+  }
+
+  addMyKey(boardEl, novice) {
+    boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-key" class="notr-my notr-player-${novice.color} notr-${novice.keyLocation}" title="${_("Key Location")}"><span class="notr-icon notr-icon-key"></span></div>`);
+  }
+
+  addMyWish(boardEl, novice) {
+    boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-wish" class="notr-my notr-player-${novice.color} notr-${novice.wishLocation}" title="${_("Secret Wish Location")}"><span class="notr-icon notr-icon-wish"></span></div>`);
+  }
+
+  playerOffset(boardEl, location) {
+    boardEl.querySelectorAll(`.notr-player.notr-${location}`).forEach((el, i) => el.classList.toggle("notr-offset", i > 0));
   }
 
   html_dieAnimate(face) {
@@ -341,12 +450,18 @@ export class Game {
         if (args.location) {
           args.location = `<b>${args.location}</b>`;
         }
+        if (args.location1) {
+          args.location1 = `<b>${args.location1}</b>`;
+        }
+        if (args.location2) {
+          args.location2 = `<b>${args.location2}</b>`;
+        }
         if (args.noiseLocation) {
           const novice = this.gamedatas.novices[args.player_id] || {};
-          args.noiseLocation = `<span class="notr-tag notr-${novice.color}"><span class="notr-icon notr-icon-noise"></span> ${args.noiseLocation}</span>`;
+          args.noiseLocation = `<b><span class="notr-tag notr-player-${novice.color}"><span class="notr-icon notr-icon-noise"></span></span> ${args.noiseLocation}</b>`;
         }
         if (args.pathName && args.path && args.pathColor && args.pathDestination && args.pathOrigin) {
-          args.pathName = this.html_pathTag(args.pathColor, args.pathOrigin, args.pathDestination);
+          args.pathName = `<b><span class="notr-tag notr-path-${args.pathColor}"><span class="notr-icon notr-icon-path-${args.pathColor}"></span></span> ${args.pathOrigin}▸${args.pathDestination}</b>`;
           log += `<div class="notr-notify notr-path-image notr-path-${args.path}"></div>`;
         }
         if (args.roleName && args.role) {
@@ -356,15 +471,15 @@ export class Game {
           args.roll = args.rollAnimate ? this.html_dieAnimate(args.roll) : this.html_dieSingle(args.roll);
         }
         if (args.startLocation) {
-          args.startLocation = `<b>${args.startLocation}</b>`;
+          args.startLocation = `<b><span class="notr-icon notr-icon-start"></span> ${args.startLocation}</b>`;
         }
         if (args.vanishLocation) {
           const novice = this.gamedatas.novices[args.player_id] || {};
-          args.vanishLocation = `<span class="notr-tag notr-${novice.color}"><span class="notr-icon notr-icon-vanish"></span> ${args.vanishLocation}</span>`;
+          args.vanishLocation = `<b><span class="notr-tag notr-player-${novice.color}"><span class="notr-icon notr-icon-vanish"></span></span> ${args.vanishLocation}</b>`;
         }
         if (args.visibleLocation) {
           const novice = this.gamedatas.novices[args.player_id] || {};
-          args.visibleLocation = `<span class="notr-tag notr-${novice.color}"><span class="notr-icon notr-icon-visible"></span> ${args.visibleLocation}</span>`;
+          args.visibleLocation = `<b><span class="notr-icon notr-icon-visible"></span> ${args.visibleLocation}</b>`;
         }
         if (args.wishIcon) {
           log += `<div class="notr-notify notr-wish">

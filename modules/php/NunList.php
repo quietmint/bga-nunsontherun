@@ -6,8 +6,9 @@ namespace Bga\Games\NunsOnTheRun;
 
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\SystemException;
+use Bga\Games\NunsOnTheRun\States\NunNoiseMultiState;
 
-class NunList implements \IteratorAggregate, \JsonSerializable
+class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 {
 	private array $nuns = [];
 
@@ -25,6 +26,11 @@ class NunList implements \IteratorAggregate, \JsonSerializable
 		return $this->nuns;
 	}
 
+	public function count(): int
+	{
+		return count($this->nuns);
+	}
+
 	public function getIterator(): \Traversable
 	{
 		return new \ArrayIterator($this->nuns);
@@ -36,6 +42,12 @@ class NunList implements \IteratorAggregate, \JsonSerializable
 		foreach ($this->nuns as $role => $nun) {
 			$json = json_decode(json_encode($nun), true);
 			unset($json['moves'], $json['paths'], $json['room']);
+			if ($state instanceof NunNoiseMultiState) {
+				if ($nun->move != null && $nun->move->active) {
+					$noiseTokens = array_intersect_key($json['move']['noiseTokens'], [$currentPlayerId => true]);
+					$json['move']['noiseTokens'] = $noiseTokens;
+				}
+			}
 			$output[$role] = $json;
 		}
 		return $output;

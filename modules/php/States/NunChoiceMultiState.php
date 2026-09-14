@@ -48,6 +48,12 @@ class NunChoiceMultiState extends GameState
           $novice->move->vanishTokens = [];
         }
         $this->game->saveNovices($novices);
+        $nuns = $this->game->getNunList();
+        foreach ($nuns as &$nun) {
+          $nun->noiseTokens = [];
+        }
+        $this->game->saveNuns($nuns);
+        $this->bga->notify->all('clearNoise');
         return NunNoiseGameState::class;
       } else {
         // Choose the other nun

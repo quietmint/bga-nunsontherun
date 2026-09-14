@@ -6,6 +6,7 @@ namespace Bga\Games\NunsOnTheRun;
 
 class Novice
 {
+	public ?string $blessing = null;
 	public bool $caught = false;
 	public string $color;
 	public bool $hasKey = false;
@@ -70,6 +71,7 @@ class Novice
 	public function __construct(?\stdClass $data = null)
 	{
 		if ($data != null) {
+			$this->blessing = property_exists($data, 'blessing') ? $data->blessing : null;
 			$this->caught = $data->caught;
 			$this->color = $data->color;
 			$this->hasKey = $data->hasKey;

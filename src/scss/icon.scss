@@ -19,16 +19,16 @@
     --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M15.188 14.688Q16.5 13.375 16.5 11.5t-1.312-3.187T12 7T8.813 8.313T7.5 11.5t1.313 3.188T12 16t3.188-1.312m-5.1-1.276Q9.3 12.625 9.3 11.5t.788-1.912T12 8.8t1.913.788t.787 1.912t-.787 1.913T12 14.2t-1.912-.787m-4.738 3.55Q2.35 14.925 1 11.5q1.35-3.425 4.35-5.462T12 4t6.65 2.038T23 11.5q-1.35 3.425-4.35 5.463T12 19t-6.65-2.037'/%3E%3C/svg%3E");
   }
 
-  &.notr-icon-bed {
-    --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M1 19V4h2v10h8V6h8q1.65 0 2.825 1.175T23 10v9h-2v-3H3v3zm3.875-6.875Q4 11.25 4 10t.875-2.125T7 7t2.125.875T10 10t-.875 2.125T7 13t-2.125-.875'/%3E%3C/svg%3E");
-  }
-
   &.notr-icon-footprint {
     --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M6.5 1q2.125 0 3.313 1.888T11 7q0 1.025-.213 1.95T10.3 10.6l-7.125 1.425Q2.8 11.3 2.4 10.013T2 7q0-2.575 1.275-4.288T6.5 1m1.375 17Q6.1 18 5.113 16.763T4 13.9l6.45-1.3q.2.425.375.963T11 14.675q0 1.425-.888 2.375T7.876 18M17.5 6q1.95 0 3.225 1.713T22 12q0 1.725-.4 3.013t-.775 2.012L13.7 15.6q-.275-.725-.487-1.65T13 12q0-2.225 1.188-4.112T17.5 6m-1.375 17q-1.35 0-2.238-.95T13 19.675q0-.575.175-1.112t.375-.963l6.425 1.3q-.125 1.625-1.1 2.863T16.125 23'/%3E%3C/svg%3E");
   }
 
   &.notr-icon-key {
     --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M7 18q-2.5 0-4.25-1.75T1 12t1.75-4.25T7 6q2.025 0 3.538 1.138T12.65 10H23v4h-2v4h-4v-4h-4.35q-.6 1.725-2.113 2.863T7 18m0-4q.825 0 1.413-.587T9 12t-.587-1.412T7 10t-1.412.588T5 12t.588 1.413T7 14'/%3E%3C/svg%3E");
+  }
+
+  &.notr-icon-location {
+    --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M13.413 11.413Q14 10.825 14 10t-.587-1.412T12 8t-1.412.588T10 10t.588 1.413T12 12t1.413-.587M12 22q-4.025-3.425-6.012-6.362T4 10.2q0-3.75 2.413-5.975T12 2t5.588 2.225T20 10.2q0 2.5-1.987 5.438T12 22'/%3E%3C/svg%3E");
   }
 
   &.notr-icon-noise {
@@ -60,6 +60,10 @@
     --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M2 20L12 4l10 16z'/%3E%3C/svg%3E");
   }
 
+  &.notr-icon-start {
+    --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M4 21V9l8-6l8 6v12h-6v-7h-4v7z'/%3E%3C/svg%3E");
+  }
+
   &.notr-icon-vanish {
     --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='m19.8 22.6l-4.2-4.15q-.875.275-1.762.413T12 19q-3.775 0-6.725-2.087T1 11.5q.525-1.325 1.325-2.463T4.15 7L1.4 4.2l1.4-1.4l18.4 18.4zM12 16q.275 0 .513-.025t.512-.1l-5.4-5.4q-.075.275-.1.513T7.5 11.5q0 1.875 1.313 3.188T12 16m7.3.45l-3.175-3.15q.175-.425.275-.862t.1-.938q0-1.875-1.312-3.187T12 7q-.5 0-.937.1t-.863.3L7.65 4.85q1.025-.425 2.1-.637T12 4q3.775 0 6.725 2.088T23 11.5q-.575 1.475-1.513 2.738T19.3 16.45m-4.625-4.6l-3-3q.7-.125 1.288.113t1.012.687t.613 1.038t.087 1.162'/%3E%3C/svg%3E");
   }
@@ -74,31 +78,59 @@
 }
 
 .notr-tag {
-  background: white;
+  background-color: white;
   border-radius: 4px;
   color: black;
-  font-weight: bold;
+  display: inline-block;
   padding: 0 3px;
-  text-align: center;
-  text-shadow: none;
-  white-space: nowrap;
 
-  &.notr-blue {
-    background: $color-light-blue-500;
+  .action-button &,
+  .notr-locations & {
   }
-  &.notr-green {
-    background: $color-light-green-500;
+
+  &.notr-path-blue {
+    background-color: $color-light-blue-400;
+    color: $color-light-blue-900;
   }
-  &.notr-orange {
-    background: $color-orange-500;
+  &.notr-path-green {
+    background-color: $color-light-green-500;
+    color: $color-light-green-900;
   }
-  &.notr-purple {
-    background: $color-purple-500;
+  &.notr-path-pink {
+    background-color: $color-pink-200;
+    color: $color-pink-900;
   }
-  &.notr-red {
-    background: $color-pink-500;
+  &.notr-path-red {
+    background-color: $color-red-400;
+    color: $color-red-900;
   }
-  &.notr-yellow {
-    background: $color-yellow-500;
+  &.notr-path-yellow {
+    background-color: $color-yellow-600;
+    color: $color-yellow-900;
+  }
+
+  &.notr-player-blue {
+    background-color: $color-light-blue-400;
+    color: $color-light-blue-900;
+  }
+  &.notr-player-green {
+    background-color: $color-green-500;
+    color: $color-green-900;
+  }
+  &.notr-player-orange {
+    background-color: $color-orange-500;
+    color: $color-orange-900;
+  }
+  &.notr-player-purple {
+    background-color: $color-purple-400;
+    color: $color-purple-900;
+  }
+  &.notr-player-red {
+    background-color: $color-pink-400;
+    color: $color-pink-900;
+  }
+  &.notr-player-yellow {
+    background-color: $color-yellow-600;
+    color: $color-yellow-900;
   }
 }

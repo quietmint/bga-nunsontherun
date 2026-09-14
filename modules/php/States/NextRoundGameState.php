@@ -44,27 +44,30 @@ class NextRoundGameState extends \Bga\GameFramework\States\GameState
       return EndGameState::class;
     }
 
-    // Add move to history
+    // Add moves to history
+    $novices = $this->game->getNoviceList();
+    foreach ($novices as &$novice) {
+      $oldMove = $novice->move;
+      if ($oldMove != null) {
+        $oldMove->undo = null;
+        $novice->moves[] = $oldMove;
+      }
+      $novice->move = new Move();
+      $novice->move->caught = $novice->caught;
+      $novice->move->start = $novice->location;
+    }
+    $this->game->saveNovices($novices);
+
     foreach ($nuns as &$nun) {
-      if ($nun->move != null) {
-        $nun->move->active = false;
-        $nun->move->undo = null;
-        $nun->moves[] = $nun->move;
+      $oldMove = $nun->move;
+      if ($oldMove != null) {
+        $oldMove->active = false;
+        $oldMove->undo = null;
+        $nun->moves[] = $oldMove;
       }
       $nun->move = null;
     }
     $this->game->saveNuns($nuns);
-    $novices = $this->game->getNoviceList();
-    foreach ($novices as &$novice) {
-      $oldMove = $novice->move;
-      if ($novice->move != null) {
-        $novice->moves[] = $oldMove;
-      }
-      $novice->move = new Move();
-      $novice->move->start = $novice->location;
-      $novice->move->noiseTokens = array_diff($oldMove->noiseTokens, ['novice']);
-    }
-    $this->game->saveNovices($novices);
 
     // Continue the game
     return NoviceTurnMultiState::class;

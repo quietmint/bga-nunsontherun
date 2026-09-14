@@ -6,14 +6,16 @@ namespace Bga\Games\NunsOnTheRun;
 
 class Nun
 {
+	public ?string $blessing = null;
 	public string $color;
 	public int $location;
-	public ?Move $move;
+	public array $noiseTokens = [];
+	public ?Move $move = null;
 	public array $moves = [];
-	public ?string $path;
-	public ?string $pathColor;
-	public ?int $pathDestination;
-	public ?int $pathOrigin;
+	public ?string $path = null;
+	public ?string $pathColor = null;
+	public ?int $pathDestination = null;
+	public ?int $pathOrigin = null;
 	public array $paths = [];
 	public int $playerId;
 	public string $playerName;
@@ -30,9 +32,11 @@ class Nun
 	public function __construct(?\stdClass $data = null)
 	{
 		if ($data != null) {
+			$this->blessing = property_exists($data, 'blessing') ? $data->blessing : null;
 			$this->color = $data->color;
 			$this->location = $data->location;
 			$this->move = property_exists($data, 'move') && !is_null($data->move) ? new Move($data->move) : null;
+			$this->noiseTokens = property_exists($data, 'noiseTokens') ? $data->noiseTokens : [];
 			$this->path = property_exists($data, 'path') ? $data->path : null;
 			$this->pathColor = property_exists($data, 'pathColor') ? $data->pathColor : null;
 			$this->pathDestination = property_exists($data, 'pathDestination') ? $data->pathDestination : null;

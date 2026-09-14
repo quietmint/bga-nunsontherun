@@ -1,49 +1,96 @@
 @use "material-colors" as *;
 
 .notr-panel {
-  align-items: center;
-  display: grid;
-  gap: 10px;
-  grid-template-areas:
-    "caught caught"
-    "move wish";
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto;
+  margin: 10px -3px -5px -3px;
+}
 
-  .notr-caught {
-    color: white;
-    font-variant: small-caps;
-    font-weight: bold;
-    grid-area: caught;
-    letter-spacing: 2px;
-    padding: 2px;
-    text-align: center;
-    transition: background 0.5s ease;
+.notr-portrait {
+  background-position: 51% 54% !important;
+  background-repeat: no-repeat;
+  background-size: 125%;
+  border-radius: 5px;
+  border-top-left-radius: 50%;
+  border-top-right-radius: 50%;
+  border: 3px solid black;
+  float: left;
+  height: 140px;
+  margin: -10px 5px 0 5px;
+  width: 105px;
 
-    &.notr-caught-false {
-      background: $color-grey-900;
-    }
-
-    &.notr-caught-true {
-      background: $color-deep-orange-900;
-    }
+  .notr-player-blue & {
+    background-color: $color-light-blue-900;
+    background-image: url(img/novice-blue.webp);
+    border-color: $color-light-blue-400;
   }
 
-  .notr-move {
-    grid-area: move;
+  .notr-player-green & {
+    background-color: $color-green-900;
+    background-image: url(img/novice-green.webp);
+    border-color: $color-green-500;
   }
 
-  .notr-wish {
-    grid-area: wish;
+  .notr-player-orange & {
+    background-color: $color-orange-900;
+    background-image: url(img/novice-orange.webp);
+    border-color: $color-orange-500;
+  }
+
+  .notr-player-purple & {
+    background-color: $color-purple-900;
+    background-image: url(img/novice-purple.webp);
+    border-color: $color-purple-400;
+  }
+
+  .notr-player-red & {
+    background-color: $color-pink-900;
+    background-image: url(img/novice-red.webp);
+    border-color: $color-pink-400;
+  }
+
+  .notr-player-yellow & {
+    background-color: $color-yellow-900;
+    background-image: url(img/novice-yellow.webp);
+    border-color: $color-yellow-600;
+  }
+
+  .notr-player-black & {
+    background-color: $color-grey-900;
+    background-image: url(img/nun-black.webp);
+    border-color: black;
+  }
+
+  .notr-player-white & {
+    background-color: $color-grey-100;
+    background-image: url(img/nun-white.webp);
+    border-color: white;
   }
 }
 
-.notr-panel-nun {
-  background: rgb(0 0 0 / 15%);
+.notr-title {
+  background: $color-grey-900;
+  color: white;
+  font-variant: small-caps;
+  font-weight: bold;
+  letter-spacing: 1px;
   padding: 5px;
-  margin-top: 5px;
+  text-align: center;
+  transition: background 0.5s ease;
 
-  .notr-panel-title {
-    font-weight: bold;
+  &.notr-caught {
+    background: $color-deep-orange-900;
   }
+}
+
+.notr-locations {
+  align-items: center;
+  column-rule: 1px solid;
+  display: flex;
+  justify-content: space-around;
+  margin-top: 5px;
+  text-align: center;
+}
+
+.notr-label {
+  font-size: 80%;
+  margin-top: 5px;
 }

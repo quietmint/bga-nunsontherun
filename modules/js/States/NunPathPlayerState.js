@@ -11,12 +11,12 @@ export class NunPathPlayerState {
         const tooltipHtml = `<div class="notr-path-image notr-path-${p.path}"></div>`;
 
         // Action button with tooltip
-        this.bga.statusBar.addActionButton(`<div class="notr-tag notr-${p.color}"><span class="notr-icon notr-icon-path-${p.color}"></span> ${p.origin}▸${p.destination}</div>`, () => this.bga.actions.performAction("actPath", { path }), { id: `action_path-${path}` });
+        this.bga.statusBar.addActionButton(`<div class="notr-tag notr-tag-path notr-path-${p.color}"><span class="notr-icon notr-icon-path-${p.color}"></span></div> ${p.origin}▸${p.destination}`, () => this.bga.actions.performAction("actPath", { path }), { id: `action_path-${path}` });
         this.bga.gameui.addTooltipHtml(`action_path-${path}`, tooltipHtml);
 
         // Board space with tooltip
         const holderEl = this.game.getHolderEl(p.destination);
-        holderEl.insertAdjacentHTML("beforeend", `<div id="notr-path-${path}" class="notr-tag notr-tag-path notr-${p.color}"><span class="notr-icon notr-icon-path-${p.color}"></span></div>`);
+        holderEl.insertAdjacentHTML("beforeend", `<div id="notr-path-${path}" class="notr-tag notr-tag-path notr-path-${p.color}"><span class="notr-icon notr-icon-path-${p.color}"></span></div>`);
         const pathEl = document.getElementById(`notr-path-${path}`);
         pathEl.addEventListener("click", () => this.bga.actions.performAction("actPath", { path }));
         this.bga.gameui.addTooltipHtml(pathEl.id, tooltipHtml);

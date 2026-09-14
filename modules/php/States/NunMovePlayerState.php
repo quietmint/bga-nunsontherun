@@ -21,6 +21,7 @@ class NunMovePlayerState extends GameState
       type: StateType::ACTIVE_PLAYER,
       description: clienttranslate('${roleName} ${player_name} must move'),
       descriptionMyTurn: clienttranslate('${you} (${roleName}) must move'),
+      updateGameProgression: true,
     );
   }
 
@@ -81,38 +82,12 @@ class NunMovePlayerState extends GameState
         'roleName' => $nun->roleName,
       ]);
 
-      if (array_key_exists($spaceId, $locationsWithNovices)) {
-        foreach ($locationsWithNovices[$spaceId] as $playerId) {
-          $novice = $novices->get($playerId);
-          if (!$novice->caught) {
-            $nun->move->deviate = true;
-            $nun->move->undo = $nun->move->spaces;
-            $novice->caught = true;
-            $novice->hasWish = false;
-            $this->game->saveNovice($novice);
-            $this->bga->playerStats->inc('caught', 1, $nun->playerId, true);
-            $this->bga->playerStats->inc('caughtTimes', 1, $novice->playerId);
-            $this->bga->notify->all('noviceCaught', clienttranslate('${roleName} ${player_name} catches ${player_name2} at ${location}!'), [
-              'i18n' => ['roleName'],
-              'preserve' => ['role'],
-              'location' => $spaceId,
-              'player_id' => $nun->playerId,
-              'player_id2' => $novice->playerId,
-              'player_name' => $nun->playerName,
-              'player_name2' => $novice->playerName,
-              'role' => $nun->role,
-              'roleName' => $nun->roleName,
-            ]);
-          }
-        }
-      }
-
       if ($nun->room != $oldRoomId) {
         $nun->move->undo = $nun->move->spaces;
         $novicesVisible = $nuns->getNovicesVisible($novices);
         $this->game->debug("new room {$nun->room} space $spaceId novicesVisible: " . json_encode($novicesVisible) . ' // ');
         foreach ($novicesVisible as $playerId => $visible) {
-          $novice = $novices->get($playerId);
+          $novice = &$novices->get($playerId);
           $oldVisible = $oldNovicesVisible[$playerId];
           if ($visible && !$oldVisible) {
             $nun->move->deviate = true;
@@ -133,6 +108,41 @@ class NunMovePlayerState extends GameState
       }
       $oldSpaceId = $spaceId;
       $oldRoomId = $nun->room;
+
+      if (array_key_exists($spaceId, $locationsWithNovices)) {
+        foreach ($locationsWithNovices[$spaceId] as $playerId) {
+          $novice = &$novices->get($playerId);
+          $novice->caught = true;
+          $nun->move->deviate = $this->game->board->getNunDeviate($nun, $novices);
+          $nun->move->undo = $nun->move->spaces;
+          $this->bga->playerStats->inc('caught', 1, $nun->playerId, true);
+          $this->bga->playerStats->inc('caughtTimes', 1, $novice->playerId);
+
+          $this->bga->notify->all('noviceCaught', clienttranslate('${roleName} ${player_name} catches ${player_name2} at ${location}!'), [
+            'i18n' => ['roleName'],
+            'preserve' => ['caught', 'player_id2', 'role'],
+            'caught' => $novice->caught,
+            'location' => $spaceId,
+            'player_id' => $nun->playerId,
+            'player_id2' => $novice->playerId,
+            'player_name' => $nun->playerName,
+            'player_name2' => $novice->playerName,
+            'role' => $nun->role,
+            'roleName' => $nun->roleName,
+          ]);
+
+          if ($novice->hasWish) {
+            $novice->hasWish = false;
+            $this->bga->notify->player($novice->playerId, 'noviceWish', clienttranslate('You drop your secret wish and must pick it up again at ${wishLocation}'), [
+              'preserve' => ['hasWish', 'player_id'],
+              'hasWish' => $novice->hasWish,
+              'player_id' => $novice->playerId,
+              'wishLocation' => $novice->wishLocation,
+            ]);
+          }
+          $this->game->saveNovice($novice);
+        }
+      }
 
       if ($nun->location == $nun->pathDestination) {
         $this->game->saveNuns($nuns);
@@ -159,9 +169,11 @@ class NunMovePlayerState extends GameState
       $message = clienttranslate('${roleName} ${player_name} runs');
     }
     $this->game->saveNun($nun);
-    $this->bga->notify->all('message', $message, [
+    $this->bga->notify->all('nunAction', $message, [
       'i18n' => ['roleName'],
-      'preserve' => ['role'],
+      'preserve' => ['action', 'actionName', 'role'],
+      'action' => $nun->move->action,
+      'actionName' => $nun->move->actionName,
       'player_id' => $nun->playerId,
       'player_name' => $nun->playerName,
       'role' => $nun->role,

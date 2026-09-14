@@ -6,8 +6,8 @@ export class NoviceMovePrivateState {
 
   onEnteringState(args, isCurrentPlayerActive) {
     if (isCurrentPlayerActive) {
-      const novice = this.game.getNovice();
       // Actions
+      const novice = this.game.getNovice();
       for (const action in args.actions) {
         const info = args.actions[action];
         const noiseText = info.noise > 0 ? "+" + info.noise : info.noise;
@@ -24,6 +24,9 @@ export class NoviceMovePrivateState {
           () => this.bga.actions.performAction("actConfirm", { confirmAction: action }),
           { disabled: info.disabled },
         );
+      }
+      if (args.blessing == "move") {
+        this.bga.statusBar.addActionButton(_("Blessing: +1"), () => this.bga.actions.performAction("actBlessingMove"), { color: "secondary" });
       }
       if (args.undo) {
         this.bga.statusBar.addActionButton(_("Undo"), () => this.bga.actions.performAction("actUndo"), { color: "secondary" });
@@ -52,7 +55,7 @@ export class NoviceMovePrivateState {
                 keyLocation: novice.keyLocation,
               }).args,
             );
-          } else if (!novice.hasWish && novice.location == novice.wishLocation) {
+          } else if (!novice.caught && !novice.hasWish && novice.location == novice.wishLocation) {
             dialog = this.bga.gameui.format_string(
               _("If you keep moving, you won't pick up your secret wish at ${wishLocation}."),
               this.game.bgaFormatText("", {

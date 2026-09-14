@@ -17,23 +17,29 @@ namespace Bga\Games\NunsOnTheRun;
 use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\States\NoviceTurnMultiState;
 
-const BGA_BLUE = '0000ff';
-const BGA_GREEN = '008000';
-const BGA_ORANGE = 'f07f16';
-const BGA_PURPLE = '982fff';
-const BGA_RED = 'ff0000';
-const BGA_YELLOW = 'ffa500';
-const COLOR_BLACK = '000000';
-const COLOR_BLUE = '039be5'; // light-blue-600
-const COLOR_GREEN = '43a047'; // green-600
-const COLOR_ORANGE = 'fb8c00'; // orange-600
-const COLOR_PURPLE = 'ab47bc'; // purple-400
-const COLOR_RED = 'e91e63'; // pink-500
-const COLOR_WHITE = 'ffffff';
-const COLOR_YELLOW = 'fdd835'; // yellow-600
-
 class Game extends \Bga\GameFramework\Table
 {
+  public const BGA_BLUE = '0000ff';
+  public const BGA_GREEN = '008000';
+  public const BGA_ORANGE = 'f07f16';
+  public const BGA_PURPLE = '982fff';
+  public const BGA_RED = 'ff0000';
+  public const BGA_YELLOW = 'ffa500';
+
+  public const COLOR_BLACK = '000000';
+  public const COLOR_BLUE = '29b6f6'; // light-blue-400
+  public const COLOR_GREEN = '4caf50'; // green-500
+  public const COLOR_ORANGE = 'ff9800'; // orange-500
+  public const COLOR_PURPLE = 'ab47bc'; // purple-400
+  public const COLOR_RED = 'ec407a'; // pink-400
+  public const COLOR_WHITE = 'ffffff';
+  public const COLOR_YELLOW = 'fdd835'; // yellow-600
+
+  public const BLESSING_ADJUST = 'adjust';
+  public const BLESSING_MOVE = 'move';
+  public const BLESSING_NOISE = 'noise';
+  public const BLESSING_REROLL = 'reroll';
+
   public Board $board;
 
   /**
@@ -184,39 +190,39 @@ class Game extends \Bga\GameFramework\Table
   function getSpecificColorPairings(): array
   {
     return [
-      BGA_ORANGE => COLOR_ORANGE,
-      BGA_BLUE => COLOR_BLUE,
-      BGA_RED => COLOR_RED,
-      BGA_GREEN => COLOR_GREEN,
-      BGA_PURPLE => COLOR_PURPLE,
-      BGA_YELLOW => COLOR_YELLOW,
+      Game::BGA_ORANGE => Game::COLOR_ORANGE,
+      Game::BGA_BLUE => Game::COLOR_BLUE,
+      Game::BGA_RED => Game::COLOR_RED,
+      Game::BGA_GREEN => Game::COLOR_GREEN,
+      Game::BGA_PURPLE => Game::COLOR_PURPLE,
+      Game::BGA_YELLOW => Game::COLOR_YELLOW,
     ];
   }
 
   public function getColorName(string $color): ?string
   {
     switch ($color) {
-      case BGA_ORANGE:
-      case COLOR_ORANGE:
+      case Game::BGA_ORANGE:
+      case Game::COLOR_ORANGE:
         return 'orange';
-      case BGA_BLUE:
-      case COLOR_BLUE:
+      case Game::BGA_BLUE:
+      case Game::COLOR_BLUE:
         return 'blue';
-      case BGA_RED:
-      case COLOR_RED:
+      case Game::BGA_RED:
+      case Game::COLOR_RED:
         return 'red';
-      case BGA_GREEN:
-      case COLOR_GREEN:
+      case Game::BGA_GREEN:
+      case Game::COLOR_GREEN:
         return 'green';
-      case BGA_PURPLE:
-      case COLOR_PURPLE:
+      case Game::BGA_PURPLE:
+      case Game::COLOR_PURPLE:
         return 'purple';
-      case BGA_YELLOW:
-      case COLOR_YELLOW:
+      case Game::BGA_YELLOW:
+      case Game::COLOR_YELLOW:
         return 'yellow';
-      case COLOR_BLACK:
+      case Game::COLOR_BLACK:
         return 'black';
-      case COLOR_WHITE:
+      case Game::COLOR_WHITE:
         return 'white';
       default:
         throw new SystemException("Unknown color: $color");
@@ -288,13 +294,13 @@ class Game extends \Bga\GameFramework\Table
       $novices->add($novice);
       $this->bga->notify->all(
         'message',
-        clienttranslate('${player_name} starts at ${location}'),
+        clienttranslate('${player_name} starts at ${startLocation}'),
         [
           'i18n' => ['role'],
-          'location' => $novice->location,
           'player_id' => $novice->playerId,
           'player_name' => $novice->playerName,
           'role' => 'novice',
+          'startLocation' => $novice->location,
         ]
       );
       $this->bga->notify->player(

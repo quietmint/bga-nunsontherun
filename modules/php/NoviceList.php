@@ -8,7 +8,7 @@ use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\States\NoviceTurnMultiState;
 
-class NoviceList implements \IteratorAggregate, \JsonSerializable
+class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 {
 	private array $novices = [];
 
@@ -26,6 +26,11 @@ class NoviceList implements \IteratorAggregate, \JsonSerializable
 		return $this->novices;
 	}
 
+	public function count(): int
+	{
+		return count($this->novices);
+	}
+
 	public function getIterator(): \Traversable
 	{
 		return new \ArrayIterator($this->novices);
@@ -41,11 +46,7 @@ class NoviceList implements \IteratorAggregate, \JsonSerializable
 			if ($playerId != $currentPlayerId) {
 				unset($json['hasKey'], $json['hasWish'], $json['keyLocation'], $json['room'], $json['wish'], $json['wishLocation']);
 				if ($state instanceof NoviceTurnMultiState) {
-					$noiseTokens = array_diff($json['move']['noiseTokens'], ['novice']);
 					unset($json['move']);
-					if (!empty($noiseTokens)) {
-						$json['move']['noiseTokens'] = $noiseTokens;
-					}
 				}
 				if (!$visible[$playerId]) {
 					$json['location'] = $json['startLocation'];
@@ -73,7 +74,9 @@ class NoviceList implements \IteratorAggregate, \JsonSerializable
 	{
 		$locations = [];
 		foreach ($this->novices as $playerId => $novice) {
-			$locations[$novice->location][] = $playerId;
+			if (!$novice->caught) {
+				$locations[$novice->location][] = $playerId;
+			}
 		}
 		return $locations;
 	}

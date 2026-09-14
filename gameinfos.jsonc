@@ -68,10 +68,10 @@
 
   // Colors attributed to players
   "player_colors": [
-    "fb8c00", // Orange (was f07f16)
-    "039be5", // Blue (was 0000ff)
-    "e91e63", // Red (was ff0000)
-    "43a047", // Green (was 008000)
+    "ff9800", // Orange (was f07f16)
+    "29b6f6", // Blue (was 0000ff)
+    "ec407a", // Red (was ff0000)
+    "4caf50", // Green (was 008000)
     "ab47bc", // Purple (was 982fff)
     "fdd835", // Yellow (was ffa500)
   ],

@@ -60,9 +60,15 @@ class NunRollPlayerState extends GameState
   }
 
   #[PossibleAction]
-  public function actBlessingAdjust()
+  public function actBlessingAdjust(array $args)
   {
+    if ($args['blessing'] != Game::BLESSING_ADJUST) {
+      throw new SystemException("Unexpected blessing: " . $args['blessing']);
+    }
+
     $nun = $this->game->getNunList()->getActiveNun();
+    $nun->blessing = null;
+    $nun->move->blessing = Game::BLESSING_ADJUST;
     $nun->move->noiseTotal++;
     $this->game->saveNun($nun);
 
@@ -77,9 +83,15 @@ class NunRollPlayerState extends GameState
   }
 
   #[PossibleAction]
-  public function actBlessingReroll()
+  public function actBlessingReroll(array $args)
   {
+    if ($args['blessing'] != Game::BLESSING_REROLL) {
+      throw new SystemException("Unexpected blessing: " . $args['blessing']);
+    }
+
     $nun = $this->game->getNunList()->getActiveNun();
+    $nun->blessing = null;
+    $nun->move->blessing = Game::BLESSING_REROLL;
     $this->bga->notify->all('blessing', clienttranslate('${roleName} ${player_name} uses a blessing to reroll'), [
       'i18n' => ['roleName'],
       'player_id' => $nun->playerId,
@@ -92,7 +104,7 @@ class NunRollPlayerState extends GameState
   }
 
   #[PossibleAction]
-  public function actContinue()
+  public function actConfirm()
   {
     return NunNoiseMultiState::class;
   }

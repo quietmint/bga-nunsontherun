@@ -30,10 +30,14 @@ class NoviceMovePrivateState extends GameState
     $round = $this->game->getRound();
     $possible = $this->game->board->getNovicePossibleMoves($novice, $nuns, $round);
     $distance = count($novice->move->spaces);
-    $actions = $this->game->board->getNoviceActions($round);
+    $actions = $this->game->board->getNoviceActions($novice, $round);
     $actionsForNow = $this->game->board->getActionsForDistance($actions, $distance);
     foreach ($actions as $action => &$info) {
       $info['disabled'] = !in_array($action, $actionsForNow);
+    }
+    // Special case
+    if ($novice->caught && $novice->location == $novice->startLocation) {
+      $actions['walk']['disabled'] = false;
     }
     return [
       'actions' => $actions,
@@ -63,19 +67,19 @@ class NoviceMovePrivateState extends GameState
       $novice->location = $spaceId;
       $novice->room = $this->game->board->getRoomId($novice->location);
       $visible = $nuns->isNoviceVisible($novice);
-      if ($visible && !$oldVisible) {
-        $this->bga->notify->player($currentPlayerId, 'noviceVisible', clienttranslate('You are visible at ${visibleLocation}'), [
+      if ($visible) {
+        $this->bga->notify->player($currentPlayerId, 'noviceMove', clienttranslate('You are visible at ${visibleLocation}'), [
           'player_id' => $currentPlayerId,
           'visibleLocation' => $spaceId,
         ]);
-      } else if (!$visible && $oldVisible) {
+      } else if (!$novice->caught && !$visible && $oldVisible) {
         $this->bga->notify->player($currentPlayerId, 'noviceVanish', clienttranslate('You vanish at ${vanishLocation}'), [
           'player_id' => $currentPlayerId,
           'vanishLocation' => $oldSpaceId,
         ]);
         $novice->move->vanishTokens[$oldSpaceId] = $this->game->board->getRoomId($oldSpaceId);
       }
-      $this->bga->notify->player($currentPlayerId, 'noviceMove', clienttranslate('You move to ${location}'), [
+      $this->bga->notify->player($currentPlayerId, 'noviceMove', '', [
         'location' => $spaceId,
         'player_id' => $currentPlayerId,
       ]);
@@ -99,40 +103,55 @@ class NoviceMovePrivateState extends GameState
     $novice->move->action = $confirmAction;
     switch ($confirmAction) {
       case 'stand':
-        $message = clienttranslate('You stand still at ${location}');
+        $message = clienttranslate('You stand still at ${location1}');
         break;
       case 'sneak':
-        $message = clienttranslate('You sneak from ${startLocation} to ${location}');
+        $message = clienttranslate('You sneak from ${location1} to ${location2}');
         break;
       case 'walk':
-        $message = clienttranslate('You walk from ${startLocation} to ${location}');
+        $message = clienttranslate('You walk from ${location1} to ${location2}');
         break;
       case 'run':
-        $message = clienttranslate('You run from ${startLocation} to ${location}');
+        $message = clienttranslate('You run from ${location1} to ${location2}');
         break;
     }
-    $this->bga->notify->player($currentPlayerId, 'message', $message, [
-      'location' => $novice->location,
-      'startLocation' => $novice->move->start,
+    $this->bga->notify->player($currentPlayerId, 'noviceAction', $message, [
+      'preserve' => ['action', 'actionName', 'player_id'],
+      'action' => $novice->move->action,
+      'actionName' => $novice->move->actionName,
+      'location1' => $novice->move->start,
+      'location2' => $novice->location,
+      'player_id' => $novice->playerId,
     ]);
 
     if (!$novice->hasKey && $novice->location == $novice->keyLocation) {
       $novice->hasKey = true;
       $this->bga->notify->player($currentPlayerId, 'noviceKey', clienttranslate('You pick up your key at ${keyLocation}'), [
-        'preserve' => ['player_id'],
+        'preserve' => ['player_id', 'hasKey'],
+        'hasKey' => $novice->hasKey,
         'keyLocation' => $novice->keyLocation,
         'player_id' => $novice->playerId,
       ]);
-    } else  if (!$novice->hasWish && $novice->location == $novice->wishLocation) {
+    } else if (!$novice->caught && !$novice->hasWish && $novice->location == $novice->wishLocation) {
       $novice->hasWish = true;
       $this->bga->notify->player($currentPlayerId, 'noviceWish', clienttranslate('You pick up your secret wish at ${wishLocation}'), [
-        'preserve' => ['player_id'],
+        'preserve' => ['hasWish', 'player_id'],
+        'hasWish' => $novice->hasWish,
         'player_id' => $novice->playerId,
         'wishLocation' => $novice->wishLocation,
       ]);
     }
     $this->game->saveNovice($novice);
-    $this->gamestate->nextPrivateState($currentPlayerId, NoviceRollPrivateState::class);
+
+    if ($novice->caught) {
+      if (!$this->game->getNunList()->isNoviceVisible($novice)) {
+        $this->gamestate->nextPrivateState($currentPlayerId, NoviceCaughtPrivateState::class);
+      } else {
+        $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
+      }
+    } else {
+      $this->gamestate->nextPrivateState($currentPlayerId, NoviceRollPrivateState::class);
+    }
   }
 
   #[PossibleAction]
@@ -140,15 +159,24 @@ class NoviceMovePrivateState extends GameState
   {
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $novice->location = $novice->move->start;
-    $novice->room = $this->game->board->getRoomId($novice->location);
     $novice->move->action = null;
-    $novice->move->noiseTokens = array_diff($novice->move->noiseTokens, ['novice']);
+    $novice->move->noiseTokens = [];
     $novice->move->spaces = [];
     $novice->move->vanishTokens = [];
+    $novice->room = $this->game->board->getRoomId($novice->location);
     $this->game->saveNovice($novice);
+
+    $noiseTokens = $novice->move->noiseTokens;
+    $nuns = $this->game->getNunList();
+    foreach ($nuns as $nun) {
+      if (array_key_exists($novice->playerId, $nun->noiseTokens)) {
+        $noiseTokens[] = $nun->noiseTokens[$novice->playerId];
+      }
+    }
     $this->bga->notify->player($currentPlayerId, 'noviceUndo', clienttranslate('You return to ${location} (undo)'), [
+      'preserve' => ['noiseTokens', 'player_id'],
       'location' => $novice->location,
-      'noiseTokens' => $novice->move->noiseTokens,
+      'noiseTokens' => $noiseTokens,
       'player_id' => $currentPlayerId,
     ]);
 

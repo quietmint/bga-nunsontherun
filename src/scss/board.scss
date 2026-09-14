@@ -13,9 +13,9 @@
 
 .notr-player {
   aspect-ratio: 1;
-  background-position: center;
+  background-position: 50% 30%;
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: 250%;
   border-radius: 100%;
   border: 0.4cqw solid black;
   box-shadow: 0 0 1cqw black;
@@ -25,41 +25,92 @@
   width: 6%;
   z-index: 10;
 
-  &.notr-black {
-    border-color: black;
-    z-index: 11;
+  &.notr-player-me {
+    z-index: 19;
   }
-  &.notr-white {
+
+  &.notr-player-blue {
+    background-image: url(img/novice-blue.webp);
+    background-position: 42% 30%;
+  }
+
+  &.notr-player-green {
+    background-image: url(img/novice-green.webp);
+    background-position: 44% 29%;
+  }
+
+  &.notr-player-orange {
+    background-image: url(img/novice-orange.webp);
+    background-position: 58% 29%;
+  }
+
+  &.notr-player-purple {
+    background-image: url(img/novice-purple.webp);
+    background-position: 64% 30%;
+  }
+
+  &.notr-player-red {
+    background-image: url(img/novice-red.webp);
+    background-position: 44% 33%;
+  }
+
+  &.notr-player-yellow {
+    background-image: url(img/novice-yellow.webp);
+    background-position: 46% 34%;
+  }
+
+  &.notr-player-black {
+    background-color: $color-grey-900;
+    background-image: url(img/nun-black.webp);
+    background-position: 57% 36%;
+    border-color: black;
+    z-index: 12;
+  }
+
+  &.notr-player-white {
+    background-color: $color-grey-100;
+    background-image: url(img/nun-white.webp);
+    background-position: 53% 27%;
     border-color: white;
     z-index: 11;
+  }
+
+  &.notr-offset {
+    translate: -75% -50%;
   }
 }
 
 .notr-player,
 .notr-my {
-  &.notr-blue {
-    border-color: $color-light-blue-500;
-    color: $color-light-blue-500;
+  &.notr-player-blue {
+    background-color: $color-light-blue-900;
+    border-color: $color-light-blue-400;
+    color: $color-light-blue-400;
   }
-  &.notr-green {
-    border-color: $color-light-green-500;
-    color: $color-light-green-500;
+  &.notr-player-green {
+    background-color: $color-green-900;
+    border-color: $color-green-500;
+    color: $color-green-500;
   }
-  &.notr-orange {
+  &.notr-player-orange {
+    background-color: $color-orange-900;
     border-color: $color-orange-500;
     color: $color-orange-500;
   }
-  &.notr-purple {
-    border-color: $color-purple-500;
-    color: $color-purple-500;
+  &.notr-player-purple {
+    background-color: $color-purple-900;
+    border-color: $color-purple-400;
+    color: $color-purple-400;
   }
-  &.notr-red {
-    border-color: $color-pink-500;
-    color: $color-pink-500;
+  &.notr-player-red {
+    background-color: $color-pink-900;
+    border-color: $color-pink-400;
+    color: $color-pink-400;
   }
-  &.notr-yellow {
-    border-color: $color-yellow-500;
-    color: $color-yellow-500;
+  &.notr-player-yellow {
+    background-color: $color-yellow-900;
+    border-color: $color-yellow-600;
+    color: $color-yellow-600;
   }
 }
 
@@ -77,13 +128,13 @@
   line-height: 3.4cqw;
   position: absolute;
   text-align: center;
-  text-shadow: 1px 1px white;
+  text-shadow: 0 1px white;
   transition: opacity 0.25s ease-out;
   translate: -50% -50%;
   width: 3.4%;
 
   &:hover {
-    opacity: 0.1;
+    opacity: 1%;
   }
 
   .notr-icon {
@@ -117,7 +168,7 @@
       1px 1px 0 white,
       0 0 0.5cqw white;
     color: white;
-    text-shadow: 1px 1px black;
+    text-shadow: 0 1px black;
   }
 
   &.notr-possible-prioress {

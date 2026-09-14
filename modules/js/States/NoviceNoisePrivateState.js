@@ -20,7 +20,7 @@ export class NoviceNoisePrivateState {
       }
 
       if (args.possible.length == 0) {
-        this.bga.statusBar.addActionButton(_("Continue"), () => this.bga.actions.performAction("actContinue"));
+        this.bga.statusBar.addActionButton(_("Confirm"), () => this.bga.actions.performAction("actConfirm"));
       }
 
       if (args.undo) {
