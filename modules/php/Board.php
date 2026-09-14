@@ -657,11 +657,10 @@ class Board
 					}
 				}
 			}
-
-			$actions = $this->getNunActions();
-			foreach ($possible as $location => &$p) {
-				$p->actions = $this->getActionsForDistance($actions, $p->distance);
-			}
+		}
+		$actions = $this->getNunActions();
+		foreach ($possible as $location => &$p) {
+			$p->actions = $this->getActionsForDistance($actions, $p->distance);
 		}
 
 		return $possible;
