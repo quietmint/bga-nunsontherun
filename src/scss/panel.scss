@@ -5,17 +5,17 @@
 }
 
 .notr-portrait {
-  background-position: 51% 54% !important;
+  background-position: 50% 50%;
   background-repeat: no-repeat;
-  background-size: 125%;
+  background-size: 130%;
   border-radius: 5px;
   border-top-left-radius: 50%;
   border-top-right-radius: 50%;
   border: 3px solid black;
   float: left;
-  height: 140px;
+  height: 130px;
   margin: -10px 5px 0 5px;
-  width: 105px;
+  width: 100px;
 
   .notr-player-blue & {
     background-color: $color-light-blue-900;
@@ -71,7 +71,6 @@
   color: white;
   font-variant: small-caps;
   font-weight: bold;
-  letter-spacing: 1px;
   padding: 5px;
   text-align: center;
   transition: background 0.5s ease;

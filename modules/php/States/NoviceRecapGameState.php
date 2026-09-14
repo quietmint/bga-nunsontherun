@@ -64,13 +64,23 @@ class NoviceRecapGameState extends GameState
 						'visibleLocation' => $spaceId,
 					]);
 				} else if ($oldVisible) {
-					$this->bga->notify->all('noviceVanish', clienttranslate('${player_name} vanishes at ${vanishLocation}'), [
-						'preserve' => ['player_id', 'recap'],
-						'player_id' => $novice->playerId,
-						'player_name' => $novice->playerName,
-						'recap' => true,
-						'vanishLocation' => $oldSpaceId,
-					]);
+					if ($novice->move->caught) {
+						// Caught novices don't leave vanish tokens
+						$this->bga->notify->all('noviceMove', '', [
+							'preserve' => ['location', 'player_id', 'recap'],
+							'location' => $novice->startLocation,
+							'player_id' => $novice->playerId,
+							'recap' => true,
+						]);
+					} else {
+						$this->bga->notify->all('noviceVanish', clienttranslate('${player_name} vanishes at ${vanishLocation}'), [
+							'preserve' => ['player_id', 'recap'],
+							'player_id' => $novice->playerId,
+							'player_name' => $novice->playerName,
+							'recap' => true,
+							'vanishLocation' => $oldSpaceId,
+						]);
+					}
 				}
 				$oldSpaceId = $spaceId;
 				$oldVisible = $visible;

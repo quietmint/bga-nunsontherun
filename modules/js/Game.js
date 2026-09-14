@@ -149,9 +149,9 @@ export class Game {
   <div id="notr-title-${novice.playerId}" class="notr-title ${novice.caught ? "notr-caught" : ""}">${statusText}</div>
   <div class="notr-locations">
     <div title="${_("Current Location")}"><span class="notr-icon notr-icon-location"></span><div id="notr-panel-${novice.playerId}-location">${novice.location}</div></div>
-    <div title="${_("Key Location")}"><span class="notr-icon notr-icon-key"></span><br>${novice.keyLocation || "?"}</div>
-    <div title="${_("Secret Wish Location")}"><span class="notr-icon notr-icon-wish"></span><br>${novice.wishLocation || "?"}</div>
-    <div title="${_("Start Location")}"><span class="notr-icon notr-icon-start"></span><br>${novice.startLocation}</div>
+    <div title="${_("Start Location")}"><span class="notr-icon notr-icon-start"></span><div>${novice.startLocation}</div></div>
+    <div title="${_("Key Location")}"><span class="notr-icon notr-icon-key"></span><div>${novice.keyLocation || "?"}</div></div>
+    <div title="${_("Secret Wish Location")}"><span class="notr-icon notr-icon-wish"></span><div>${novice.wishLocation || "?"}</div></div>
     </div>
   <div class="notr-label">${_("Move")}:</div>
   <div id="notr-panel-${novice.playerId}-move">?</div>
@@ -269,6 +269,12 @@ export class Game {
   async notif_noviceKey(args) {
     const novice = this.getNovice(args.player_id);
     novice.hasKey = args.hasKey;
+    if (novice.playerId == this.bga.players.getCurrentPlayerId()) {
+      const myKeyEl = document.getElementById("notr-my-key");
+      if (myKeyEl != null) {
+        myKeyEl.remove();
+      }
+    }
   }
 
   async notif_noviceMove(args) {
@@ -355,7 +361,7 @@ export class Game {
     nun.pathOrigin = args.pathOrigin;
 
     const el = document.getElementById(`notr-panel-${nun.role}-path`);
-    el.innerHTML = `<span class="notr-tag notr-path-${nun.pathColor}"><span class="notr-icon notr-icon-path-${nun.pathColor}"></span></span> ${nun.pathOrigin}▸${nun.pathDestination}`;
+    el.innerHTML = `<span class="notr-tag notr-path-${nun.pathColor}"><span class="notr-icon notr-icon-path-${nun.pathColor}"></span></span><div>${nun.pathOrigin}▸${nun.pathDestination}</div>`;
     this.bga.gameui.removeTooltip(el.id);
     this.bga.gameui.addTooltipHtml(el.id, `<div class="notr-path-image notr-path-${nun.path}"></div>`);
   }
