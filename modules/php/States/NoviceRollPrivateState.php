@@ -20,7 +20,7 @@ class NoviceRollPrivateState extends GameState
       $game,
       id: 12,
       type: StateType::PRIVATE,
-      descriptionMyTurn: clienttranslate('${you} roll ${roll} and make noise ${noise} spaces away'),
+      descriptionMyTurn: clienttranslate('${you} roll ${roll} and make noise ${noiseTotal} spaces away'),
     );
   }
 
@@ -31,18 +31,15 @@ class NoviceRollPrivateState extends GameState
     $novice->move->noiseTotal = max(0, $novice->move->noiseRoll + $actions[$novice->move->action]['noise']);
     $game->saveNovice($novice);
 
-    $game->bga->notify->player($novice->playerId, 'noviceRoll', clienttranslate('${you} roll ${roll} and make noise ${noise} spaces away'), [
-      'i18n' => ['you'],
-      'noise' => $novice->move->noiseTotal,
+    $game->bga->notify->player($novice->playerId, 'noviceRoll', clienttranslate('You roll ${roll} and make noise ${noiseTotal} spaces away'), [
+      'noiseTotal' => $novice->move->noiseTotal,
       'player_id' => $novice->playerId,
       'roll' => $novice->move->noiseRoll,
-      'you' => clienttranslate('You'),
     ]);
   }
 
   public function getArgs(int $playerId): array
   {
-    $this->game->debug("NoviceRollPrivateState getArgs // ");
     $novice = $this->game->getNoviceList()->get($playerId);
     $nuns = $this->game->getNunList();
     $possible = $this->game->board->getNovicePossibleNoise($novice, $nuns);
@@ -52,7 +49,7 @@ class NoviceRollPrivateState extends GameState
       'action' => $info['name'],
       'blessing' => $novice->blessing,
       'heard' => !empty($possible),
-      'noise' => $novice->move->noiseTotal,
+      'noiseTotal' => $novice->move->noiseTotal,
       'possible' => $possible,
       'roll' => $novice->move->noiseRoll,
       'rollAnimate' => true,
@@ -61,22 +58,9 @@ class NoviceRollPrivateState extends GameState
 
   public function onEnteringState(int $currentPlayerId)
   {
-    $this->game->debug("NoviceRollPrivateState onEnteringState // ");
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     if (is_null($novice->move->noiseRoll)) {
-      $actions = $this->game->board->getNoviceActions($novice, $this->game->getRound());
-      $novice->move->noiseRoll = \bga_rand(1, 6);
-      $novice->move->noiseTotal = max(0, $novice->move->noiseRoll + $actions[$novice->move->action]['noise']);
-      $this->game->debug("noiseRoll = " . $novice->move->noiseRoll . ", noiseTotal = " . $novice->move->noiseTotal . " // ");
-      $this->game->saveNovice($novice);
-
-      $this->bga->notify->player($currentPlayerId, 'noviceRoll', clienttranslate('${you} roll ${roll} and make noise ${noise} spaces away'), [
-        'i18n' => ['you'],
-        'noise' => $novice->move->noiseTotal,
-        'player_id' => $currentPlayerId,
-        'roll' => $novice->move->noiseRoll,
-        'you' => clienttranslate('You'),
-      ]);
+      self::noviceRoll($this->game, $novice);
     }
   }
 

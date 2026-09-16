@@ -21,8 +21,8 @@ class NunRollPlayerState extends GameState
       $game,
       id: 34,
       type: StateType::ACTIVE_PLAYER,
-      description: clienttranslate('${roleName} ${player_name} rolls ${roll} and hears noise ${noise} spaces away'),
-      descriptionMyTurn: clienttranslate('${you} (${roleName}) roll ${roll} and hear noise ${noise} spaces away'),
+      description: clienttranslate('${roleName} ${player_name} rolls ${roll} and hears noise ${noiseTotal} spaces away'),
+      descriptionMyTurn: clienttranslate('${you} (${roleName}) roll ${roll} and hear noise ${noiseTotal} spaces away'),
     );
   }
 
@@ -33,9 +33,9 @@ class NunRollPlayerState extends GameState
     $nun->move->noiseTotal = $nun->move->noiseRoll;
     $game->saveNun($nun);
 
-    $game->bga->notify->all('nunRoll', clienttranslate('${roleName} ${player_name} rolls ${roll} and hears noise ${noise} spaces away'), [
+    $game->bga->notify->all('nunRoll', clienttranslate('${roleName} ${player_name} rolls ${roll} and hears noise ${noiseTotal} spaces away'), [
       'i18n' => ['roleName'],
-      'noise' => $nun->move->noiseTotal,
+      'noiseTotal' => $nun->move->noiseTotal,
       'player_id' => $nun->playerId,
       'player_name' => $nun->playerName,
       'role' => $nun->role,
@@ -49,7 +49,7 @@ class NunRollPlayerState extends GameState
     $nun = $this->game->getNunList()->getActiveNun();
     return [
       'i18n' => ['roleName'],
-      'noise' => $nun->move->noiseTotal,
+      'noiseTotal' => $nun->move->noiseTotal,
       'player_id' => $nun->playerId,
       'player_name' => $nun->playerName,
       'role' => $nun->role,

@@ -1,6 +1,8 @@
 @use "material-colors" as *;
 
 .notr-panel {
+  clear: both;
+  height: 130px;
   margin: 10px -3px -5px -3px;
 }
 
@@ -71,6 +73,7 @@
   color: white;
   font-variant: small-caps;
   font-weight: bold;
+  margin: 10px 0;
   padding: 5px;
   text-align: center;
   transition: background 0.5s ease;
@@ -90,6 +93,5 @@
 }
 
 .notr-label {
-  font-size: 80%;
-  margin-top: 5px;
+  opacity: 0.5;
 }
