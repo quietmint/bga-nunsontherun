@@ -443,14 +443,19 @@ class Board
 			return [];
 		}
 
+		$distance = $novice->move->noiseTotal;
 		$nunMode = count($nuns) == 1;
-		if ($nunMode && array_key_exists($novice->playerId, $nuns->getActiveNun()->noiseTokens)) {
-			return [];
+		if ($nunMode) {
+			$nun = $nuns->getActiveNun();
+			if (array_key_exists($novice->playerId, $nun->noiseTokens)) {
+				return [];
+			}
+			$distance = $nun->move->noiseTotal;
 		}
 
 		// Check each nun's hearing
 		$nunHearing = [];
-		$traverse = $this->traverse($novice->location, 0, $novice->move->noiseTotal, TRAVERSE_ZERO);
+		$traverse = $this->traverse($novice->location, 0, $distance, TRAVERSE_ZERO);
 		foreach ($nuns as $nun) {
 			if (array_key_exists($nun->location, $traverse)) {
 				// Determine the closest neighbor

@@ -17,6 +17,7 @@ import { NunChoiceMultiState } from "./States/NunChoiceMultiState.js";
 import { NunMovePlayerState } from "./States/NunMovePlayerState.js";
 import { NunPathPlayerState } from "./States/NunPathPlayerState.js";
 import { NunRollPlayerState } from "./States/NunRollPlayerState.js";
+import { NextRoundGameState } from "./States/NextRoundGameState.js";
 
 export class Game {
   constructor(bga) {
@@ -33,6 +34,7 @@ export class Game {
     this.bga.states.register("NunMovePlayerState", new NunMovePlayerState(this, bga));
     this.bga.states.register("NunPathPlayerState", new NunPathPlayerState(this, bga));
     this.bga.states.register("NunRollPlayerState", new NunRollPlayerState(this, bga));
+    this.bga.states.register("NextRoundGameState", new NextRoundGameState(this, bga));
 
     this.classLocations = ["notr-offset"];
     for (let i = 1; i <= 155; i++) {
@@ -158,8 +160,8 @@ export class Game {
   <div class="notr-portrait"></div>
   <div id="notr-title-${novice.playerId}" class="notr-title ${novice.caught ? "notr-caught" : ""}">${statusText}</div>
   <div class="notr-locations">
-    <div title="${_("Move")}"><span class="notr-label notr-icon notr-icon-move"></span><div id="notr-panel-${novice.playerId}-move">${_(novice.move?.actionName || "-")}</div></div>
-    <div title="${_("Noise")}"><span class="notr-label notr-icon notr-icon-noise"></span><div id="notr-panel-${novice.playerId}-noise">${novice.move?.noiseTotal || "-"}</div></div>
+    <div title="${_("Move")}"><span class="notr-label notr-icon notr-icon-move"></span><div id="notr-panel-${novice.playerId}-move" class="notr-panel-move">${_(novice.move?.actionName || "-")}</div></div>
+    <div title="${_("Noise")}"><span class="notr-label notr-icon notr-icon-noise"></span><div id="notr-panel-${novice.playerId}-noise" class="notr-panel-noise">${novice.move?.noiseTotal || "-"}</div></div>
     <div title="${_("Start Location")}"><span class="notr-label notr-icon notr-icon-start"></span><div>${novice.startLocation}</div></div>
   </div>
   ${privateHtml}
@@ -191,8 +193,8 @@ export class Game {
     <div id="notr-panel-${nun.role}-path" title="${_("Path")}">${path}</div>
   </div>
   <div class="notr-locations">
-    <div title="${_("Move")}"><span class="notr-label notr-icon notr-icon-move"></span><div id="notr-panel-${nun.role}-move">${_(nun.move?.actionName || "-")}</div></div>
-    <div title="${_("Noise")}"><span class="notr-label notr-icon notr-icon-noise"></span><div id="notr-panel-${nun.role}-noise">${noise}</div></div>
+    <div title="${_("Move")}"><span class="notr-label notr-icon notr-icon-move"></span><div id="notr-panel-${nun.role}-move" class="notr-panel-move">${_(nun.move?.actionName || "-")}</div></div>
+    <div title="${_("Noise")}"><span class="notr-label notr-icon notr-icon-noise"></span><div id="notr-panel-${nun.role}-noise" class="notr-panel-noise">${noise}</div></div>
   </div>
 </div>`,
       );
@@ -371,7 +373,7 @@ export class Game {
   async notif_noviceWish(args) {
     const novice = this.getNovice(args.player_id);
     novice.hasWish = args.hasWish;
-    const el = document.getElementById(`notr-panel-${novice.playerId}-key`);
+    const el = document.getElementById(`notr-panel-${novice.playerId}-wish`);
     if (el != null) {
       el.innerHTML = novice.hasKey ? `<span class="notr-icon notr-icon-circle-yes"></span>` : novice.wishLocation || "-";
     }

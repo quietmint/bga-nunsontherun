@@ -39,11 +39,18 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 	public function getAllDatas(int $currentPlayerId, GameState $state, NunList $nuns): array
 	{
 		$output = [];
+		$gameEnd = $currentPlayerId == -1 || $state->name == 'gameEnd';
 		$visible = $nuns->getNovicesVisible($this);
 		foreach ($this->novices as $playerId => $novice) {
 			$json = json_decode(json_encode($novice), true);
-			unset($json['moves']);
-			if ($playerId != $currentPlayerId) {
+			if (!$gameEnd) {
+				unset($json['moves']);
+			} else {
+				foreach ($json['moves'] as &$move) {
+					unset($move['active'], $move['deviate'], $move['undo']);
+				}
+			}
+			if (!$gameEnd && $playerId != $currentPlayerId) {
 				unset($json['hasKey'], $json['hasWish'], $json['keyLocation'], $json['room'], $json['wish'], $json['wishLocation']);
 				if ($state instanceof NoviceTurnMultiState) {
 					unset($json['move']);
@@ -51,6 +58,9 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 				if (!$visible[$playerId]) {
 					$json['location'] = $json['startLocation'];
 				}
+			}
+			if ($json['move'] != null) {
+				unset($json['move']['active'], $json['move']['deviate'], $json['move']['undo']);
 			}
 			$output[$playerId] = $json;
 		}

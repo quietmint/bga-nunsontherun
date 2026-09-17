@@ -42,9 +42,7 @@ class NunChoiceMultiState extends GameState
         // 2c. Remove noise and vanish tokens
         $novices = $this->game->getNoviceList();
         foreach ($novices as &$novice) {
-          $novice->move->noiseRoll = null;
           $novice->move->noiseTokens = [];
-          $novice->move->noiseTotal = null;
           $novice->move->vanishTokens = [];
         }
         $this->game->saveNovices($novices);

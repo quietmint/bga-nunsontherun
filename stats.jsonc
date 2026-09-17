@@ -11,6 +11,16 @@
       "name": "Novices Caught",
       "type": "int",
     },
+    "noiseTokens": {
+      "id": 40,
+      "name": "Noise Tokens",
+      "type": "int",
+    },
+    "vanishTokens": {
+      "id": 41,
+      "name": "Vanish Tokens",
+      "type": "int",
+    },
   },
 
   // Statistics for each player
@@ -43,18 +53,18 @@
     },
     "wishLocation": {
       "id": 22,
-      "name": "Wish Location",
+      "name": "Secret Wish Location",
       "type": "int",
     },
 
     "keyObtained": {
       "id": 23,
-      "name": "Key Obtained",
+      "name": "Keys Obtained",
       "type": "int",
     },
     "wishObtained": {
       "id": 24,
-      "name": "Wish Obtained",
+      "name": "Secret Wishes Obtained",
       "type": "int",
     },
 
@@ -83,20 +93,23 @@
       "name": "Moves - Runing",
       "type": "int",
     },
+
+    "noiseTokens": {
+      "id": 40,
+      "name": "Noise Tokens",
+      "type": "int",
+    },
+    "vanishTokens": {
+      "id": 41,
+      "name": "Vanish Tokens",
+      "type": "int",
+    },
   },
 
   "value_labels": {
     "13": {
       "0": "Novice",
       "1": "Nun",
-    },
-    "22": {
-      "0": "No",
-      "1": "Yes",
-    },
-    "23": {
-      "0": "No",
-      "1": "Yes",
     },
   },
 }

@@ -33,8 +33,6 @@ class NoviceOwnNoisePrivateState extends GameState
     return [
       'i18n' => ['action'],
       'action' => $info['name'],
-      'formula' => ($info['noise'] > 0 ? "+ " : "- ") . abs($info['noise']),
-      'noise' => $novice->move->noiseTotal,
       'possible' => $possible,
       'roll' => $novice->move->noiseRoll,
       'undo' => !empty($novice->move->noiseTokens),
@@ -65,6 +63,11 @@ class NoviceOwnNoisePrivateState extends GameState
   {
     if (!empty($args['possible'])) {
       throw new SystemException("You must make more noise.");
+    }
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
+    $count = count($novice->move->noiseTokens);
+    if ($count > 0) {
+      $this->bga->playerStats->inc('noiseTokens', $count, $novice->playerId, true);
     }
     $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
   }

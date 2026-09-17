@@ -78,6 +78,7 @@ class NoviceMovePrivateState extends GameState
           'vanishLocation' => $oldSpaceId,
         ]);
         $novice->move->vanishTokens[$oldSpaceId] = $this->game->board->getRoomId($oldSpaceId);
+        $this->bga->playerStats->inc('vanishTokens', 1, $novice->playerId, true);
       }
       $this->bga->notify->player($currentPlayerId, 'noviceMove', '', [
         'location' => $spaceId,
@@ -101,6 +102,8 @@ class NoviceMovePrivateState extends GameState
 
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $novice->move->action = $confirmAction;
+    $this->bga->playerStats->inc('spaces', count($novice->move->spaces), $novice->playerId);
+    $this->bga->playerStats->inc($confirmAction . 'Move', 1, $novice->playerId);
     switch ($confirmAction) {
       case 'stand':
         $message = clienttranslate('You stand still at ${location1}');
@@ -126,6 +129,7 @@ class NoviceMovePrivateState extends GameState
 
     if (!$novice->hasKey && $novice->location == $novice->keyLocation) {
       $novice->hasKey = true;
+      $this->bga->playerStats->inc('keyObtained', 1, $novice->playerId);
       $this->bga->notify->player($currentPlayerId, 'noviceKey', clienttranslate('You pick up your key at ${keyLocation}'), [
         'preserve' => ['player_id', 'hasKey'],
         'hasKey' => $novice->hasKey,
@@ -134,6 +138,7 @@ class NoviceMovePrivateState extends GameState
       ]);
     } else if (!$novice->caught && !$novice->hasWish && $novice->location == $novice->wishLocation) {
       $novice->hasWish = true;
+      $this->bga->playerStats->inc('wishObtained', 1, $novice->playerId);
       $this->bga->notify->player($currentPlayerId, 'noviceWish', clienttranslate('You pick up your secret wish at ${wishLocation}'), [
         'preserve' => ['hasWish', 'player_id'],
         'hasWish' => $novice->hasWish,
@@ -150,7 +155,15 @@ class NoviceMovePrivateState extends GameState
         $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
       }
     } else {
-      $this->gamestate->nextPrivateState($currentPlayerId, NoviceRollPrivateState::class);
+      if ($novice->hasWish && $novice->location == $novice->startLocation) {
+        $this->bga->notify->player($currentPlayerId, 'message', clienttranslate('You return to ${startLocation} with your secret wish (caught ${caughtTimes} times)'), [
+          'caughtTimes' => $this->bga->playerStats->get('caughtTimes', $novice->playerId),
+          'startLocation' => $novice->startLocation,
+        ]);
+        $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
+      } else {
+        $this->gamestate->nextPrivateState($currentPlayerId, NoviceRollPrivateState::class);
+      }
     }
   }
 

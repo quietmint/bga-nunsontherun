@@ -39,14 +39,25 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 	public function getAllDatas(int $currentPlayerId, GameState $state): array
 	{
 		$output = [];
+		$gameEnd = $currentPlayerId == -1 || $state->name == 'gameEnd';
 		foreach ($this->nuns as $role => $nun) {
 			$json = json_decode(json_encode($nun), true);
-			unset($json['moves'], $json['paths'], $json['room']);
+			unset($json['paths'], $json['room']);
+			if (!$gameEnd) {
+				unset($json['moves']);
+			} else {
+				foreach ($json['moves'] as &$move) {
+					unset($move['active'], $move['caught'], $move['undo'], $move['vanishTokens']);
+				}
+			}
 			if ($state instanceof NunNoiseMultiState) {
 				if ($nun->move != null && $nun->move->active) {
 					$noiseTokens = array_intersect_key($json['move']['noiseTokens'], [$currentPlayerId => true]);
 					$json['move']['noiseTokens'] = $noiseTokens;
 				}
+			}
+			if ($json['move'] != null) {
+				unset($json['move']['active'], $json['move']['caught'], $json['move']['undo'], $json['move']['vanishTokens']);
 			}
 			$output[$role] = $json;
 		}

@@ -34,7 +34,6 @@ class NunNoiseMultiState extends GameState
     $novices = $this->game->getNoviceList();
     $noisyNovices = [];
     foreach ($novices as &$novice) {
-      $novice->move->noiseTotal = $nun->move->noiseTotal;
       $possible = $this->game->board->getNovicePossibleNoise($novice, $oneNuns);
       if (!empty($possible)) {
         $noisyNovices[] = $novice->playerId;

@@ -32,7 +32,6 @@ class NoviceNunNoisePrivateState extends GameState
     $oneNuns->add($nun);
     $possible = $this->game->board->getNovicePossibleNoise($novice, $oneNuns);
     return [
-      'noise' => $novice->move->noiseTotal,
       'possible' => $possible,
       'undo' => array_key_exists($novice->playerId, $nun->noiseTokens),
     ];
@@ -43,6 +42,10 @@ class NoviceNunNoisePrivateState extends GameState
   {
     if (!empty($args['possible'])) {
       throw new SystemException("You must make more noise.");
+    }
+    $nun = $this->game->getNunList()->getActiveNun();
+    if (array_key_exists($currentPlayerId, $nun->noiseTokens)) {
+      $this->bga->playerStats->inc('noiseTokens', 1, $currentPlayerId, true);
     }
     $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NunRecapGameState::class);
   }

@@ -163,6 +163,8 @@ class NunMovePlayerState extends GameState
     $nun = $this->game->getNunList()->getActiveNun();
     $nun->move->action = $confirmAction;
     $nun->move->active = false;
+    $this->bga->playerStats->inc('spaces', count($nun->move->spaces), $nun->playerId);
+    $this->bga->playerStats->inc($confirmAction . 'Move', 1, $nun->playerId);
     if ($confirmAction == 'walk') {
       $message = clienttranslate('${roleName} ${player_name} walks');
     } else {

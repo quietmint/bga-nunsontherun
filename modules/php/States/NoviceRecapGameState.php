@@ -25,6 +25,7 @@ class NoviceRecapGameState extends GameState
 	{
 		$novices = $this->game->getNoviceList();
 		$nuns = $this->game->getNunList();
+		$winners = [];
 		foreach ($novices as &$novice) {
 			// Notify each novice's move type
 			switch ($novice->move->action) {
@@ -115,28 +116,51 @@ class NoviceRecapGameState extends GameState
 					]);
 				}
 
-				// Notify noise
-				$this->bga->notify->all('noviceRoll', clienttranslate('${player_name} rolls ${roll} and makes noise ${noiseTotal} spaces away'), [
-					'preserve' => ['player_id', 'recap'],
-					'noiseTotal' => $novice->move->noiseTotal,
-					'player_id' => $novice->playerId,
-					'player_name' => $novice->playerName,
-					'recap' => true,
-					'roll' => $novice->move->noiseRoll,
-				]);
-				if (!empty($novice->move->noiseTokens)) {
-					foreach ($novice->move->noiseTokens as $noiseLocation) {
-						$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
-							'preserve' => ['player_id', 'recap'],
-							'noiseLocation' => $noiseLocation,
-							'player_id' => $novice->playerId,
-							'player_name' => $novice->playerName,
-							'recap' => true,
-						]);
+				if ($novice->hasWish && $novice->location == $novice->startLocation) {
+					// Winner winner!
+					$caughtTimes = $this->bga->playerStats->get('caughtTimes', $novice->playerId);
+					$this->bga->notify->all('noviceRecap', clienttranslate('${player_name} returns to ${startLocation} with their secret wish (caught ${caughtTimes} times)'), [
+						'preserve' => ['player_id', 'recap'],
+						'caughtTimes' => $caughtTimes,
+						'player_id' => $novice->playerId,
+						'player_name' => $novice->playerName,
+						'recap' => true,
+						'startLocation' => $novice->startLocation,
+					]);
+					$winners[$novice->playerId] = [
+						'caughtTimes' => $caughtTimes,
+						'playerName' => $novice->playerName
+					];
+				} else {
+					// Notify noise
+					$this->bga->notify->all('noviceRoll', clienttranslate('${player_name} rolls ${roll} and makes noise ${noiseTotal} spaces away'), [
+						'preserve' => ['player_id', 'recap'],
+						'noiseTotal' => $novice->move->noiseTotal,
+						'player_id' => $novice->playerId,
+						'player_name' => $novice->playerName,
+						'recap' => true,
+						'roll' => $novice->move->noiseRoll,
+					]);
+					if (!empty($novice->move->noiseTokens)) {
+						foreach ($novice->move->noiseTokens as $noiseLocation) {
+							$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
+								'preserve' => ['player_id', 'recap'],
+								'noiseLocation' => $noiseLocation,
+								'player_id' => $novice->playerId,
+								'player_name' => $novice->playerName,
+								'recap' => true,
+							]);
+						}
 					}
 				}
 			}
 		}
-		return NunChoiceMultiState::class;
+
+		if (!empty($winners)) {
+			$this->game->winGame($winners);
+			return EndGameState::class;
+		} else {
+			return NunChoiceMultiState::class;
+		}
 	}
 }

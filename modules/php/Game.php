@@ -131,8 +131,9 @@ class Game extends \Bga\GameFramework\Table
   protected function getAllDatas(int $currentPlayerId): array
   {
     $state = $this->gamestate->getCurrentMainStateClass();
-    $nuns = $this->getNunList();
+    $this->debug('THE STATE THE STATE: name: ' . $state->name . ' // id: ' . $state->id . ' // ');
     $novices = $this->getNoviceList();
+    $nuns = $this->getNunList();
     $result = [
       'caught' => $this->getCaught(),
       'caughtGoal' => $this->getCaughtGoal(),
@@ -323,12 +324,14 @@ class Game extends \Bga\GameFramework\Table
       $this->bga->playerStats->set('caughtTimes', 0, $playerId);
       $this->bga->playerStats->set('keyLocation', $novice->keyLocation, $playerId);
       $this->bga->playerStats->set('keyObtained', 0, $playerId);
+      $this->bga->playerStats->set('noiseTokens', 0, $playerId);
       $this->bga->playerStats->set('role', 0, $playerId);
       $this->bga->playerStats->set('runMove', 0, $playerId);
       $this->bga->playerStats->set('sneakMove', 0, $playerId);
       $this->bga->playerStats->set('spaces', 0, $playerId);
       $this->bga->playerStats->set('standMove', 0, $playerId);
       $this->bga->playerStats->set('startLocation', $novice->location, $playerId);
+      $this->bga->playerStats->set('vanishTokens', 0, $playerId);
       $this->bga->playerStats->set('walkMove', 0, $playerId);
       $this->bga->playerStats->set('wishLocation', $novice->wishLocation, $playerId);
       $this->bga->playerStats->set('wishObtained', 0, $playerId);
@@ -377,6 +380,8 @@ class Game extends \Bga\GameFramework\Table
 
     // Table statistics
     $this->incRound();
+    $this->bga->tableStats->set('noiseTokens', 0);
+    $this->bga->tableStats->set('vanishTokens', 0);
 
     return NoviceTurnMultiState::class;
   }
@@ -435,7 +440,59 @@ class Game extends \Bga\GameFramework\Table
     }
   }
 
-  public function winGame(int $dbNun) {}
+  public function winGame(array $winners)
+  {
+    // Set score
+    $caughtTimes = [];
+    foreach ($winners as $playerId => $winner) {
+      $caughtTimes[$playerId] = $winner['caughtTimes'];
+      $this->bga->playerScore->set($playerId, 1);
+      $this->bga->playerScoreAux->set($playerId, $winner['caughtTimes'] * -1);
+    }
+    $min = min($caughtTimes);
+    foreach ($winners as $playerId => $winner) {
+      if ($winner['caughtTimes'] > $min) {
+        unset($winners[$playerId]);
+      }
+    }
+
+    // Send
+    $state = $this->gamestate->getCurrentMainStateClass();
+    $novices = $this->getNoviceList();
+    $nuns = $this->getNunList();
+    $args = [
+      'novices' => $novices->getAllDatas(-1, $state, $nuns),
+      'nuns' => $nuns->getAllDatas(-1, $state),
+    ];
+
+    // Message
+    $count = count($winners);
+    if ($count == 1) {
+      $message = clienttranslate('${player_name} wins!');
+    } else if ($count == 2) {
+      $message = clienttranslate('${player_name} and ${player_name2} win!');
+    } else if ($count == 3) {
+      $message = clienttranslate('${player_name}, ${player_name2}, and ${player_name3} win!');
+    } else if ($count == 4) {
+      $message = clienttranslate('${player_name}, ${player_name2}, ${player_name3}, and ${player_name4} win!');
+    } else if ($count == 5) {
+      $message = clienttranslate('${player_name}, ${player_name2}, ${player_name3}, ${player_name4}, and ${player_name5} win!');
+    } else if ($count == 6) {
+      $message = clienttranslate('${player_name}, ${player_name2}, ${player_name3}, ${player_name4}, ${player_name5}, and ${player_name6} win!');
+    }
+    $x = '';
+    foreach ($winners as $playerId => $playerName) {
+      $args['player_id' . $x] = $playerId;
+      $args['player_name' . $x] = $playerName;
+      if ($x == '') {
+        $x = 2;
+      } else {
+        $x++;
+      }
+    }
+
+    $this->bga->notify->all('win', $message, $args);
+  }
 
   /**
    * Example of debug function.

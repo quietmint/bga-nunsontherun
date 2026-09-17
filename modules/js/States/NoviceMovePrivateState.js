@@ -47,20 +47,26 @@ export class NoviceMovePrivateState {
         const el = document.getElementById(`notr-possible-${move.location}`);
         el.addEventListener("click", () => {
           let dialog = null;
-          console.log("novice.location", novice.location, "novice.keyLocation", novice.keyLocation, "novice.wishLocation", novice.wishLocation);
           if (!novice.hasKey && novice.location == novice.keyLocation) {
             dialog = this.bga.gameui.format_string(
-              _("If you keep moving, you won't pick up your key at ${keyLocation}."),
+              _("You must end your move at ${keyLocation} to pick up your key.") + " " + _("Do you want to keep moving instead?"),
               this.game.bgaFormatText("", {
                 keyLocation: novice.keyLocation,
               }).args,
             );
           } else if (!novice.caught && !novice.hasWish && novice.location == novice.wishLocation) {
             dialog = this.bga.gameui.format_string(
-              _("If you keep moving, you won't pick up your secret wish at ${wishLocation}."),
+              _("You must end your move at ${wishLocation} to pick up your secret wish.") + " " + _("Do you want to keep moving instead?"),
               this.game.bgaFormatText("", {
                 wishLocation: novice.wishLocation,
-              }),
+              }).args,
+            );
+          } else if (novice.hasWish && novice.location == novice.startLocation) {
+            dialog = this.bga.gameui.format_string(
+              _("You must end your move at ${startLocation} to win the game.") + " " + _("Do you want to keep moving instead?"),
+              this.game.bgaFormatText("", {
+                startLocation: novice.startLocation,
+              }).args,
             );
           }
           if (dialog) {
