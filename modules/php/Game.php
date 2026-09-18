@@ -456,7 +456,31 @@ class Game extends \Bga\GameFramework\Table
       }
     }
 
-    // Send
+    // Add moves to history
+    $novices = $this->getNoviceList();
+    foreach ($novices as &$novice) {
+      $oldMove = $novice->move;
+      if ($oldMove != null) {
+        $oldMove->undo = null;
+        $novice->moves[] = $oldMove;
+      }
+      $novice->move = null;
+    }
+    $this->saveNovices($novices);
+
+    $nuns = $this->getNunList();
+    foreach ($nuns as &$nun) {
+      $oldMove = $nun->move;
+      if ($oldMove != null) {
+        $oldMove->active = false;
+        $oldMove->undo = null;
+        $nun->moves[] = $oldMove;
+      }
+      $nun->move = null;
+    }
+    $this->saveNuns($nuns);
+
+    // Send recap data
     $state = $this->gamestate->getCurrentMainStateClass();
     $novices = $this->getNoviceList();
     $nuns = $this->getNunList();
@@ -479,18 +503,19 @@ class Game extends \Bga\GameFramework\Table
       $message = clienttranslate('${player_name}, ${player_name2}, ${player_name3}, ${player_name4}, and ${player_name5} win!');
     } else if ($count == 6) {
       $message = clienttranslate('${player_name}, ${player_name2}, ${player_name3}, ${player_name4}, ${player_name5}, and ${player_name6} win!');
+    } else {
+      throw new SystemException("More than 6 winners");
     }
     $x = '';
-    foreach ($winners as $playerId => $playerName) {
+    foreach ($winners as $playerId => $winner) {
       $args['player_id' . $x] = $playerId;
-      $args['player_name' . $x] = $playerName;
+      $args['player_name' . $x] = $winner['playerName'];
       if ($x == '') {
         $x = 2;
       } else {
         $x++;
       }
     }
-
     $this->bga->notify->all('win', $message, $args);
   }
 

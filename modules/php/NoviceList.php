@@ -47,7 +47,13 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 				unset($json['moves']);
 			} else {
 				foreach ($json['moves'] as &$move) {
-					unset($move['active'], $move['deviate'], $move['undo']);
+					unset(
+						$move['active'],
+						$move['deviate'],
+						$move['noiseTokens'],
+						$move['undo'],
+						$move['vanishTokens']
+					);
 				}
 			}
 			if (!$gameEnd && $playerId != $currentPlayerId) {
@@ -59,8 +65,16 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 					$json['location'] = $json['startLocation'];
 				}
 			}
-			if ($json['move'] != null) {
-				unset($json['move']['active'], $json['move']['deviate'], $json['move']['undo']);
+			if (array_key_exists('move', $json) && $json['move'] != null) {
+				unset(
+					$json['move']['active'],
+					$json['move']['caught'],
+					$json['move']['caughtHistory'],
+					$json['move']['deviate'],
+					$json['move']['noiseHistory'],
+					$json['move']['undo'],
+					$json['move']['vanishHistory'],
+				);
 			}
 			$output[$playerId] = $json;
 		}

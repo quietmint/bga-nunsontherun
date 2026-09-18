@@ -75,6 +75,11 @@ export class Game {
     });
     this.setupBoard();
     this.setupPanels();
+    const stateName = this.bga.states.getCurrentMainStateName();
+    if (stateName == "gameEnd") {
+      this.setupReplay();
+      this.setupNotes();
+    }
     this.setupNotifications();
     if (gamedatas.round == gamedatas.roundMax - 1) {
       this.bga.gameArea.addLastTurnBanner();
@@ -135,6 +140,204 @@ export class Game {
           const novice = this.getNovice(playerId);
           this.addNoviceNoise(novice, location);
         }
+      }
+    });
+  }
+
+  setupReplay() {
+    let markers = "";
+    for (let i = 1; i <= this.gamedatas.round; i++) {
+      markers += `<option value="${i}"></option>`;
+    }
+    this.bga.gameArea.getElement().insertAdjacentHTML(
+      "afterbegin",
+      `<div id="notr-replay">
+  <a href="#" class="action-button bgabutton bgabutton_blue" id="notr-replay-button"><span id="notr-replay-icon" class="notr-icon notr-icon-play"></span> ${_("Watch replay")}</a>
+  <input type="range" id="notr-replay-range" list="notr-replay-markers" min="0" max="${this.gamedatas.round}" value="${this.gamedatas.round}" />
+  <datalist id="notr-replay-markers">${markers}</datalist>
+</div>`,
+    );
+
+    const rangeEl = document.getElementById("notr-replay-range");
+    rangeEl.addEventListener("input", (event) => {
+      this.replayPause();
+      this.replayShow(event.target.value);
+    });
+
+    this.replayTimer = null;
+    const buttonEl = document.getElementById("notr-replay-button");
+    const iconEl = document.getElementById("notr-replay-icon");
+    buttonEl.addEventListener("click", (event) => {
+      if (this.replayTimer) {
+        this.replayPause();
+      } else {
+        iconEl.classList.remove("notr-icon-play");
+        iconEl.classList.add("notr-icon-pause");
+        if (rangeEl.value == rangeEl.max) {
+          this.replayShow(0);
+          this.replayTimer = setTimeout(() => {
+            this.replayPlay();
+          }, 1500);
+        } else {
+          this.replayPlay();
+        }
+      }
+    });
+  }
+
+  replayPlay() {
+    console.log("replayPlay");
+    this.replayTimer = null;
+    const rangeEl = document.getElementById("notr-replay-range");
+    if (rangeEl.value == rangeEl.max) {
+      this.replayPause();
+    } else {
+      rangeEl.value++;
+      this.replayShow(rangeEl.value);
+      this.replayTimer = setTimeout(() => {
+        this.replayPlay();
+      }, 1500);
+    }
+  }
+
+  replayPause() {
+    console.log("replayPause");
+    if (this.replayTimer) {
+      clearTimeout(this.replayTimer);
+    }
+    this.replayTimer = null;
+    const iconEl = document.getElementById("notr-replay-icon");
+    iconEl.classList.remove("notr-icon-pause");
+    iconEl.classList.add("notr-icon-play");
+  }
+
+  replayShow(round) {
+    console.log("replayShow", round);
+    // Update the range input
+    const rangeEl = document.getElementById("notr-replay-range");
+    rangeEl.value = round;
+
+    // Update the notepads
+    document.querySelectorAll("#notr-notes .notr-highlight").forEach((el) => el.classList.remove("notr-highlight"));
+    document.querySelectorAll(`#notr-notes .notr-line[data-round="${round}"]`).forEach((el) => el.classList.add("notr-highlight"));
+
+    // Clear tokens
+    const tokens = [];
+    let els = document.getElementsByClassName("notr-noise");
+    while (els.length > 0) {
+      els[0].remove();
+    }
+    els = document.getElementsByClassName("notr-vanish");
+    while (els.length > 0) {
+      els[0].remove();
+    }
+
+    // Move novices
+    Object.values(this.gamedatas.novices).forEach((novice) => {
+      let location = novice.location;
+      const move = novice.moves[Math.max(round - 1, 0)];
+      if (move) {
+        location = move.start;
+        if (round > 0 && move.spaces.length) {
+          location = move.spaces.at(-1);
+        }
+        if (round > 0 && move.noiseHistory) {
+          for (let noise of move.noiseHistory) {
+            tokens.push({ type: "noise", novice: novice, location: noise });
+          }
+        }
+        if (round > 0 && move.vanishHistory) {
+          for (let vanish of move.noiseHistory) {
+            tokens.push({ type: "vanish", novice: novice, location: vanish });
+          }
+        }
+      }
+      const noviceEl = document.getElementById(`notr-novice-${novice.playerId}`);
+      noviceEl.classList.remove(...this.classLocations);
+      noviceEl.classList.add("notr-" + location);
+    });
+
+    // Move nuns
+    Object.values(this.gamedatas.nuns).forEach((nun) => {
+      let location = nun.location;
+      const move = nun.moves[Math.max(round - 1, 0)];
+      if (move) {
+        location = move.start;
+        if (round > 0 && move.spaces.length) {
+          location = move.spaces.at(-1);
+        }
+        if (round > 0 && move.noiseHistory) {
+          for (let playerId of move.noiseHistory) {
+            tokens.push({ type: "noise", novice: this.getNovice(playerId), location: move.noiseHistory[playerId] });
+          }
+        }
+      }
+      const nunEl = document.getElementById(`notr-nun-${nun.role}`);
+      nunEl.classList.remove(...this.classLocations);
+      nunEl.classList.add("notr-" + location);
+    });
+
+    // Add tokens
+    if (tokens.length) {
+      setTimeout(() => {
+        for (const token of tokens) {
+          if (token.type == "noise") {
+            this.addNoviceNoise(token.novice, token.location);
+          } else if (token.type == "vanish") {
+            this.addNoviceVanish(token.novice, token.location);
+          }
+        }
+      }, 300);
+    }
+  }
+
+  setupNotes() {
+    this.bga.gameArea.getElement().insertAdjacentHTML("beforeend", `<div id="notr-notes"></div>`);
+    const notesEl = document.getElementById("notr-notes");
+    notesEl.addEventListener("click", (event) => {
+      const tr = event.target.closest("tr.notr-line");
+      if (tr && tr.dataset.round !== undefined) {
+        this.replayPause();
+        this.replayShow(parseInt(tr.dataset.round));
+      }
+    });
+
+    Object.values(this.gamedatas.novices).forEach((novice) => {
+      let tr = "";
+      if (novice.moves) {
+        novice.moves.forEach((move, x) => {
+          let distance = move.spaces.length;
+          let end = move.start;
+          if (distance) {
+            end = move.spaces.at(-1);
+          }
+          let icon = "";
+          if (end == novice.keyLocation) {
+            icon = `<span class="notr-icon notr-icon-key" title="${_("Key Location")}"></span>`;
+          } else if (end == novice.wishLocation) {
+            icon = `<span class="notr-icon notr-icon-wish" title="${_("Secret Wish Location")}"></span>`;
+          } else if (end == novice.startLocation) {
+            icon = `<span class="notr-icon notr-icon-start" title="${_("Start Location")}"></span>`;
+          }
+          const cssClass = move.caught ? "notr-caught" : "";
+          const caught = move.caughtHistory ? `<span class="notr-icon notr-icon-circle-no" title="${_("Caught")}"></span>` : "";
+          tr += `<tr data-round="${x + 1}" class="notr-line ${cssClass}"><td>#${x + 1}</td><td>${end}</td><td class="rp">${icon} ${_(move.actionName)} (${distance})</td><td>${caught}</td></tr>`;
+        });
+        notesEl.insertAdjacentHTML(
+          "beforeend",
+          `<div id="notr-notes-${novice.playerId}" class="notr-notes notr-player-${novice.color} notr-${novice.location}">
+  <div class="notr-portrait"></div>
+  <table class="notr-notes-table">
+    <thead>
+        <tr><th colspan="99">${novice.playerName}</th></tr>
+    </thead>
+    <tbody>
+        <tr data-round="0" class="notr-line"><td>#0</td><td>${novice.startLocation}</td><td class="rp"><span class="notr-icon notr-icon-start" title="${_("Start Location")}"></span></td><td></td></tr>
+        ${tr}
+    </tbody>
+  </table>
+</div>`,
+        );
       }
     });
   }
@@ -289,6 +492,8 @@ export class Game {
       el.innerHTML = novice.hasKey ? `<span class="notr-icon notr-icon-circle-yes"></span>` : novice.keyLocation || "-";
     }
     if (novice.playerId == this.bga.players.getCurrentPlayerId()) {
+      this.bga.sounds.play("collect");
+      this.bga.gameui.disableNextMoveSound();
       const myKeyEl = document.getElementById("notr-my-key");
       if (myKeyEl != null) {
         myKeyEl.remove();
@@ -320,7 +525,7 @@ export class Game {
 
   async notif_noviceNoise(args) {
     console.log("doing notif_noviceNoise", args);
-    this.bga.sounds.play("noise" + (Math.floor(Math.random() * 4) + 1));
+    this.bga.sounds.play("noise" + (Math.floor(Math.random() * 5) + 1));
     this.bga.gameui.disableNextMoveSound();
     const novice = this.getNovice(args.player_id);
     this.addNoviceNoise(novice, args.noiseLocation);
@@ -378,6 +583,10 @@ export class Game {
       el.innerHTML = novice.hasKey ? `<span class="notr-icon notr-icon-circle-yes"></span>` : novice.wishLocation || "-";
     }
     if (novice.playerId == this.bga.players.getCurrentPlayerId()) {
+      if (novice.hashWish) {
+        this.bga.sounds.play("collect");
+        this.bga.gameui.disableNextMoveSound();
+      }
       const myWishEl = document.getElementById("notr-my-wish");
       if (novice.hasWish && myWishEl != null) {
         myWishEl.remove();
@@ -448,9 +657,18 @@ export class Game {
   }
 
   async notif_round(args) {
+    console.log("doing notif_round", args);
     if (args.round == args.roundMax - 1) {
       this.bga.gameArea.addLastTurnBanner();
     }
+  }
+
+  async notif_win(args) {
+    console.log("doing notif_win", args);
+    this.gamedatas.novices = args.novices;
+    this.gamedatas.nuns = args.nuns;
+    this.setupReplay();
+    this.setupNotes();
   }
 
   ///////////////////////////////////////////////////

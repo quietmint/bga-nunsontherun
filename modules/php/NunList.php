@@ -47,7 +47,15 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 				unset($json['moves']);
 			} else {
 				foreach ($json['moves'] as &$move) {
-					unset($move['active'], $move['caught'], $move['undo'], $move['vanishTokens']);
+					unset(
+						$move['active'],
+						$move['caught'],
+						$move['caughtNow'],
+						$move['noiseTokens'],
+						$move['undo'],
+						$move['vanishHistory'],
+						$move['vanishTokens'],
+					);
 				}
 			}
 			if ($state instanceof NunNoiseMultiState) {
@@ -56,8 +64,15 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 					$json['move']['noiseTokens'] = $noiseTokens;
 				}
 			}
-			if ($json['move'] != null) {
-				unset($json['move']['active'], $json['move']['caught'], $json['move']['undo'], $json['move']['vanishTokens']);
+			if (array_key_exists('move', $json) && $json['move'] != null) {
+				unset(
+					$json['move']['caught'],
+					$json['move']['caughtHistory'],
+					$json['move']['noiseHistory'],
+					$json['move']['undo'],
+					$json['move']['vanishHistory'],
+					$json['move']['vanishTokens'],
+				);
 			}
 			$output[$role] = $json;
 		}

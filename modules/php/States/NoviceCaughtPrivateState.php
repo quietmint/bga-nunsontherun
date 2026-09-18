@@ -28,7 +28,7 @@ class NoviceCaughtPrivateState extends GameState
   {
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     if (!$caught) {
-      $novice->caught = $caught;
+      $novice->caught = false;
       $this->game->saveNovice($novice);
       $this->bga->notify->player($currentPlayerId, 'noviceCaught', clienttranslate('You are back on the run'), [
         'preserve' => ['caught', 'player_id'],

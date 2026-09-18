@@ -11,7 +11,7 @@
     margin-right: 4px;
     width: 48px;
 
-    .action-button:disabled & {
+    .bgabutton:disabled & {
       filter: grayscale(1);
     }
   }

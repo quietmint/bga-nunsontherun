@@ -11,6 +11,7 @@ const TRAVERSE_UNLOCKED = 1;
 const TRAVERSE_SINGLE_ROOM = 2;
 const TRAVERSE_ZERO = 4;
 const TRAVERSE_TARGET = 8;
+const TRAVERSE_RESTRICT = 16;
 
 class Board
 {
@@ -749,11 +750,11 @@ class Board
 						continue;
 					}
 					if (array_key_exists($neighborId, $targets)) {
-						// Ignore target spaces
 						if ($flags & TRAVERSE_TARGET) {
 							$maxDistance = min($distance + 1, $maxDistance);
 							$this->game->debug("TRAVERSE_TARGET got to $neighborId in maxDistance = $maxDistance via " . json_encode($move->spaces) . " // ");
 						} else {
+							// Ignore target spaces
 							continue;
 						}
 					}

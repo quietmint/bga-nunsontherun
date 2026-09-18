@@ -148,6 +148,7 @@ class NoviceMovePrivateState extends GameState
     }
     $this->game->saveNovice($novice);
 
+    $this->game->giveExtraTime($currentPlayerId);
     if ($novice->caught) {
       if (!$this->game->getNunList()->isNoviceVisible($novice)) {
         $this->gamestate->nextPrivateState($currentPlayerId, NoviceCaughtPrivateState::class);

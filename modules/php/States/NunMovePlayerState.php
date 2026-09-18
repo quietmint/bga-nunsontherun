@@ -113,6 +113,7 @@ class NunMovePlayerState extends GameState
         foreach ($locationsWithNovices[$spaceId] as $playerId) {
           $novice = &$novices->get($playerId);
           $novice->caught = true;
+          $novice->move->caughtHistory = true;
           $nun->move->deviate = $this->game->board->getNunDeviate($nun, $novices);
           $nun->move->undo = $nun->move->spaces;
           $this->bga->playerStats->inc('caught', 1, $nun->playerId, true);
@@ -181,6 +182,7 @@ class NunMovePlayerState extends GameState
       'role' => $nun->role,
       'roleName' => $nun->roleName,
     ]);
+    $this->game->giveExtraTime($nun->playerId);
     return NunChoiceMultiState::class;
   }
 

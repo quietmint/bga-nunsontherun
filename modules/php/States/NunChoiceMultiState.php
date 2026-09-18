@@ -42,12 +42,15 @@ class NunChoiceMultiState extends GameState
         // 2c. Remove noise and vanish tokens
         $novices = $this->game->getNoviceList();
         foreach ($novices as &$novice) {
+          $novice->move->noiseHistory = $novice->move->noiseTokens;
           $novice->move->noiseTokens = [];
+          $novice->move->vanishHistory = array_keys($novice->move->vanishTokens);
           $novice->move->vanishTokens = [];
         }
         $this->game->saveNovices($novices);
         $nuns = $this->game->getNunList();
         foreach ($nuns as &$nun) {
+          $nun->move->noiseHistory = $nun->noiseTokens;
           $nun->noiseTokens = [];
         }
         $this->game->saveNuns($nuns);
@@ -86,6 +89,7 @@ class NunChoiceMultiState extends GameState
     ]);
 
     $this->gamestate->changeActivePlayer($nun->playerId);
+    $this->game->giveExtraTime($nun->playerId);
     if ($nun->path == null) {
       $this->gamestate->setAllPlayersNonMultiactive(NunPathPlayerState::class);
     } else {
