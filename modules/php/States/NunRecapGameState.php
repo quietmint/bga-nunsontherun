@@ -45,8 +45,8 @@ class NunRecapGameState extends GameState
 		}
 
 		$nun = $this->game->getNunList()->getActiveNun();
-		if (!empty($nun->noiseTokens)) {
-			foreach ($nun->noiseTokens as $playerId => $noiseLocation) {
+		if (!empty($nun->move->noiseTokens)) {
+			foreach ($nun->move->noiseTokens as $playerId => $noiseLocation) {
 				$novice = $novices->get($playerId);
 				$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
 					'preserve' => ['player_id', 'recap'],

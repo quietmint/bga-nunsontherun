@@ -145,7 +145,7 @@ class NunMovePlayerState extends GameState
         }
       }
 
-      if ($nun->location == $nun->pathDestination) {
+      if ($nun->location == $nun->path->destination) {
         $this->game->saveNuns($nuns);
         return NunPathPlayerState::class;
       }

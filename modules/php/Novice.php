@@ -6,14 +6,14 @@ namespace Bga\Games\NunsOnTheRun;
 
 class Novice
 {
-	public ?string $blessing = null;
-	public bool $caught = false;
+	public ?string $blessing;
+	public bool $caught;
 	public string $color;
-	public bool $hasKey = false;
-	public bool $hasWish = false;
+	public bool $hasKey;
+	public bool $hasWish;
 	public int $location;
 	public ?Move $move;
-	public array $moves = [];
+	public array $moves;
 	public int $playerId;
 	public string $playerName;
 	public int $room;
@@ -68,25 +68,57 @@ class Novice
 		}
 	}
 
-	public function __construct(?\stdClass $data = null)
+	public function __construct(
+		string $color,
+		int $location,
+		Move $move,
+		int $playerId,
+		string $playerName,
+		int $room,
+		int $startLocation,
+		string $wish,
+		?string $blessing = null,
+		bool $caught = false,
+		bool $hasKey = false,
+		bool $hasWish = false,
+		array $moves = [],
+	) {
+		$this->blessing = $blessing;
+		$this->caught = $caught;
+		$this->color = $color;
+		$this->hasKey = $hasKey;
+		$this->hasWish = $hasWish;
+		$this->location = $location;
+		$this->move = $move;
+		$this->moves = $moves;
+		$this->playerId = $playerId;
+		$this->playerName = $playerName;
+		$this->room = $room;
+		$this->startLocation = $startLocation;
+		$this->wish = $wish;
+	}
+
+	public static function fromData(\stdClass $data): Novice
 	{
-		if ($data != null) {
-			$this->blessing = property_exists($data, 'blessing') ? $data->blessing : null;
-			$this->caught = $data->caught;
-			$this->color = $data->color;
-			$this->hasKey = $data->hasKey;
-			$this->hasWish = $data->hasWish;
-			$this->location = $data->location;
-			$this->move = property_exists($data, 'move') && !is_null($data->move) ? new Move($data->move) : null;
-			$this->playerId = $data->playerId;
-			$this->playerName = $data->playerName;
-			$this->room = $data->room;
-			$this->startLocation = $data->startLocation;
-			$this->wish = $data->wish;
-			foreach ($data->moves as $move) {
-				array_push($this->moves, new Move($move));
-			}
+		$moves = [];
+		foreach ($data->moves as $move) {
+			$moves[] = Move::fromData($move);
 		}
+		return new Novice(
+			blessing: $data->blessing,
+			caught: $data->caught,
+			color: $data->color,
+			hasKey: $data->hasKey,
+			hasWish: $data->hasWish,
+			location: $data->location,
+			move: Move::fromData($data->move),
+			moves: $moves,
+			playerId: $data->playerId,
+			playerName: $data->playerName,
+			room: $data->room,
+			startLocation: $data->startLocation,
+			wish: $data->wish,
+		);
 	}
 
 	public function __toString()

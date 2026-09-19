@@ -38,8 +38,8 @@ export class NunMovePlayerState {
         const move = args.possible[i];
         const action = move.actions[0];
         let str = move.distance;
-        if (move.location == nun.pathDestination) {
-          str = `<span class="notr-icon notr-icon-path-${nun.pathColor}"></span>`;
+        if (move.location == nun.path.destination) {
+          str = `<span class="notr-icon notr-icon-path-${nun.path.color}"></span>`;
         }
         boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${move.location}" class="notr-possible notr-possible-${action} notr-${move.location}">${str}</div>`);
         const el = document.getElementById(`notr-possible-${move.location}`);

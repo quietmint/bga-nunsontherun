@@ -83,8 +83,8 @@ class NoviceOwnNoisePrivateState extends GameState
     $noiseTokens = $novice->move->noiseTokens;
     $nuns = $this->game->getNunList();
     foreach ($nuns as $nun) {
-      if (array_key_exists($novice->playerId, $nun->noiseTokens)) {
-        $noiseTokens[] = $nun->noiseTokens[$novice->playerId];
+      if (array_key_exists($novice->playerId, $nun->move->noiseTokens)) {
+        $noiseTokens[] = $nun->move->noiseTokens[$novice->playerId];
       }
     }
     $this->bga->notify->player($currentPlayerId, 'noviceNoiseUndo', clienttranslate('You undo'), [

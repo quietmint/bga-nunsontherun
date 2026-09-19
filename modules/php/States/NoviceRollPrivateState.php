@@ -59,6 +59,8 @@ class NoviceRollPrivateState extends GameState
   public function onEnteringState(int $currentPlayerId)
   {
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
+    $this->game->debug("NoviceRollPrivateState loaded this novice: " . json_encode($novice) . ' // ');
+
     if (is_null($novice->move->noiseRoll)) {
       self::noviceRoll($this->game, $novice);
     }

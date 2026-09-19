@@ -6,21 +6,21 @@ namespace Bga\Games\NunsOnTheRun;
 
 class Move
 {
-	public ?string $action = null;
-	public bool $active = false;
-	public ?string $blessing = null;
-	public bool $caught = false;
-	public bool $caughtHistory = false;
-	public bool $deviate = false;
-	public ?int $noiseRoll = null;
-	public array $noiseHistory = [];
-	public array $noiseTokens = [];
-	public ?int $noiseTotal = null;
-	public array $spaces = [];
+	public ?string $action;
+	public bool $active;
+	public ?string $blessing;
+	public bool $caught;
+	public bool $caughtHistory;
+	public bool $deviate;
+	public ?int $noiseRoll;
+	public array $noiseHistory;
+	public array $noiseTokens;
+	public ?int $noiseTotal;
+	public array $spaces;
 	public int $start;
-	public ?array $undo = null;
-	public array $vanishHistory = [];
-	public array $vanishTokens = [];
+	public ?array $undo;
+	public array $vanishHistory;
+	public array $vanishTokens;
 
 	public ?string $actionName {
 		&get {
@@ -38,24 +38,58 @@ class Move
 		}
 	}
 
-	public function __construct(?\stdClass $data = null)
+	public function __construct(
+		int $start,
+		?string $action = null,
+		bool $active = false,
+		?string $blessing = null,
+		bool $caught = false,
+		bool $caughtHistory = false,
+		bool $deviate = false,
+		?int $noiseRoll = null,
+		array $noiseHistory = [],
+		array $noiseTokens = [],
+		?int $noiseTotal = null,
+		array $spaces = [],
+		?array $undo = null,
+		array $vanishHistory = [],
+		array $vanishTokens = [],
+	) {
+		$this->action = $action;
+		$this->active = $active;
+		$this->blessing = $blessing;
+		$this->caught = $caught;
+		$this->caughtHistory = $caughtHistory;
+		$this->deviate = $deviate;
+		$this->noiseHistory = $noiseHistory;
+		$this->noiseRoll = $noiseRoll;
+		$this->noiseTokens = $noiseTokens;
+		$this->noiseTotal = $noiseTotal;
+		$this->spaces = $spaces;
+		$this->start = $start;
+		$this->undo = $undo;
+		$this->vanishHistory = $vanishHistory;
+		$this->vanishTokens = $vanishTokens;
+	}
+
+	public static function fromData(\stdClass $data): Move
 	{
-		if ($data != null) {
-			$this->action = property_exists($data, 'action') ? $data->action : null;
-			$this->active = property_exists($data, 'active') && $data->active;
-			$this->blessing = property_exists($data, 'blessing') ? $data->blessing : null;
-			$this->caught = property_exists($data, 'caught') && $data->caught;
-			$this->caughtHistory = property_exists($data, 'caughtHistory') && $data->caughtHistory;
-			$this->deviate = property_exists($data, 'deviate') && $data->deviate;
-			$this->noiseRoll = property_exists($data, 'noiseRoll') ? $data->noiseRoll : null;
-			$this->noiseHistory = property_exists($data, 'noiseHistory') ? $data->noiseHistory : [];
-			$this->noiseTokens = property_exists($data, 'noiseTokens') ? $data->noiseTokens : [];
-			$this->noiseTotal = property_exists($data, 'noiseTotal') ? $data->noiseTotal : null;
-			$this->spaces = property_exists($data, 'spaces') ? $data->spaces : [];
-			$this->start = $data->start;
-			$this->undo = property_exists($data, 'undo') ? $data->undo : null;
-			$this->vanishHistory = property_exists($data, 'vanishHistory') ? $data->vanishHistory : [];
-			$this->vanishTokens = property_exists($data, 'vanishTokens') ? $data->vanishTokens : [];
-		}
+		return new Move(
+			action: $data->action,
+			active: $data->active,
+			blessing: $data->blessing,
+			caught: $data->caught,
+			caughtHistory: $data->caughtHistory,
+			deviate: $data->deviate,
+			noiseHistory: $data->noiseHistory,
+			noiseRoll: $data->noiseRoll,
+			noiseTokens: $data->noiseTokens,
+			noiseTotal: $data->noiseTotal,
+			spaces: $data->spaces,
+			start: $data->start,
+			undo: $data->undo,
+			vanishHistory: $data->vanishHistory,
+			vanishTokens: $data->vanishTokens,
+		);
 	}
 }

@@ -6,17 +6,13 @@ namespace Bga\Games\NunsOnTheRun;
 
 class Nun
 {
-	public ?string $blessing = null;
+	public ?string $blessing;
 	public string $color;
 	public int $location;
-	public array $noiseTokens = [];
-	public ?Move $move = null;
-	public array $moves = [];
-	public ?string $path = null;
-	public ?string $pathColor = null;
-	public ?int $pathDestination = null;
-	public ?int $pathOrigin = null;
-	public array $paths = [];
+	public ?Move $move;
+	public array $moves;
+	public ?Path $path;
+	public array $paths;
 	public int $playerId;
 	public string $playerName;
 	public string $role;
@@ -29,27 +25,51 @@ class Nun
 		}
 	}
 
-	public function __construct(?\stdClass $data = null)
+	public function __construct(
+		string $color,
+		int $location,
+		Move $move,
+		int $playerId,
+		string $playerName,
+		string $role,
+		int $room,
+		?string $blessing = null,
+		array $moves = [],
+		?Path $path = null,
+		array $paths = [],
+	) {
+		$this->blessing = $blessing;
+		$this->color = $color;
+		$this->location = $location;
+		$this->move = $move;
+		$this->moves = $moves;
+		$this->path = $path;
+		$this->paths = $paths;
+		$this->playerId = $playerId;
+		$this->playerName = $playerName;
+		$this->role = $role;
+		$this->room = $room;
+	}
+
+	public static function fromData(\stdClass $data): Nun
 	{
-		if ($data != null) {
-			$this->blessing = property_exists($data, 'blessing') ? $data->blessing : null;
-			$this->color = $data->color;
-			$this->location = $data->location;
-			$this->move = property_exists($data, 'move') && !is_null($data->move) ? new Move($data->move) : null;
-			$this->noiseTokens = property_exists($data, 'noiseTokens') ? $data->noiseTokens : [];
-			$this->path = property_exists($data, 'path') ? $data->path : null;
-			$this->pathColor = property_exists($data, 'pathColor') ? $data->pathColor : null;
-			$this->pathDestination = property_exists($data, 'pathDestination') ? $data->pathDestination : null;
-			$this->pathOrigin = property_exists($data, 'pathOrigin') ? $data->pathOrigin : null;
-			$this->paths = $data->paths;
-			$this->playerId = $data->playerId;
-			$this->playerName = $data->playerName;
-			$this->role = $data->role;
-			$this->room = $data->room;
-			foreach ($data->moves as $move) {
-				array_push($this->moves, new Move($move));
-			}
+		$moves = [];
+		foreach ($data->moves as $move) {
+			$moves[] = Move::fromData($move);
 		}
+		return new Nun(
+			blessing: $data->blessing,
+			color: $data->color,
+			location: $data->location,
+			move: Move::fromData($data->move),
+			moves: $moves,
+			path: property_exists($data, 'path') && !is_null($data->path) ? Path::fromData($data->path) : null,
+			paths: $data->paths,
+			playerId: $data->playerId,
+			playerName: $data->playerName,
+			role: $data->role,
+			room: $data->room,
+		);
 	}
 
 	public function __toString()

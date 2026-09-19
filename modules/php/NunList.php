@@ -10,15 +10,23 @@ use Bga\Games\NunsOnTheRun\States\NunNoiseMultiState;
 
 class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 {
-	private array $nuns = [];
+	private array $nuns;
 
-	public function __construct(?\stdClass $data = null)
+	public function __construct(
+		array $nuns = []
+	) {
+		$this->nuns = $nuns;
+	}
+
+	public static function fromData(\stdClass $data): NunList
 	{
-		if ($data != null) {
-			foreach ($data as $role => $nun) {
-				$this->nuns[$role] = new Nun($nun);
-			}
+		$nuns = [];
+		foreach ($data as $role => $nun) {
+			$nuns[$role] = Nun::fromData($nun);
 		}
+		return new NunList(
+			nuns: $nuns,
+		);
 	}
 
 	public function jsonSerialize(): array
@@ -42,6 +50,8 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 		$gameEnd = $currentPlayerId == -1 || $state->name == 'gameEnd';
 		foreach ($this->nuns as $role => $nun) {
 			$json = json_decode(json_encode($nun), true);
+			$json['_get_class'] = get_class($state);
+			$json['_currentPlayerId'] = $currentPlayerId;
 			unset($json['paths'], $json['room']);
 			if (!$gameEnd) {
 				unset($json['moves']);
@@ -58,11 +68,9 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 					);
 				}
 			}
-			if ($state instanceof NunNoiseMultiState) {
-				if ($nun->move != null && $nun->move->active) {
-					$noiseTokens = array_intersect_key($json['move']['noiseTokens'], [$currentPlayerId => true]);
-					$json['move']['noiseTokens'] = $noiseTokens;
-				}
+			if ($state instanceof NunNoiseMultiState && $nun->move != null && $nun->move->active) {
+				$noiseTokens = array_intersect_key($json['move']['noiseTokens'], [$currentPlayerId => true]);
+				$json['move']['noiseTokens'] = $noiseTokens;
 			}
 			if (array_key_exists('move', $json) && $json['move'] != null) {
 				unset(
@@ -95,17 +103,7 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 	public function &getActiveNun(): ?Nun
 	{
 		foreach ($this->nuns as &$nun) {
-			if ($nun->move != null && $nun->move->active) {
-				return $nun;
-			}
-		}
-		return null;
-	}
-
-	public function &getInactiveNun(): ?Nun
-	{
-		foreach ($this->nuns as &$nun) {
-			if ($nun->move == null) {
+			if ($nun->move->active) {
 				return $nun;
 			}
 		}
@@ -116,11 +114,22 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 	{
 		$choices = [];
 		foreach ($this->nuns as $nun) {
-			if ($nun->move == null) {
+			if (!$nun->move->action && $nun->move->action == null) {
 				$choices[] = $nun->role;
 			}
 		}
 		return $choices;
+	}
+
+	public function getPathsUsed(): array
+	{
+		$paths = [];
+		foreach ($this->nuns as $nun) {
+			foreach ($nun->paths as $path) {
+				$paths[$path] = true;
+			}
+		}
+		return $paths;
 	}
 
 	public function getRoomsVisible(): array

@@ -156,7 +156,7 @@ class Game extends \Bga\GameFramework\Table
 
   function getNoviceList(): NoviceList
   {
-    return new NoviceList($this->bga->globals->get('novices'));
+    return NoviceList::fromData($this->bga->globals->get('novices'));
   }
 
   function saveNovice(Novice $novice)
@@ -173,7 +173,7 @@ class Game extends \Bga\GameFramework\Table
 
   function getNunList(): NunList
   {
-    return new NunList($this->bga->globals->get('nuns'));
+    return NunList::fromData($this->bga->globals->get('nuns'));
   }
 
   function saveNun(Nun $nun)
@@ -282,16 +282,18 @@ class Game extends \Bga\GameFramework\Table
     $location = 1;
     foreach ($novicePlayers as $playerId => $player) {
       $color = $player['player_color'];
-      $novice = new Novice();
-      $novice->color = $this->getColorName($color);
-      $novice->location = $location++;
-      $novice->playerId = $playerId;
-      $novice->playerName = $player['player_name'];
-      $novice->room = $this->board->getRoomId($novice->location);
-      $novice->startLocation = $novice->location;
-      $novice->wish = array_shift($wishes);
-      $novice->move = new Move();
-      $novice->move->start = $novice->location;
+      $novice = new Novice(
+        color: $this->getColorName($color),
+        location: $location++,
+        move: new Move(
+          start: $location,
+        ),
+        playerId: $playerId,
+        playerName: $player['player_name'],
+        room: $this->board->getRoomId($location),
+        startLocation: $location,
+        wish: array_shift($wishes),
+      );
       $novices->add($novice);
       $this->bga->notify->all(
         'message',
@@ -349,13 +351,18 @@ class Game extends \Bga\GameFramework\Table
       $playerId = array_shift($nunIds);
       $player = $nunPlayers[$playerId];
       $color = array_shift($nunColors);
-      $nun = new Nun();
-      $nun->color = $this->getColorName($color);
-      $nun->location = 26;
-      $nun->playerId = $playerId;
-      $nun->playerName = $player['player_name'];
-      $nun->role = $role;
-      $nun->room = $this->board->getRoomId($nun->location);
+      $nun = new Nun(
+        color: $this->getColorName($color),
+        location: 26,
+        move: new Move(
+          start: 26,
+          undo: [],
+        ),
+        playerId: $playerId,
+        playerName: $player['player_name'],
+        role: $role,
+        room: $this->board->getRoomId(26),
+      );
       $nuns->add($nun);
       $this->bga->notify->all(
         'message',
@@ -464,7 +471,6 @@ class Game extends \Bga\GameFramework\Table
         $oldMove->undo = null;
         $novice->moves[] = $oldMove;
       }
-      $novice->move = null;
     }
     $this->saveNovices($novices);
 
@@ -476,7 +482,6 @@ class Game extends \Bga\GameFramework\Table
         $oldMove->undo = null;
         $nun->moves[] = $oldMove;
       }
-      $nun->move = null;
     }
     $this->saveNuns($nuns);
 

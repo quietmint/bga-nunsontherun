@@ -46,9 +46,10 @@ class NextRoundGameState extends \Bga\GameFramework\States\GameState
         $oldMove->undo = null;
         $novice->moves[] = $oldMove;
       }
-      $novice->move = new Move();
-      $novice->move->caught = $novice->caught;
-      $novice->move->start = $novice->location;
+      $novice->move = new Move(
+        caught: $novice->caught,
+        start: $novice->location,
+      );
     }
     $this->game->saveNovices($novices);
 
@@ -59,7 +60,11 @@ class NextRoundGameState extends \Bga\GameFramework\States\GameState
         $oldMove->undo = null;
         $nun->moves[] = $oldMove;
       }
-      $nun->move = null;
+      $nun->move = new Move(
+        noiseTokens: $oldMove->noiseTokens,
+        start: $nun->location,
+        undo: [],
+      );
     }
     $this->game->saveNuns($nuns);
 

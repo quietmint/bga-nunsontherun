@@ -147,6 +147,7 @@ class NoviceMovePrivateState extends GameState
       ]);
     }
     $this->game->saveNovice($novice);
+    $this->game->debug("NoviceMovePrivateState saved this novice: " . json_encode($novice) . ' // ');
 
     $this->game->giveExtraTime($currentPlayerId);
     if ($novice->caught) {
@@ -183,8 +184,8 @@ class NoviceMovePrivateState extends GameState
     $noiseTokens = $novice->move->noiseTokens;
     $nuns = $this->game->getNunList();
     foreach ($nuns as $nun) {
-      if (array_key_exists($novice->playerId, $nun->noiseTokens)) {
-        $noiseTokens[] = $nun->noiseTokens[$novice->playerId];
+      if (array_key_exists($novice->playerId, $nun->move->noiseTokens)) {
+        $noiseTokens[] = $nun->move->noiseTokens[$novice->playerId];
       }
     }
     $this->bga->notify->player($currentPlayerId, 'noviceUndo', clienttranslate('You return to ${location} (undo)'), [

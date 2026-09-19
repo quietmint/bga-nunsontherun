@@ -12,13 +12,21 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 {
 	private array $novices = [];
 
-	public function __construct(?\stdClass $data = null)
+	public function __construct(
+		array $novices = [],
+	) {
+		$this->novices = $novices;
+	}
+
+	public static function fromData(\stdClass $data): NoviceList
 	{
-		if ($data != null) {
-			foreach ($data as $playerId => $novice) {
-				$this->novices[$playerId] = new Novice($novice);
-			}
+		$novices = [];
+		foreach ($data as $playerId => $novice) {
+			$novices[$playerId] = Novice::fromData($novice);
 		}
+		return new NoviceList(
+			novices: $novices,
+		);
 	}
 
 	public function jsonSerialize(): array
@@ -43,6 +51,8 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 		$visible = $nuns->getNovicesVisible($this);
 		foreach ($this->novices as $playerId => $novice) {
 			$json = json_decode(json_encode($novice), true);
+			$json['_get_class'] = get_class($state);
+			$json['_currentPlayerId'] = $currentPlayerId;
 			if (!$gameEnd) {
 				unset($json['moves']);
 			} else {

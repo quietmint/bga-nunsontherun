@@ -33,7 +33,7 @@ class NoviceNunNoisePrivateState extends GameState
     $possible = $this->game->board->getNovicePossibleNoise($novice, $oneNuns);
     return [
       'possible' => $possible,
-      'undo' => array_key_exists($novice->playerId, $nun->noiseTokens),
+      'undo' => array_key_exists($novice->playerId, $nun->move->noiseTokens),
     ];
   }
 
@@ -44,7 +44,7 @@ class NoviceNunNoisePrivateState extends GameState
       throw new SystemException("You must make more noise.");
     }
     $nun = $this->game->getNunList()->getActiveNun();
-    if (array_key_exists($currentPlayerId, $nun->noiseTokens)) {
+    if (array_key_exists($currentPlayerId, $nun->move->noiseTokens)) {
       $this->bga->playerStats->inc('noiseTokens', 1, $currentPlayerId, true);
     }
     $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NunRecapGameState::class);
@@ -59,7 +59,7 @@ class NoviceNunNoisePrivateState extends GameState
     }
 
     $nun = $this->game->getNunList()->getActiveNun();
-    $nun->noiseTokens[$currentPlayerId] = $location;
+    $nun->move->noiseTokens[$currentPlayerId] = $location;
     $this->game->saveNun($nun);
 
     $this->bga->notify->player($currentPlayerId, 'noviceNoise', clienttranslate('You make noise at ${noiseLocation}'), [
@@ -75,14 +75,14 @@ class NoviceNunNoisePrivateState extends GameState
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $nuns = $this->game->getNunList();
     $nun = $nuns->getActiveNun();
-    unset($nun->noiseTokens[$currentPlayerId]);
+    unset($nun->move->noiseTokens[$currentPlayerId]);
     $this->game->saveNun($nun);
-    unset($nun->noiseTokens['___bga_associative_array_flag']);
+    unset($nun->move->noiseTokens['___bga_associative_array_flag']);
 
     $noiseTokens = $novice->move->noiseTokens;
     foreach ($nuns as $nun) {
-      if (array_key_exists($novice->playerId, $nun->noiseTokens)) {
-        $noiseTokens[] = $nun->noiseTokens[$novice->playerId];
+      if (array_key_exists($novice->playerId, $nun->move->noiseTokens)) {
+        $noiseTokens[] = $nun->move->noiseTokens[$novice->playerId];
       }
     }
     $this->bga->notify->player($currentPlayerId, 'noviceNoiseUndo', clienttranslate('You undo'), [

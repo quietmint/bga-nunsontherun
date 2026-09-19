@@ -47,29 +47,15 @@ class NunPathPlayerState extends GameState
       throw new SystemException("Path $path is not possible");
     }
     $nun = $this->game->getNunList()->getActiveNun();
-    $color = $args['possible'][$path]['color'];
-    $spaces = $args['possible'][$path]['spaces'];
-    $origin = $spaces[0];
-    $destination = end($spaces);
-    if ($nun->location == $destination) {
-      $origin = $destination;
-      $destination = $spaces[0];
-    }
-    $nun->path = $path;
+    $nun->path = $args['possible'][$path];
     $nun->paths[] = $path;
-    $nun->pathColor = $color;
-    $nun->pathOrigin = $origin;
-    $nun->pathDestination = $destination;
     $this->game->saveNun($nun);
 
     $this->bga->notify->all('nunPath', clienttranslate('${roleName} ${player_name} chooses path ${pathName}'), [
       'i18n' => ['roleName'],
-      'preserve' => ['path', 'pathColor', 'pathDestination', 'pathOrigin', 'role'],
+      'preserve' => ['path', 'role'],
       'path' => $nun->path,
-      'pathColor' => $nun->pathColor,
-      'pathDestination' => $nun->pathDestination,
       'pathName' => $nun->path,
-      'pathOrigin' => $nun->pathOrigin,
       'player_id' => $currentPlayerId,
       'player_name' => $this->game->getPlayerNameById($currentPlayerId),
       'role' => $nun->role,

@@ -50,8 +50,8 @@ class NunChoiceMultiState extends GameState
         $this->game->saveNovices($novices);
         $nuns = $this->game->getNunList();
         foreach ($nuns as &$nun) {
-          $nun->move->noiseHistory = $nun->noiseTokens;
-          $nun->noiseTokens = [];
+          $nun->move->noiseHistory = $nun->move->noiseTokens;
+          $nun->move->noiseTokens = [];
         }
         $this->game->saveNuns($nuns);
         $this->bga->notify->all('clearNoise');
@@ -73,11 +73,8 @@ class NunChoiceMultiState extends GameState
   {
     $novices = $this->game->getNoviceList();
     $nun = $this->game->getNunList()->get($role);
-    $nun->move = new Move();
     $nun->move->active = true;
     $nun->move->deviate = $this->game->board->getNunDeviate($nun, $novices);
-    $nun->move->start = $nun->location;
-    $nun->move->undo = [];
     $this->game->saveNun($nun);
 
     $this->bga->notify->all('message', clienttranslate('${roleName} ${player_name} activates'), [

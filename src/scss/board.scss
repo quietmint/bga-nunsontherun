@@ -114,6 +114,43 @@
   }
 }
 
+.notr-path {
+  aspect-ratio: 1;
+  border-radius: 100%;
+  border: 0.5cqw solid currentColor;
+  opacity: 0.8;
+  position: absolute;
+  transition: all 0.5s ease-out;
+  translate: -50% -50%;
+  width: 3.4%;
+  z-index: 5;
+
+  &.notr-path-zero {
+    opacity: 0;
+  }
+
+  &.notr-path-blue {
+    // background-color: $color-light-blue-400;
+    color: $color-light-blue-800;
+  }
+  &.notr-path-green {
+    // background-color: $color-light-green-500;
+    color: $color-light-green-800;
+  }
+  &.notr-path-pink {
+    // background-color: $color-pink-200;
+    color: $color-pink-800;
+  }
+  &.notr-path-red {
+    // background-color: $color-red-400;
+    color: $color-red-800;
+  }
+  &.notr-path-yellow {
+    // background-color: $color-yellow-600;
+    color: $color-yellow-800;
+  }
+}
+
 .notr-possible,
 .notr-my {
   aspect-ratio: 1;

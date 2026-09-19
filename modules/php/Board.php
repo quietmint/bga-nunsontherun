@@ -17,66 +17,7 @@ class Board
 {
 	private Game $game;
 	public array $spaces = [];
-	public array $paths = [
-		'blue-26-84' => [
-			'color' => 'blue',
-			'spaces' => [26, 19, 18, 17, 16, 15, 14, 13, 12, 31, 34, 33, 55, 56, 83, 84],
-		],
-		'blue-26-147' => [
-			'color' => 'blue',
-			'spaces' => [26, 40, 41, 46, 68, 73, 94, 99, 120, 125, 126, 127, 138, 147],
-		],
-		'blue-84-122' => [
-			'color' => 'blue',
-			'spaces' => [84, 85, 86, 80, 79, 78, 77, 76, 90, 91, 92, 93, 94, 95, 96, 97, 122],
-		],
-		'green-26-84' => [
-			'color' => 'green',
-			'spaces' => [26, 19, 18, 17, 16, 15, 30, 35, 51, 52, 53, 58, 80, 86, 85, 84],
-		],
-		'green-26-101' => [
-			'color' => 'green',
-			'spaces' => [26, 40, 41, 46, 68, 73, 94, 93, 100, 101],
-		],
-		'green-101-122' => [
-			'color' => 'green',
-			'spaces' => [101, 92, 91, 102, 117, 128, 127, 126, 125, 124, 123, 122],
-		],
-		'pink-84-101' => [
-			'color' => 'pink',
-			'spaces' => [84, 85, 108, 111, 112, 113, 114, 115, 116, 117, 102, 91, 92, 101],
-		],
-		'pink-101-147' => [
-			'color' => 'pink',
-			'spaces' => [101, 100, 93, 94, 99, 120, 125, 126, 139, 146, 147],
-		],
-		'red-26-122' => [
-			'color' => 'red',
-			'spaces' => [26, 25, 24, 42, 45, 69, 70, 71, 96, 97, 122],
-		],
-		'red-26-147' => [
-			'color' => 'red',
-			'spaces' => [26, 40, 39, 38, 37, 49, 50, 51, 60, 78, 105, 114, 115, 116, 117, 128, 127, 138, 147],
-		],
-		'red-122-147' => [
-			'color' => 'red',
-			'spaces' => [122, 123, 142, 143, 144, 145, 146, 147],
-		],
-		'yellow-26-101' => [
-			'color' => 'yellow',
-			'spaces' => [26, 40, 39, 38, 37, 49, 62, 76, 90, 91, 92, 101],
-		],
-		'yellow-26-122' => [
-			'color' => 'yellow',
-			'spaces' => [26, 19, 20, 21, 22, 23, 43, 44, 70, 71, 96, 97, 122],
-		],
-		'yellow-84-147' => [
-			'color' => 'yellow',
-			'spaces' =>  [84, 85, 108, 111, 112, 113, 131, 134, 150, 135, 149, 136, 137, 128, 127, 138,	147],
-		],
-		'repeat-1' => true,
-		'repeat-2' => true,
-	];
+	public array $paths = [];
 
 	public function __construct(Game $game)
 	{
@@ -401,6 +342,100 @@ class Board
 				}
 			}
 		}
+
+		// Create paths
+		$path = new Path(
+			color: 'blue',
+			spaces: [26, 19, 18, 17, 16, 15, 14, 13, 12, 31, 34, 33, 55, 56, 83, 84],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'blue',
+			spaces: [26, 19, 18, 17, 16, 15, 14, 13, 12, 31, 34, 33, 55, 56, 83, 84],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'blue',
+			spaces: [26, 40, 41, 46, 68, 73, 94, 99, 120, 125, 126, 127, 138, 147],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'blue',
+			spaces: [84, 85, 86, 80, 79, 78, 77, 76, 90, 91, 92, 93, 94, 95, 96, 97, 122],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'green',
+			spaces: [26, 19, 18, 17, 16, 15, 30, 35, 51, 52, 53, 58, 80, 86, 85, 84],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'green',
+			spaces: [26, 40, 41, 46, 68, 73, 94, 93, 100, 101],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'green',
+			spaces: [101, 92, 91, 102, 117, 128, 127, 126, 125, 124, 123, 122],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'pink',
+			spaces: [84, 85, 108, 111, 112, 113, 114, 115, 116, 117, 102, 91, 92, 101],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'pink',
+			spaces: [101, 100, 93, 94, 99, 120, 125, 126, 139, 146, 147],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'red',
+			spaces: [26, 25, 24, 42, 45, 69, 70, 71, 96, 97, 122],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'red',
+			spaces: [26, 40, 39, 38, 37, 49, 50, 51, 60, 78, 88, 105, 114, 115, 116, 117, 128, 127, 138, 147],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'red',
+			spaces: [122, 123, 142, 143, 144, 145, 146, 147],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'yellow',
+			spaces: [26, 40, 39, 38, 37, 49, 62, 76, 90, 91, 92, 101],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'yellow',
+			spaces: [26, 19, 20, 21, 22, 23, 43, 44, 70, 71, 96, 97, 122],
+		);
+		$this->paths[$path->path] = $path;
+
+		$path = new Path(
+			color: 'yellow',
+			spaces: [84, 85, 108, 111, 112, 113, 131, 134, 150, 135, 149, 136, 137, 128, 127, 138,	147],
+		);
+		$this->paths[$path->path] = $path;
+
+		$this->paths['repeat-1'] = true;
+		$this->paths['repeat-2'] = true;
 	}
 
 	public function getRoomId(int $spaceId): int
@@ -448,7 +483,7 @@ class Board
 		$nunMode = count($nuns) == 1;
 		if ($nunMode) {
 			$nun = $nuns->getActiveNun();
-			if (array_key_exists($novice->playerId, $nun->noiseTokens)) {
+			if (array_key_exists($novice->playerId, $nun->move->noiseTokens)) {
 				return [];
 			}
 			$distance = $nun->move->noiseTotal;
@@ -573,54 +608,31 @@ class Board
 
 	public function getNunPossiblePaths(NunList $nuns, Nun $nun): array
 	{
-		$possible = $this->paths;
-		// Remove paths already used
-		foreach ($nuns as $aNun) {
-			foreach ($aNun->paths as $pathId) {
-				unset($possible[$pathId]);
+		$possible = [];
+		$used = $nuns->getPathsUsed();
+		foreach ($this->paths as $pathId => $path) {
+			if (array_key_exists($pathId, $used)) {
+				// Ignore used paths
+				continue;
 			}
-		}
-		// Remove unrelated paths
-		foreach ($possible as $pathId => $path) {
-			if (is_array($path) && !in_array($nun->location, $path['spaces'])) {
-				unset($possible[$pathId]);
-			}
-		}
-		if ($nun->path == null) {
-			unset($possible['repeat-1']);
-			unset($possible['repeat-2']);
-		} else {
-			foreach (['repeat-1', 'repeat-2'] as $pathId) {
-				if (array_key_exists($pathId, $possible)) {
-					$possible[$pathId] = $this->paths[$nun->path];
-					$possible[$pathId]['path'] = $nun->path;
-					$otherId = $pathId == 'repeat-1' ? 'repeat-2' : 'repeat-1';
-					unset($possible[$otherId]);
-					break;
+			if ($path instanceof Path) {
+				if ($nun->location == $path->origin) {
+					$possible[$pathId] = $path;
+				} else if ($nun->location == $path->destination) {
+					$possible[$pathId] = $path->reverse();
 				}
-			}
-		}
-
-		// Add origin and destination
-		foreach ($possible as $pathId => &$path) {
-			$spaces = $path['spaces'];
-			if (!array_key_exists('path', $path)) {
-				$path['path'] = $pathId;
-			}
-			$path['origin'] = $spaces[0];
-			$path['destination'] = end($spaces);
-			if ($nun->location == $path['destination']) {
-				$path['origin'] = $path['destination'];
-				$path['destination'] = $spaces[0];
+			} else if ($nun->path != null) {
+				$possible[$pathId] = $nun->path->reverse();
+				// Only keep the first 'repeat-x'
+				break;
 			}
 		}
 
 		// Sort by destination, color
-		uasort($possible, function ($a, $b) {
-			return ($a['destination'] <=> $b['destination'])
-				?? ($a['color'] <=> $b['color']);
+		uasort($possible, function (Path $a, Path $b) {
+			return ($a->destination <=> $b->destination)
+				?? ($a->color <=> $b->color);
 		});
-
 		return $possible;
 	}
 
@@ -632,11 +644,7 @@ class Board
 		$possible = $this->traverse($nun->location, $distance, $maxDistance, TRAVERSE_SINGLE_ROOM);
 		if (!$nun->move->deviate) {
 			// Get the nun's path, with the destination at the end
-			$pathSpaces = $this->paths[$nun->path]['spaces'];
-			if ($pathSpaces[0] == $nun->pathDestination) {
-				$pathSpaces = array_reverse($pathSpaces);
-			}
-
+			$pathSpaces = $nun->path->spaces;
 			$onPath = array_search($nun->location, $pathSpaces);
 			$this->game->debug("Nun $nun onPath: $onPath // ");
 			if ($onPath === false) {
@@ -680,36 +688,35 @@ class Board
 		$start = empty($nun->move->spaces);
 		$neighbors = array_keys($this->spaces[$nun->location]->neighbors);
 
-
 		// A nun can leave the path if:
 		// - A nun noise token is adjacent (at start of turn)
-		if ($start && !empty($nun->noiseTokens) && array_intersect($nun->noiseTokens, $neighbors)) {
-			$this->game->debug("$nun can deviate from path {$nun->path} because a nun noise token is adjacent // ");
+		if ($start && !empty($nun->move->noiseTokens) && array_intersect($nun->move->noiseTokens, $neighbors)) {
+			$this->game->debug("$nun can deviate from path {$nun->path->path} because a nun noise token is adjacent // ");
 			return true;
 		}
 
 		foreach ($novices as $novice) {
 			// - An uncaught novice is in this room (at any time)
 			if (!$novice->caught && $novice->room == $nun->room) {
-				$this->game->debug("$nun can deviate from path {$nun->path} because uncaught novice {$novice->playerId} is in the room // ");
+				$this->game->debug("$nun can deviate from path {$nun->path->path} because uncaught novice {$novice->playerId} is in the room // ");
 				return true;
 			}
 
 			// - A novice vanish token is in this room (at start of turn)
 			if ($start && !empty($novice->move->vanishTokens) && !empty(array_intersect($novice->move->vanishTokens, [$nun->room]))) {
-				$this->game->debug("$nun can deviate from path {$nun->path} because novice {$novice->playerId} vanish token is in the room // ");
+				$this->game->debug("$nun can deviate from path {$nun->path->path} because novice {$novice->playerId} vanish token is in the room // ");
 				return true;
 			}
 
 			// - A novice noise token is adjacent (at start of turn)
 			if ($start && !empty($novice->move->noiseTokens) && !empty(array_intersect($novice->move->noiseTokens, $neighbors))) {
-				$this->game->debug("$nun can deviate from path {$nun->path} because novice {$novice->playerId} noise token is adjacent // ");
+				$this->game->debug("$nun can deviate from path {$nun->path->path} because novice {$novice->playerId} noise token is adjacent // ");
 				return true;
 			}
 		}
 
 		// Otherwise, the nun must follow the path 
-		$this->game->debug("$nun cannot deviate from path {$nun->path} // ");
+		$this->game->debug("$nun cannot deviate from path {$nun->path->path} // ");
 		return false;
 	}
 

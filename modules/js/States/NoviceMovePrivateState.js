@@ -32,6 +32,40 @@ export class NoviceMovePrivateState {
         this.bga.statusBar.addActionButton(_("Undo"), () => this.bga.actions.performAction("actUndo"), { color: "secondary" });
       }
 
+      let specialMessage = null;
+      let confirmMessage = null;
+      if (!novice.hasKey && novice.location == novice.keyLocation) {
+        // key
+        const args = this.game.bgaFormatText("", {
+          keyLocation: novice.keyLocation,
+        }).args;
+        specialMessage = this.bga.gameui.format_string(_("You can pick up your key at ${keyLocation}"), args);
+      } else if (!novice.caught && !novice.hasWish && novice.location == novice.wishLocation) {
+        // wish
+        const args = this.game.bgaFormatText("", {
+          wishLocation: novice.wishLocation,
+        }).args;
+        specialMessage = this.bga.gameui.format_string(_("You can pick up your secret wish at ${wishLocation}"), args);
+      } else if (novice.hasWish && novice.location == novice.startLocation) {
+        // win
+        const args = this.game.bgaFormatText("", {
+          startLocation: novice.startLocation,
+        }).args;
+        specialMessage = this.bga.gameui.format_string(_("You can end the game at ${startLocation}"), args);
+      }
+      const specialEl = document.getElementById("notr-special");
+      if (specialMessage) {
+        confirmMessage = `${specialMessage}<br><br>${_("Do you want to keep moving instead?")}`;
+        if (!specialEl) {
+          const gaEl = document.getElementById("generalactions");
+          gaEl.insertAdjacentHTML("beforebegin", `<div id="notr-special">${specialMessage}</div>`);
+        } else {
+          specialEl.innerHTML = specialMessage;
+        }
+      } else if (specialEl) {
+        specialEl.remove();
+      }
+
       // Board possible moves
       const boardEl = document.getElementById("notr-board");
       for (const i in args.possible) {
@@ -46,31 +80,8 @@ export class NoviceMovePrivateState {
         boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${move.location}" class="notr-possible notr-possible-${action} notr-${move.location}">${str}</div>`);
         const el = document.getElementById(`notr-possible-${move.location}`);
         el.addEventListener("click", () => {
-          let dialog = null;
-          if (!novice.hasKey && novice.location == novice.keyLocation) {
-            dialog = this.bga.gameui.format_string(
-              _("You must end your move at ${keyLocation} to pick up your key.") + " " + _("Do you want to keep moving instead?"),
-              this.game.bgaFormatText("", {
-                keyLocation: novice.keyLocation,
-              }).args,
-            );
-          } else if (!novice.caught && !novice.hasWish && novice.location == novice.wishLocation) {
-            dialog = this.bga.gameui.format_string(
-              _("You must end your move at ${wishLocation} to pick up your secret wish.") + " " + _("Do you want to keep moving instead?"),
-              this.game.bgaFormatText("", {
-                wishLocation: novice.wishLocation,
-              }).args,
-            );
-          } else if (novice.hasWish && novice.location == novice.startLocation) {
-            dialog = this.bga.gameui.format_string(
-              _("You must end your move at ${startLocation} to win the game.") + " " + _("Do you want to keep moving instead?"),
-              this.game.bgaFormatText("", {
-                startLocation: novice.startLocation,
-              }).args,
-            );
-          }
-          if (dialog) {
-            this.bga.dialogs.confirmation(dialog).then((result) => {
+          if (confirmMessage) {
+            this.bga.dialogs.confirmation(confirmMessage).then((result) => {
               if (result) {
                 this.bga.actions.performAction("actMove", { location: move.location });
               }
@@ -84,6 +95,10 @@ export class NoviceMovePrivateState {
   }
 
   onLeavingState(args, isCurrentPlayerActive) {
+    const specialEl = document.getElementById("notr-special");
+    if (specialEl) {
+      specialEl.remove();
+    }
     const boardEl = document.getElementById("notr-board");
     for (const el of boardEl.querySelectorAll(".notr-possible")) {
       el.remove();
