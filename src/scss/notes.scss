@@ -3,16 +3,21 @@
 #notr-notes {
   align-items: flex-start;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: wrap balance;
+  gap: 15px;
   justify-content: space-around;
+  padding: 15px;
 }
 
 .notr-notes {
-  color: $color-grey-900;
+  align-items: center;
   clear: both;
+  color: $color-grey-900;
+  display: flex;
   font-family: cursive;
 
   .notr-portrait {
+    float: none;
     margin: 0 10px 0 0;
   }
 
@@ -20,7 +25,7 @@
     font-family: "Chilanka", cursive;
   }
   &.notr-player-green {
-    font-family: "Dekko", cursive;
+    font-family: "Schoolbell", cursive;
   }
   &.notr-player-orange {
     font-family: "Twinkle Star", cursive;
@@ -32,7 +37,8 @@
     font-family: "Handlee", cursive;
   }
   &.notr-player-yellow {
-    font-family: "Schoolbell", cursive;
+    font-family: "Playwrite USTrad", cursive;
+    font-size: 14px;
   }
 }
 
@@ -40,9 +46,9 @@
   background: $color-grey-200;
   border-radius: 4px;
   box-shadow: 2px 2px 6px black;
+  min-width: 225px;
 
   tr {
-    cursor: pointer;
     transition: background 0.5s ease;
 
     &:nth-child(even) {
@@ -60,7 +66,7 @@
 
   th,
   td {
-    line-height: 150%;
+    line-height: 24px;
     padding: 0 5px;
 
     &:first-child,
@@ -73,6 +79,10 @@
     }
   }
 
+  td {
+    cursor: pointer;
+  }
+
   td:last-child {
     padding-left: 10px;
     border-left: 2px solid $color-grey-400;
@@ -83,5 +93,28 @@
     font-size: 115%;
     font-weight: bold;
     text-align: center;
+
+    .notr-player-blue & {
+      background-color: $color-light-blue-400;
+    }
+    .notr-player-green & {
+      background-color: $color-green-500;
+    }
+    .notr-player-orange & {
+      background-color: $color-orange-500;
+    }
+    .notr-player-purple & {
+      background-color: $color-purple-400;
+    }
+    .notr-player-red & {
+      background-color: $color-pink-400;
+    }
+    .notr-player-yellow & {
+      background-color: $color-yellow-600;
+    }
+  }
+
+  .notr-icon {
+    font-size: 16px;
   }
 }

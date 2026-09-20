@@ -449,7 +449,16 @@ class Board
 		$distance = count($novice->move->spaces);
 		if ($novice->caught) {
 			$possible = $this->traverse($novice->location, $distance, 25, TRAVERSE_TARGET, [$novice->startLocation => true]);
-			$this->game->debug("caught traverse from location " . $novice->location . " to start location " . $novice->startLocation . ": " . json_encode($possible) . " // ");
+			$reverse = $this->traverse($novice->startLocation, 0, 25, TRAVERSE_TARGET | TRAVERSE_ZERO, [$novice->location => true]);
+			$sum = [];
+			foreach ($possible as $spaceId => $possibleMove) {
+				if (array_key_exists($spaceId, $reverse)) {
+					$sum[$spaceId] = $possibleMove->distance + $reverse[$spaceId]->distance;
+				}
+			}
+			$keys = array_intersect($sum, [min($sum)]);
+			$possible = array_filter($possible, fn(PossibleMove $move, int $spaceId) => array_key_exists($spaceId, $keys) && $move->distance <= 4, ARRAY_FILTER_USE_BOTH);
+			$this->game->debug("$novice caught possible: " . json_encode($possible) . " // ");
 		} else {
 			$maxDistance = $round == 1 ? 10 : 5;
 			$flags = $novice->hasKey ? 0 : TRAVERSE_UNLOCKED;
@@ -463,10 +472,6 @@ class Board
 			$p->actions = $this->getActionsForDistance($actions, $p->distance);
 			if ($novice->caught && $location == $novice->startLocation && $p->distance < 3 && empty($p->actions)) {
 				$p->actions = ['walk'];
-			}
-			if (empty($p->actions)) {
-				// Ignore impossible moves (distance = 1 on round = 1)
-				unset($possible[$location]);
 			}
 		}
 		return $possible;
@@ -646,21 +651,47 @@ class Board
 			// Get the nun's path, with the destination at the end
 			$pathSpaces = $nun->path->spaces;
 			$onPath = array_search($nun->location, $pathSpaces);
-			$this->game->debug("Nun $nun onPath: $onPath // ");
+			$this->game->debug("$nun onPath: $onPath, pathSpaces: " . json_encode($pathSpaces) . " // ");
 			if ($onPath === false) {
 				// Nun has left the path
 				// Find the closest path space
-				$this->game->debug("$nun path: " . json_encode($pathSpaces) . " // ");
-				$this->game->debug("$nun path flip: " . json_encode(array_flip($pathSpaces)) . " // ");
-				$traverse = $this->traverse($nun->location, 0, 25, TRAVERSE_TARGET, array_flip($pathSpaces));
-				$this->game->debug("$nun traverse target to path: " . json_encode($traverse) . " // ");
-				if (!empty($traverse)) {
-					$this->game->debug("$nun possible normal: " . json_encode($possible) . " // ");
-					$possible = array_intersect_key($possible, $traverse);
-					$this->game->debug("$nun possible intersect: " . json_encode($possible) . " // ");
-				} else {
-					throw new SystemException("$nun has left the path and has no way back!");
+				$pathKeys = array_flip($pathSpaces);
+				$forward = $this->traverse($nun->location, $distance, 25, TRAVERSE_TARGET, $pathKeys);
+				$this->game->debug("$nun forward: " . json_encode($forward) . " // ");
+
+				$reverse = [];
+				foreach ($forward as $spaceId => $forwardMove) {
+					if (array_key_exists($spaceId, $pathKeys)) {
+						$reverse[$spaceId] = $this->traverse($spaceId, $distance, 25, TRAVERSE_TARGET | TRAVERSE_ZERO, [$nun->location => true]);
+					}
 				}
+				$this->game->debug("$nun reverse: " . json_encode($reverse) . " // ");
+
+				$sum = [];
+				foreach ($reverse as $reverseMoves) {
+					foreach ($reverseMoves as $spaceId => $reverseMove) {
+						if (array_key_exists($spaceId, $forward)) {
+							$x = $forward[$spaceId]->distance + $reverseMove->distance;
+							if (!array_key_exists($spaceId, $sum) || $x < $sum[$spaceId]) {
+								$sum[$spaceId] = $x;
+							}
+						}
+					}
+				}
+				if (empty($sum)) {
+					$this->game->warn("$nun sum is empty??? // ");
+					$keys = [];
+				} else {
+					$this->game->debug("$nun min: " . min($sum) . ", sum: " . json_encode($sum) . " // ");
+					$keys = array_intersect($sum, [min($sum)]);
+				}
+				foreach ($reverse as $spaceId => $reverseMoves) {
+					$keys[$spaceId] = true;
+				}
+				$this->game->debug("$nun keys: " . json_encode($keys) . " // ");
+
+				$possible = array_intersect_key($possible, $keys);
+				$this->game->debug("$nun possible: " . json_encode($possible) . " // ");
 			} else {
 				// Nun is on the path
 				// Ignore prior path spaces
@@ -676,7 +707,6 @@ class Board
 		foreach ($possible as $location => &$p) {
 			$p->actions = $this->getActionsForDistance($actions, $p->distance);
 		}
-
 		return $possible;
 	}
 
@@ -776,19 +806,6 @@ class Board
 		}
 		if (!($flags & TRAVERSE_ZERO)) {
 			unset($possible[$start]);
-		}
-		if ($flags & TRAVERSE_TARGET) {
-			$this->game->debug('TRAVERSE_TARGET possible = ' . json_encode($possible) . ' // ');
-			$keeps = [];
-			foreach ($targets as $target => $x) {
-				$keeps[] = $target;
-				if (array_key_exists($target, $possible)) {
-					array_push($keeps, ...$possible[$target]->spaces);
-				}
-			}
-			$keeps = array_flip($keeps);
-			$this->game->debug('TRAVERSE_TARGET keeps = ' . json_encode($keeps) . ' // ');
-			$possible = array_intersect_key($possible, $keeps);
 		}
 		return $possible;
 	}

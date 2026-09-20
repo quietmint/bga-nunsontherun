@@ -155,11 +155,11 @@ export class Game {
     for (let i = 1; i <= this.gamedatas.round; i++) {
       markers += `<option value="${i}"></option>`;
     }
-    this.bga.gameArea.getElement().insertAdjacentHTML(
-      "afterbegin",
+    document.getElementById("page-title").insertAdjacentHTML(
+      "beforeend",
       `<div id="notr-replay">
   <a href="#" class="action-button bgabutton bgabutton_blue" id="notr-replay-button"><span id="notr-replay-icon" class="notr-icon notr-icon-play"></span> ${_("Watch replay")}</a>
-  <input type="range" id="notr-replay-range" list="notr-replay-markers" min="0" max="${this.gamedatas.round}" value="${this.gamedatas.round}" />
+  <input type="range" id="notr-replay-range" list="notr-replay-markers" step="0.5" min="0.5" max="${this.gamedatas.round}.5" value="${this.gamedatas.round}.5" />
   <datalist id="notr-replay-markers">${markers}</datalist>
 </div>`,
     );
@@ -198,7 +198,7 @@ export class Game {
     if (rangeEl.value == rangeEl.max) {
       this.replayPause();
     } else {
-      rangeEl.value++;
+      rangeEl.value = Number(rangeEl.value) + 0.5;
       this.replayShow(rangeEl.value);
       this.replayTimer = setTimeout(() => {
         this.replayPlay();
@@ -218,6 +218,8 @@ export class Game {
   }
 
   replayShow(round) {
+    const roundNovice = Math.floor(round);
+    const roundNun = Math.floor(round - 0.5);
     console.log("replayShow", round);
     // Update the range input
     const rangeEl = document.getElementById("notr-replay-range");
@@ -225,7 +227,7 @@ export class Game {
 
     // Update the notepads
     document.querySelectorAll("#notr-notes .notr-highlight").forEach((el) => el.classList.remove("notr-highlight"));
-    document.querySelectorAll(`#notr-notes .notr-line[data-round="${round}"]`).forEach((el) => el.classList.add("notr-highlight"));
+    document.querySelectorAll(`#notr-notes .notr-line[data-round="${roundNovice}"]`).forEach((el) => el.classList.add("notr-highlight"));
 
     // Clear tokens
     const tokens = [];
@@ -241,19 +243,19 @@ export class Game {
     // Move novices
     Object.values(this.gamedatas.novices).forEach((novice) => {
       let location = novice.location;
-      const move = novice.moves[Math.max(round - 1, 0)];
+      const move = novice.moves[Math.max(roundNovice - 1, 0)];
       if (move) {
         location = move.start;
-        if (round > 0 && move.spaces.length) {
+        if (roundNovice > 0 && move.spaces.length) {
           location = move.spaces.at(-1);
         }
-        if (round > 0 && move.noiseHistory) {
-          for (let noise of move.noiseHistory) {
+        if (roundNovice > 0 && move.noiseHistory) {
+          for (const noise of move.noiseHistory) {
             tokens.push({ type: "noise", novice: novice, location: noise });
           }
         }
-        if (round > 0 && move.vanishHistory) {
-          for (let vanish of move.noiseHistory) {
+        if (roundNovice > 0 && move.vanishHistory) {
+          for (const vanish of move.vanishHistory) {
             tokens.push({ type: "vanish", novice: novice, location: vanish });
           }
         }
@@ -266,14 +268,14 @@ export class Game {
     // Move nuns
     Object.values(this.gamedatas.nuns).forEach((nun) => {
       let location = nun.location;
-      const move = nun.moves[Math.max(round - 1, 0)];
+      const move = nun.moves[Math.max(roundNun - 1, 0)];
       if (move) {
         location = move.start;
-        if (round > 0 && move.spaces.length) {
+        if (roundNun > 0 && move.spaces.length) {
           location = move.spaces.at(-1);
         }
-        if (round > 0 && move.noiseHistory) {
-          for (let playerId of move.noiseHistory) {
+        if (roundNun > 0 && move.noiseHistory) {
+          for (const playerId in move.noiseHistory) {
             tokens.push({ type: "noise", novice: this.getNovice(playerId), location: move.noiseHistory[playerId] });
           }
         }
@@ -319,15 +321,15 @@ export class Game {
           }
           let icon = "";
           if (end == novice.keyLocation) {
-            icon = `<span class="notr-icon notr-icon-key" title="${_("Key Location")}"></span>`;
+            icon = ` <span class="notr-icon notr-icon-key" title="${_("Key Location")}"></span>`;
           } else if (end == novice.wishLocation) {
-            icon = `<span class="notr-icon notr-icon-wish" title="${_("Secret Wish Location")}"></span>`;
+            icon = ` <span class="notr-icon notr-icon-wish" title="${_("Secret Wish Location")}"></span>`;
           } else if (end == novice.startLocation) {
-            icon = `<span class="notr-icon notr-icon-start" title="${_("Start Location")}"></span>`;
+            icon = ` <span class="notr-icon notr-icon-start" title="${_("Start Location")}"></span>`;
           }
           const cssClass = move.caught ? "notr-caught" : "";
           const caught = move.caughtHistory ? `<span class="notr-icon notr-icon-circle-no" title="${_("Caught")}"></span>` : "";
-          tr += `<tr data-round="${x + 1}" class="notr-line ${cssClass}"><td>#${x + 1}</td><td>${end}</td><td class="rp">${icon} ${_(move.actionName)} (${distance})</td><td>${caught}</td></tr>`;
+          tr += `<tr data-round="${x + 1}" class="notr-line ${cssClass}"><td>#${x + 1}</td><td>${end}</td><td class="rp">${_(move.actionName)} (${distance})${icon}</td><td>${caught}</td></tr>`;
         });
         notesEl.insertAdjacentHTML(
           "beforeend",
@@ -357,11 +359,9 @@ export class Game {
       const wish = novice.hasWish ? `<span class="notr-icon notr-icon-circle-yes"></span>` : novice.wishLocation || "-";
       let privateHtml = "";
       if (novice.playerId == this.bga.players.getCurrentPlayerId()) {
-        privateHtml = `<div id="notr-panel-${novice.playerId}-private" class="notr-locations">
-  <div title="${_("Current Location")}"><span class="notr-label notr-icon notr-icon-location"></span><div id="notr-panel-${novice.playerId}-location">${novice.location}</div></div>
-  <div title="${_("Key Location")}"><span class="notr-label notr-icon notr-icon-key"></span><div id="notr-panel-${novice.playerId}-key">${key}</div></div>
-  <div title="${_("Secret Wish Location")}"><span class="notr-label notr-icon notr-icon-wish"></span><div id="notr-panel-${novice.playerId}-wish">${wish}</div></div>
-</div>`;
+        privateHtml = `<div title="${_("Key Location")}"><span class="notr-label notr-icon notr-icon-key"></span><div id="notr-panel-${novice.playerId}-key">${key}</div></div>
+<div title="${_("Secret Wish Location")}"><span class="notr-label notr-icon notr-icon-wish"></span><div id="notr-panel-${novice.playerId}-wish">${wish}</div></div>
+<div title="${_("Current Location")}"><span class="notr-label notr-icon notr-icon-location"></span><div id="notr-panel-${novice.playerId}-location">${novice.location}</div></div>`;
       }
       panelEl.insertAdjacentHTML(
         "beforeend",
@@ -372,8 +372,8 @@ export class Game {
     <div title="${_("Move")}"><span class="notr-label notr-icon notr-icon-move"></span><div id="notr-panel-${novice.playerId}-move" class="notr-panel-move">${_(novice.move?.actionName || "-")}</div></div>
     <div title="${_("Noise")}"><span class="notr-label notr-icon notr-icon-noise"></span><div id="notr-panel-${novice.playerId}-noise" class="notr-panel-noise">${novice.move?.noiseTotal || "-"}</div></div>
     <div title="${_("Start Location")}"><span class="notr-label notr-icon notr-icon-start"></span><div>${novice.startLocation}</div></div>
+    ${privateHtml}
   </div>
-  ${privateHtml}
 </div>`,
       );
     });
@@ -398,12 +398,10 @@ export class Game {
   <div class="notr-portrait"></div>
   <div class="notr-title">${this.emoji(nun.role)}${_(nun.roleName)}</div>
   <div class="notr-locations">
-    <div title="${_("Current Location")}"><span class="notr-label notr-icon notr-icon-location"></span><div id="notr-panel-${nun.role}-location">${nun.location}</div></div>
-    <div id="notr-panel-${nun.role}-path" title="${_("Path")}">${path}</div>
-  </div>
-  <div class="notr-locations">
     <div title="${_("Move")}"><span class="notr-label notr-icon notr-icon-move"></span><div id="notr-panel-${nun.role}-move" class="notr-panel-move">${_(nun.move?.actionName || "-")}</div></div>
     <div title="${_("Noise")}"><span class="notr-label notr-icon notr-icon-noise"></span><div id="notr-panel-${nun.role}-noise" class="notr-panel-noise">${noise}</div></div>
+    <div id="notr-panel-${nun.role}-path" title="${_("Path")}">${path}</div>
+    <div title="${_("Current Location")}"><span class="notr-label notr-icon notr-icon-location"></span><div id="notr-panel-${nun.role}-location">${nun.location}</div></div>
   </div>
 </div>`,
       );
@@ -656,11 +654,7 @@ export class Game {
         document.getElementById(`notr-path-${nun.path.path}-${space}`).classList.remove("notr-path-zero");
       }, delay);
       delay += 50;
-      request
     }
-    // setTimeout(() => {
-    //   boardEl.querySelectorAll(".notr-path-zero").forEach((el) => el.classList.remove("notr-path-zero"));
-    // }, 50);
 
     // Board player tooltip
     const tooltipHtml = `<div class="notr-path-image notr-path-${nun.path.path}"></div>`;

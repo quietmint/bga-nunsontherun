@@ -85,10 +85,12 @@
 
 .notr-locations {
   align-items: center;
+  column-gap: 15px;
   column-rule: 1px solid;
   display: flex;
+  flex-wrap: wrap balance;
   justify-content: space-around;
-  margin-top: 5px;
+  row-gap: 5px;
   text-align: center;
 }
 

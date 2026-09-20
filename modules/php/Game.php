@@ -524,6 +524,18 @@ class Game extends \Bga\GameFramework\Table
     $this->bga->notify->all('win', $message, $args);
   }
 
+  public function debug_win()
+  {
+    $state = $this->gamestate->getCurrentMainStateClass();
+    $novices = $this->getNoviceList();
+    $nuns = $this->getNunList();
+    $args = [
+      'novices' => $novices->getAllDatas(-1, $state, $nuns),
+      'nuns' => $nuns->getAllDatas(-1, $state),
+    ];
+    $this->bga->notify->all('win', 'debug_win', $args);
+  }
+
   /**
    * Example of debug function.
    * Here, jump to a state you want to test (by default, jump to next player state)
@@ -541,14 +553,4 @@ class Game extends \Bga\GameFramework\Table
   {
     $this->bga->debug->playUntil(fn(int $count) => $count == 1);
   }
-
-  /*
-    Another example of debug function, to easily create situations you want to test.
-    Here, put a card you want to test in your hand (assuming you use the Deck component).
-
-    public function debug_setCardInHand(int $cardType, int $playerId) {
-        $card = array_values($this->cards->getCardsOfType($cardType))[0];
-        $this->cards->moveCard($card['id'], 'hand', $playerId);
-    }
-    */
 }
