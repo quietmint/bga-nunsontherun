@@ -1,23 +1,62 @@
 {
-  // option ids should be between 100 and 199
-  // See https://en.doc.boardgamearena.com/Options_and_preferences:_gameoptions.json,_gamepreferences.json for more details
-  /*
-  EXAMPLE:
-
-  "101": {
-    "name": "Draft variant",
+  "100": {
+    "default": 0,
+    "name": "Blessings",
     "values": {
       "0": {
-        "name": "No draft"
+        "name": "No",
       },
       "1": {
-        "name": "Draft",
-        "description": "Add a draft at the beginning of the game"
-        "tmdisplay": "Draft",
-        "nobeginner": true
-      }
+        "description": "Each player receives a once-per-game bonus.",
+        "name": "Yes",
+        "nobeginner": true,
+        "tmdisplay": "Blessings",
+      },
     },
-    "default": 0
-  }
-  */
+  },
+  "101": {
+    "default": 0,
+    "name": "Slow Novices",
+    "values": {
+      "0": {
+        "name": "No",
+      },
+      "1": {
+        "description": "Increased difficulty for novices. In the first round, novices only move once (instead of the usual twice).",
+        "name": "Yes",
+        "nobeginner": true,
+        "tmdisplay": "Slow Novices",
+      },
+    },
+  },
+  "102": {
+    "default": 0,
+    "name": "Slow Nuns",
+    "values": {
+      "0": {
+        "name": "No",
+      },
+      "1": {
+        "description": "Increased difficulty for nuns. Nuns move up to 5 spaces (instead of the usual 6).",
+        "name": "Yes",
+        "nobeginner": true,
+        "tmdisplay": "Slow Nuns",
+      },
+    },
+  },
+  "103": {
+    "default": 0,
+    "name": "Strict Standards",
+    "values": {
+      "0": {
+        "name": "No",
+      },
+      "1": {
+        "description": "Reduced difficulty for nuns. Nuns win by catching the number of novices in the game (instead of the total number of players).",
+        "name": "Yes",
+        "nobeginner": true,
+        "tmdisplay": "Strict Standards",
+      },
+    },
+  },
 }

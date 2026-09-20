@@ -117,7 +117,7 @@ class NoviceRecapGameState extends GameState
 				}
 
 				if ($novice->hasWish && $novice->location == $novice->startLocation) {
-					// Winner winner!
+					// We have a winner!
 					$caughtTimes = $this->bga->playerStats->get('caughtTimes', $novice->playerId);
 					$this->bga->notify->all('noviceRecap', clienttranslate('${player_name} returns to ${startLocation} with their secret wish (caught ${caughtTimes} times)'), [
 						'preserve' => ['player_id', 'recap'],
@@ -157,7 +157,7 @@ class NoviceRecapGameState extends GameState
 		}
 
 		if (!empty($winners)) {
-			$this->game->winGame($winners);
+			$this->game->winGame($winners, 'novice');
 			return EndGameState::class;
 		} else {
 			return NunChoiceMultiState::class;

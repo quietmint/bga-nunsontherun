@@ -27,6 +27,7 @@ class NextRoundGameState extends \Bga\GameFramework\States\GameState
     $nuns = $this->game->getNunList();
     $round = $this->game->incRound();
     if ($round == 15) {
+      // We have a winner!
       $winners = [];
       foreach ($nuns as $nun) {
         $winners[$nun->playerId] = [
@@ -34,7 +35,7 @@ class NextRoundGameState extends \Bga\GameFramework\States\GameState
           'playerName' => $nun->playerName
         ];
       }
-      $this->game->winGame($winners);
+      $this->game->winGame($winners, 'round');
       return EndGameState::class;
     }
 

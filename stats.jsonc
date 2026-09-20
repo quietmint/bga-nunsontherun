@@ -6,6 +6,11 @@
       "name": "Rounds",
       "type": "int",
     },
+    "caughtGoal": {
+      "id": 12,
+      "name": "Novices Caught To Win",
+      "type": "int",
+    },
     "caught": {
       "id": 11,
       "name": "Novices Caught",

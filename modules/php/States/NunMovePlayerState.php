@@ -143,6 +143,20 @@ class NunMovePlayerState extends GameState
           }
           $this->game->saveNovice($novice);
         }
+
+        if ($this->game->getCaught() >= $this->game->getCaughtGoal()) {
+          $this->game->saveNuns($nuns);
+          // We have a winner!
+          $winners = [];
+          foreach ($nuns as $nun) {
+            $winners[$nun->playerId] = [
+              'caughtTimes' => 0,
+              'playerName' => $nun->playerName
+            ];
+          }
+          $this->game->winGame($winners, 'caught');
+          return EndGameState::class;
+        }
       }
 
       if ($nun->location == $nun->path->destination) {

@@ -54,23 +54,13 @@ class Game extends \Bga\GameFramework\Table
   public function __construct()
   {
     parent::__construct();
-    $this->bga->notify->alwaysMergePrivate();
+    $this->initGameStateLabels([
+      'optionBlessings' => 100,
+      'optionSlowNovices' => 101,
+      'optionSlowNuns' => 102,
+      'optionsCaughtGoal' => 103,
+    ]);
     $this->board = new Board($this);
-
-    /* example of notification decorator.
-    // automatically complete notification args when needed
-    $this->bga->notify->addDecorator(function(string $message, array $args) {
-        if (isset($args['player_id']) && !isset($args['player_name']) && str_contains($message, '${player_name}')) {
-            $args['player_name'] = $this->getPlayerNameById($args['player_id']);
-        }
-    
-        if (isset($args['card_id']) && !isset($args['card_name']) && str_contains($message, '${card_name}')) {
-            $args['card_name'] = self::$CARD_TYPES[$args['card_id']]['card_name'];
-            $args['i18n'][] = ['card_name'];
-        }
-        
-        return $args;
-    });*/
   }
 
   /**
@@ -84,8 +74,7 @@ class Game extends \Bga\GameFramework\Table
    */
   public function getGameProgression()
   {
-    $caughtGoal = $this->getCaughtGoal();
-    $caughtProgression = round($this->getCaught() / $caughtGoal * 100);
+    $caughtProgression = round($this->getCaught() / $this->getCaughtGoal() * 100);
     $roundProgression = round(($this->getRound() - 1) / 0.15);
     return max($caughtProgression, $roundProgression);
   }
@@ -238,11 +227,12 @@ class Game extends \Bga\GameFramework\Table
   {
     $r = new \Random\Randomizer();
     $gameinfos = $this->getGameinfos();
+    $playerCount = count($players);
 
     // Assign nun colors
     $insertNuns = [];
     $nunColors = ['000000', 'ffffff'];
-    $nunCount = count($players) == 8 ? 2 : 1;
+    $nunCount = $playerCount == 8 ? 2 : 1;
     $nunIds = $r->pickArrayKeys($players, $nunCount);
     foreach ($nunIds as $playerId) {
       $player = $players[$playerId];
@@ -387,8 +377,14 @@ class Game extends \Bga\GameFramework\Table
 
     // Table statistics
     $this->incRound();
+    $caughtGoal = $this->getGameStateValue('optionCaughtGoal') == 1 ? count($novices) : $playerCount;
+    $this->bga->tableStats->set('caughtGoal', $caughtGoal);
     $this->bga->tableStats->set('noiseTokens', 0);
     $this->bga->tableStats->set('vanishTokens', 0);
+
+    $this->notify->all('message', clienttranslate('Nuns must catch ${caughtGoal} novices to win'), [
+      'caughtGoal' => $caughtGoal,
+    ]);
 
     return NoviceTurnMultiState::class;
   }
@@ -400,12 +396,7 @@ class Game extends \Bga\GameFramework\Table
 
   public function getCaughtGoal(): int
   {
-    // TODO: game option
-    // "If it turns out that the nuns’ task is too difficult, you can reduce
-    // the number of novices they need to catch to win to the number of novices
-    // in the game (instead of the total number of players)."
-    $playerCount = (int) $this->getUniqueValueFromDB('SELECT COUNT(1) FROM `player`');
-    return $playerCount;
+    return $this->tableStats->get('caughtGoal');
   }
 
   public function getRound(): int
@@ -418,13 +409,7 @@ class Game extends \Bga\GameFramework\Table
     $roundMax = 15;
     $this->tableStats->inc('round', 1);
     $round = $this->getRound();
-    $message = clienttranslate('Round ${round} of ${roundMax}');
-    if ($round == $roundMax) {
-      $message = clienttranslate('Round ${round} of ${roundMax}. The novices are out of time!');
-    } else if ($round == $roundMax - 1) {
-      $message = clienttranslate('Round ${round} of ${roundMax}. This is the final round!');
-    }
-    $this->bga->notify->all('round', $message, [
+    $this->bga->notify->all('round', clienttranslate('Round ${round} of ${roundMax}'), [
       'round' => $round,
       'roundMax' => $roundMax,
     ]);
@@ -447,7 +432,7 @@ class Game extends \Bga\GameFramework\Table
     }
   }
 
-  public function winGame(array $winners)
+  public function winGame(array $winners, string $reason)
   {
     // Set score
     $caughtTimes = [];
@@ -492,9 +477,18 @@ class Game extends \Bga\GameFramework\Table
     $args = [
       'novices' => $novices->getAllDatas(-1, $state, $nuns),
       'nuns' => $nuns->getAllDatas(-1, $state),
+      'reason' => $reason,
     ];
 
     // Message
+    if ($reason == 'novice') {
+      $this->bga->notify->all('message', clienttranslate('Game over! A novice returned with their secret wish'));
+    } else if ($reason == 'caught') {
+      $this->bga->notify->all('message', clienttranslate('Game over! Nuns caught enough naughty novices'));
+    } else if ($reason == 'round') {
+      $this->bga->notify->all('message', clienttranslate('Game over! Novices ran out of time'));
+    }
+
     $count = count($winners);
     if ($count == 1) {
       $message = clienttranslate('${player_name} wins!');
@@ -532,6 +526,7 @@ class Game extends \Bga\GameFramework\Table
     $args = [
       'novices' => $novices->getAllDatas(-1, $state, $nuns),
       'nuns' => $nuns->getAllDatas(-1, $state),
+      'reason' => 'round',
     ];
     $this->bga->notify->all('win', 'debug_win', $args);
   }

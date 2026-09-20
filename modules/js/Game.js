@@ -151,6 +151,9 @@ export class Game {
   }
 
   setupReplay() {
+    const boardEl = document.getElementById("notr-board");
+    boardEl.querySelectorAll(".notr-path").forEach((el) => el.remove());
+
     let markers = "";
     for (let i = 1; i <= this.gamedatas.round; i++) {
       markers += `<option value="${i}"></option>`;
@@ -166,6 +169,7 @@ export class Game {
 
     const rangeEl = document.getElementById("notr-replay-range");
     rangeEl.addEventListener("input", (event) => {
+      this.bga.gameui.pageheader.showSectionFromButton("pageheader_gameview");
       this.replayPause();
       this.replayShow(event.target.value);
     });
@@ -177,6 +181,7 @@ export class Game {
       if (this.replayTimer) {
         this.replayPause();
       } else {
+        this.bga.gameui.pageheader.showSectionFromButton("pageheader_gameview");
         iconEl.classList.remove("notr-icon-play");
         iconEl.classList.add("notr-icon-pause");
         if (rangeEl.value == rangeEl.max) {
@@ -241,6 +246,7 @@ export class Game {
     }
 
     // Move novices
+    const boardEl = document.getElementById("notr-board");
     Object.values(this.gamedatas.novices).forEach((novice) => {
       let location = novice.location;
       const move = novice.moves[Math.max(roundNovice - 1, 0)];
@@ -263,6 +269,7 @@ export class Game {
       const noviceEl = document.getElementById(`notr-novice-${novice.playerId}`);
       noviceEl.classList.remove(...this.classLocations);
       noviceEl.classList.add("notr-" + location);
+      this.playerOffset(boardEl, location);
     });
 
     // Move nuns
@@ -283,19 +290,18 @@ export class Game {
       const nunEl = document.getElementById(`notr-nun-${nun.role}`);
       nunEl.classList.remove(...this.classLocations);
       nunEl.classList.add("notr-" + location);
+      this.playerOffset(boardEl, location);
     });
 
     // Add tokens
     if (tokens.length) {
-      setTimeout(() => {
-        for (const token of tokens) {
-          if (token.type == "noise") {
-            this.addNoviceNoise(token.novice, token.location);
-          } else if (token.type == "vanish") {
-            this.addNoviceVanish(token.novice, token.location);
-          }
+      for (const token of tokens) {
+        if (token.type == "noise") {
+          this.addNoviceNoise(token.novice, token.location);
+        } else if (token.type == "vanish") {
+          this.addNoviceVanish(token.novice, token.location);
         }
-      }, 300);
+      }
     }
   }
 
@@ -331,9 +337,11 @@ export class Game {
           const caught = move.caughtHistory ? `<span class="notr-icon notr-icon-circle-no" title="${_("Caught")}"></span>` : "";
           tr += `<tr data-round="${x + 1}" class="notr-line ${cssClass}"><td>#${x + 1}</td><td>${end}</td><td class="rp">${_(move.actionName)} (${distance})${icon}</td><td>${caught}</td></tr>`;
         });
-        notesEl.insertAdjacentHTML(
-          "beforeend",
-          `<div id="notr-notes-${novice.playerId}" class="notr-notes notr-player-${novice.color} notr-${novice.location}">
+      }
+      const style = novice.playerId == this.bga.players.getCurrentPlayerId() ? "order: -1" : "";
+      notesEl.insertAdjacentHTML(
+        "beforeend",
+        `<div id="notr-notes-${novice.playerId}" class="notr-notes notr-player-${novice.color} notr-${novice.location}" style="${style}">
   <div class="notr-portrait"></div>
   <table class="notr-notes-table">
     <thead>
@@ -345,8 +353,7 @@ export class Game {
     </tbody>
   </table>
 </div>`,
-        );
-      }
+      );
     });
   }
 
