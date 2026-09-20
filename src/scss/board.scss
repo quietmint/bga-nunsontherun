@@ -1,5 +1,37 @@
 @use "material-colors" as *;
 
+#notr-meters {
+  color: white;
+  position: absolute;
+  text-align: center;
+
+  .notr-meter {
+    border-radius: 4px;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+
+    &.notr-meter-caught {
+      background: $color-deep-orange-900;
+    }
+
+    &.notr-meter-round {
+      background: $color-blue-900;
+    }
+  }
+
+  .notr-label {
+    font-size: 14px;
+  }
+
+  .notr-value {
+    font-weight: bold;
+
+    span {
+      display: inline-block;
+    }
+  }
+}
+
 #notr-board {
   aspect-ratio: 1409 / 1509;
   background-image: url(img/board.webp);

@@ -121,8 +121,9 @@ class NunMovePlayerState extends GameState
 
           $this->bga->notify->all('noviceCaught', clienttranslate('${roleName} ${player_name} catches ${player_name2} at ${location}!'), [
             'i18n' => ['roleName'],
-            'preserve' => ['caught', 'player_id2', 'role'],
+            'preserve' => ['caught', 'caughtMeter', 'player_id2', 'role'],
             'caught' => $novice->caught,
+            'caughtMeter' => $this->game->getCaught(),
             'location' => $spaceId,
             'player_id' => $nun->playerId,
             'player_id2' => $novice->playerId,

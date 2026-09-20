@@ -86,8 +86,26 @@ export class Game {
     }
   }
 
+  setupMeters() {
+    this.bga.gameArea.getElement().insertAdjacentHTML("beforeend", `<div id="notr-meters"></div>`);
+    const meterEl = document.getElementById("notr-board");
+  }
+
   setupBoard() {
-    this.bga.gameArea.getElement().insertAdjacentHTML("beforeend", `<div id="notr-board"></div>`);
+    this.bga.gameArea.getElement().insertAdjacentHTML(
+      "beforeend",
+      `<div id="notr-meters">
+  <div class="notr-meter notr-meter-caught">
+      <div class="notr-label">${_("Caught")}:</div>
+      <div class="notr-value"><span id="notr-meter-caught">${this.gamedatas.caught}</span> / ${this.gamedatas.caughtGoal}</div>
+  </div>
+  <div class="notr-meter notr-meter-round">
+      <div class="notr-label">${_("Round")}:</div>
+      <div class="notr-value"><span id="notr-meter-round">${this.gamedatas.round}</span> / ${this.gamedatas.roundMax}</div>
+  </div>
+</div>
+<div id="notr-board"></div>`,
+    );
     const boardEl = document.getElementById("notr-board");
     const playerId = this.bga.players.getCurrentPlayerId();
 
@@ -478,6 +496,11 @@ export class Game {
     novice.caught = args.caught;
     if (novice.caught) {
       novice.hasWish = false;
+      caughtEl.innerText = _("Caught");
+      caughtEl.classList.add("notr-caught");
+      const meterEl = document.getElementById("notr-meter-caught");
+      meterEl.innerText = args.caughtMeter;
+      this.animate(meterEl, "notr-pulse");
       this.bga.sounds.play("caught");
       this.bga.gameui.disableNextMoveSound();
       if (novice.playerId == this.bga.players.getCurrentPlayerId()) {
@@ -487,8 +510,6 @@ export class Game {
           this.addMyWish(boardEl, novice);
         }
       }
-      caughtEl.innerText = _("Caught");
-      caughtEl.classList.add("notr-caught");
     } else {
       caughtEl.innerText = _("On The Run");
       caughtEl.classList.remove("notr-caught");
@@ -690,6 +711,9 @@ export class Game {
 
   async notif_round(args) {
     console.log("doing notif_round", args);
+    const meterEl = document.getElementById("notr-meter-round");
+    meterEl.innerText = args.round;
+    this.animate(meterEl, "notr-pulse");
     if (args.round == args.roundMax - 1) {
       this.bga.gameArea.addLastTurnBanner();
     }

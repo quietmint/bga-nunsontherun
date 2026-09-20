@@ -69,6 +69,7 @@ class NoviceOwnNoisePrivateState extends GameState
     if ($count > 0) {
       $this->bga->playerStats->inc('noiseTokens', $count, $novice->playerId, true);
     }
+    $this->game->giveExtraTime($currentPlayerId);
     $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
   }
 

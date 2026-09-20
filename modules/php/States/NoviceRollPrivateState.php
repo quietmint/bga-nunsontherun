@@ -98,6 +98,7 @@ class NoviceRollPrivateState extends GameState
   #[PossibleAction]
   public function actConfirm(int $currentPlayerId, array $args)
   {
+    $this->game->giveExtraTime($currentPlayerId);
     if (empty($args['possible'])) {
       $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
     } else {

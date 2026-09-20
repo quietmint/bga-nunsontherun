@@ -47,6 +47,7 @@ class NoviceNunNoisePrivateState extends GameState
     if (array_key_exists($currentPlayerId, $nun->move->noiseTokens)) {
       $this->bga->playerStats->inc('noiseTokens', 1, $currentPlayerId, true);
     }
+    $this->game->giveExtraTime($currentPlayerId);
     $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NunRecapGameState::class);
   }
 

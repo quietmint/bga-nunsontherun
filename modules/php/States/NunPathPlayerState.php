@@ -41,7 +41,7 @@ class NunPathPlayerState extends GameState
   }
 
   #[PossibleAction]
-  public function actPath(int $currentPlayerId, array $args, string $path)
+  public function actPath(array $args, string $path)
   {
     if (!array_key_exists($path, $args['possible'])) {
       throw new SystemException("Path $path is not possible");
@@ -51,13 +51,14 @@ class NunPathPlayerState extends GameState
     $nun->paths[] = $path;
     $this->game->saveNun($nun);
 
+    $this->game->giveExtraTime($nun->playerId);
     $this->bga->notify->all('nunPath', clienttranslate('${roleName} ${player_name} chooses path ${pathName}'), [
       'i18n' => ['roleName'],
       'preserve' => ['path', 'role'],
       'path' => $nun->path,
       'pathName' => $nun->path,
-      'player_id' => $currentPlayerId,
-      'player_name' => $this->game->getPlayerNameById($currentPlayerId),
+      'player_id' => $nun->playerId,
+      'player_name' => $nun->playerName,
       'role' => $nun->role,
       'roleName' => $nun->roleName,
     ]);

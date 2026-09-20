@@ -104,8 +104,9 @@ class NunRollPlayerState extends GameState
   }
 
   #[PossibleAction]
-  public function actConfirm()
+  public function actConfirm(int $activePlayerId)
   {
+    $this->game->giveExtraTime($activePlayerId);
     return NunNoiseMultiState::class;
   }
 

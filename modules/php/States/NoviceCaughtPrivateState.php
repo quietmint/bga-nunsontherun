@@ -24,7 +24,7 @@ class NoviceCaughtPrivateState extends GameState
   }
 
   #[PossibleAction]
-  public function actConfirm(int $currentPlayerId, array $args, bool $caught)
+  public function actConfirm(int $currentPlayerId, bool $caught)
   {
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     if (!$caught) {
@@ -36,6 +36,7 @@ class NoviceCaughtPrivateState extends GameState
         'player_id' => $novice->playerId,
       ]);
     }
+    $this->game->giveExtraTime($currentPlayerId);
     $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
   }
 
