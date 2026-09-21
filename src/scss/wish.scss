@@ -39,6 +39,21 @@
   grid-area: loc;
 }
 
+.notr-wish-image {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border-color: inherit;
+  border-radius: 100%;
+  border-style: solid;
+  border-width: 3px;
+  bottom: -30px;
+  height: 75px;
+  position: absolute;
+  right: -10px;
+  width: 75px;
+}
+
 .notr-wish-dessert {
   background-image: url(img/wish-dessert.webp);
 }

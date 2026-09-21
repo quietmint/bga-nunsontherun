@@ -169,8 +169,22 @@ export class Game {
   }
 
   setupReplay() {
+    // Remove nun's path
     const boardEl = document.getElementById("notr-board");
     boardEl.querySelectorAll(".notr-path").forEach((el) => el.remove());
+
+    // Add my key, wish
+    const novice = this.getNovice();
+    if (novice != null) {
+      const myKeyEl = document.getElementById("notr-my-key");
+      if (myKeyEl == null) {
+        this.addMyKey(boardEl, novice);
+      }
+      const myWishEl = document.getElementById("notr-my-wish");
+      if (myWishEl == null) {
+        this.addMyWish(boardEl, novice);
+      }
+    }
 
     let markers = "";
     for (let i = 1; i <= this.gamedatas.round; i++) {
@@ -335,7 +349,7 @@ export class Game {
     });
 
     Object.values(this.gamedatas.novices).forEach((novice) => {
-      let tr = "";
+      let tbody = "";
       if (novice.moves) {
         novice.moves.forEach((move, x) => {
           let distance = move.spaces.length;
@@ -353,22 +367,26 @@ export class Game {
           }
           const cssClass = move.caught ? "notr-caught" : "";
           const caught = move.caughtHistory ? `<span class="notr-icon notr-icon-circle-no" title="${_("Caught")}"></span>` : "";
-          tr += `<tr data-round="${x + 1}" class="notr-line ${cssClass}"><td>#${x + 1}</td><td>${end}</td><td class="rp">${_(move.actionName)} (${distance})${icon}</td><td>${caught}</td></tr>`;
+          tbody += `<tr data-round="${x + 1}" class="notr-line ${cssClass}"><td>#${x + 1}</td><td>${end}</td><td class="rp">${_(move.actionName)} (${distance})${icon}</td><td>${caught}</td></tr>`;
         });
       }
       const style = novice.playerId == this.bga.players.getCurrentPlayerId() ? "order: -1" : "";
       notesEl.insertAdjacentHTML(
         "beforeend",
         `<div id="notr-notes-${novice.playerId}" class="notr-notes notr-player-${novice.color} notr-${novice.location}" style="${style}">
-  <div class="notr-portrait"></div>
+  <div class="notr-portrait"><div class="notr-wish-image notr-wish-${novice.wish}"></div></div>
   <table class="notr-notes-table">
     <thead>
-        <tr><th colspan="99">${novice.playerName}</th></tr>
+        <tr><th colspan="99">
+          <div class="notr-player-name">${novice.playerName}</div>
+          <div class="notr-locations">
+            <div title="Start Location"><span class="notr-label notr-icon notr-icon-start"></span> ${novice.startLocation}</div>
+            <div title="Key Location"><span class="notr-label notr-icon notr-icon-key"></span> ${novice.keyLocation}</div>
+            <div title="Secret Wish Location"><span class="notr-label notr-icon notr-icon-wish"></span> ${novice.wishLocation}</div>
+          </div>
+        </th></tr>
     </thead>
-    <tbody>
-        <tr data-round="0" class="notr-line"><td>#0</td><td>${novice.startLocation}</td><td class="rp"><span class="notr-icon notr-icon-start" title="${_("Start Location")}"></span></td><td></td></tr>
-        ${tr}
-    </tbody>
+    <tbody>${tbody}</tbody>
   </table>
 </div>`,
       );
@@ -526,7 +544,6 @@ export class Game {
     }
     if (novice.playerId == this.bga.players.getCurrentPlayerId()) {
       if (novice.hasKey) {
-        console.log("play sound collect");
         this.bga.sounds.play("collect");
         this.bga.gameui.disableNextMoveSound();
       }
@@ -621,7 +638,6 @@ export class Game {
     }
     if (novice.playerId == this.bga.players.getCurrentPlayerId()) {
       if (novice.hasWish) {
-        console.log("play sound collect");
         this.bga.sounds.play("collect");
         this.bga.gameui.disableNextMoveSound();
       }
