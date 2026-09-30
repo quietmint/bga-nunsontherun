@@ -727,8 +727,9 @@ export class Game {
 
   async notif_round(args) {
     console.log("doing notif_round", args);
+    this.gamedatas.round = args.round;
     const meterEl = document.getElementById("notr-meter-round");
-    meterEl.innerText = args.round;
+    meterEl.innerText = this.gamedatas.round;
     this.animate(meterEl, "notr-pulse");
     if (args.round == args.roundMax - 1) {
       this.bga.gameArea.addLastTurnBanner();

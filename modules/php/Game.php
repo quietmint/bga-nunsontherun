@@ -54,12 +54,6 @@ class Game extends \Bga\GameFramework\Table
   public function __construct()
   {
     parent::__construct();
-    $this->initGameStateLabels([
-      'optionBlessings' => 100,
-      'optionSlowNovices' => 101,
-      'optionSlowNuns' => 102,
-      'optionCaughtGoal' => 103,
-    ]);
     $this->board = new Board($this);
   }
 
@@ -120,7 +114,6 @@ class Game extends \Bga\GameFramework\Table
   protected function getAllDatas(int $currentPlayerId): array
   {
     $state = $this->gamestate->getCurrentMainStateClass();
-    $this->debug('THE STATE THE STATE: name: ' . $state->name . ' // id: ' . $state->id . ' // ');
     $novices = $this->getNoviceList();
     $nuns = $this->getNunList();
     $result = [
@@ -131,6 +124,7 @@ class Game extends \Bga\GameFramework\Table
       'players' => $this->getCollectionFromDb('SELECT `player_id` AS `id`, `player_score` AS `score` FROM `player`'),
       'round' => $this->getRound(),
       'roundMax' => 15,
+      'version' => $this->bga->tableOptions->getGameVersion(),
     ];
     return $result;
   }
@@ -378,12 +372,12 @@ class Game extends \Bga\GameFramework\Table
 
     // Table statistics
     $this->incRound();
-    $caughtGoal = $this->getGameStateValue('optionCaughtGoal') == 1 ? count($novices) : $playerCount;
+    $caughtGoal = $this->bga->tableOptions->get(103) == 1 ? count($novices) : $playerCount;
     $this->bga->tableStats->set('caughtGoal', $caughtGoal);
     $this->bga->tableStats->set('noiseTokens', 0);
     $this->bga->tableStats->set('vanishTokens', 0);
 
-    $this->notify->all('message', clienttranslate('Nuns must catch ${caughtGoal} novices to win'), [
+    $this->bga->notify->all('message', clienttranslate('Nuns must catch ${caughtGoal} novices to win'), [
       'caughtGoal' => $caughtGoal,
     ]);
 
