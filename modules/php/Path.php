@@ -47,6 +47,11 @@ class Path
 		);
 	}
 
+	public function __toString()
+	{
+		return $this->path;
+	}
+
 	public function reverse(): Path
 	{
 		return new Path(

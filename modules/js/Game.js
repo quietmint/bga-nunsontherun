@@ -784,11 +784,11 @@ export class Game {
         el.classList.add("show-" + face);
       }
     }, 50);
-    return `<div id="${id}" class="notr-die">${this.html_dieFace(1)}${this.html_dieFace(2)}${this.html_dieFace(3)}${this.html_dieFace(4)}${this.html_dieFace(5)}${this.html_dieFace(6)}</div>`;
+    return `<div id="${id}" class="notr-die notr-die-animate">${this.html_dieFace(1)}${this.html_dieFace(2)}${this.html_dieFace(3)}${this.html_dieFace(4)}${this.html_dieFace(5)}${this.html_dieFace(6)}</div>`;
   }
 
   html_dieSingle(face) {
-    return `<div class="notr-die show-${face}">${this.html_dieFace(face)}</div>`;
+    return `<div class="notr-die">${this.html_dieFace(face)}</div>`;
   }
 
   html_dieFace(face) {

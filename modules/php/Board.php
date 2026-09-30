@@ -460,7 +460,7 @@ class Board
 			$possible = array_filter($possible, fn(PossibleMove $move, int $spaceId) => array_key_exists($spaceId, $keys) && $move->distance <= 4, ARRAY_FILTER_USE_BOTH);
 			$this->game->debug("$novice caught possible: " . json_encode($possible) . " // ");
 		} else {
-			$maxDistance = $round == 1 ? 10 : 5;
+			$maxDistance = $round == 1 && $this->game->getGameStateValue('optionSlowNovices') == 0 ? 10 : 5;
 			$flags = $novice->hasKey ? 0 : TRAVERSE_UNLOCKED;
 			$targets = [];
 			foreach ($nuns as $nun) {
@@ -540,11 +540,7 @@ class Board
 
 	public function getNoviceActions(Novice $novice, int $round): array
 	{
-		// TODO: game option
-		// "If the novices are winning too easily, you can give them a handicap. In the
-		// first round, the novices may only move once (instead of the usual two times)."
-
-		$multi = $round == 1 ? 2 : 1;
+		$multi = $round == 1 && $this->game->getGameStateValue('optionSlowNovices') == 0 ? 2 : 1;
 		$actions = [
 			'stand' => [
 				'min' => 0,
@@ -721,32 +717,32 @@ class Board
 		// A nun can leave the path if:
 		// - A nun noise token is adjacent (at start of turn)
 		if ($start && !empty($nun->move->noiseTokens) && array_intersect($nun->move->noiseTokens, $neighbors)) {
-			$this->game->debug("$nun can deviate from path {$nun->path->path} because a nun noise token is adjacent // ");
+			$this->game->debug("$nun can deviate from path {$nun->path} because a nun noise token is adjacent // ");
 			return true;
 		}
 
 		foreach ($novices as $novice) {
 			// - An uncaught novice is in this room (at any time)
 			if (!$novice->caught && $novice->room == $nun->room) {
-				$this->game->debug("$nun can deviate from path {$nun->path->path} because uncaught novice {$novice->playerId} is in the room // ");
+				$this->game->debug("$nun can deviate from path {$nun->path} because uncaught novice {$novice->playerId} is in the room // ");
 				return true;
 			}
 
 			// - A novice vanish token is in this room (at start of turn)
 			if ($start && !empty($novice->move->vanishTokens) && !empty(array_intersect($novice->move->vanishTokens, [$nun->room]))) {
-				$this->game->debug("$nun can deviate from path {$nun->path->path} because novice {$novice->playerId} vanish token is in the room // ");
+				$this->game->debug("$nun can deviate from path {$nun->path} because novice {$novice->playerId} vanish token is in the room // ");
 				return true;
 			}
 
 			// - A novice noise token is adjacent (at start of turn)
 			if ($start && !empty($novice->move->noiseTokens) && !empty(array_intersect($novice->move->noiseTokens, $neighbors))) {
-				$this->game->debug("$nun can deviate from path {$nun->path->path} because novice {$novice->playerId} noise token is adjacent // ");
+				$this->game->debug("$nun can deviate from path {$nun->path} because novice {$novice->playerId} noise token is adjacent // ");
 				return true;
 			}
 		}
 
 		// Otherwise, the nun must follow the path 
-		$this->game->debug("$nun cannot deviate from path {$nun->path->path} // ");
+		$this->game->debug("$nun cannot deviate from path {$nun->path} // ");
 		return false;
 	}
 

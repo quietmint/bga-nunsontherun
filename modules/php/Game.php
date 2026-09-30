@@ -58,7 +58,7 @@ class Game extends \Bga\GameFramework\Table
       'optionBlessings' => 100,
       'optionSlowNovices' => 101,
       'optionSlowNuns' => 102,
-      'optionsCaughtGoal' => 103,
+      'optionCaughtGoal' => 103,
     ]);
     $this->board = new Board($this);
   }
@@ -269,12 +269,13 @@ class Game extends \Bga\GameFramework\Table
     $novices = new NoviceList();
     $novicePlayers = $this->getCollectionFromDb("SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 0 ORDER BY `player_no`");
     $wishes = $r->shuffleArray(['dessert', 'game', 'letter', 'magazine', 'makeup', 'perfume', 'phone', 'wine']);
-    $location = 1;
+    $location = 0;
     foreach ($novicePlayers as $playerId => $player) {
       $color = $player['player_color'];
+      $location++;
       $novice = new Novice(
         color: $this->getColorName($color),
-        location: $location++,
+        location: $location,
         move: new Move(
           start: $location,
         ),
