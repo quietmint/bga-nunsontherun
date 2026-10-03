@@ -11,20 +11,20 @@ export class NoviceNoisePrivateState {
       for (const location in args.possible) {
         const role = args.possible[location][0];
         // Action button
-        this.bga.statusBar.addActionButton(`<span class="notr-icon notr-icon-noise"></span> ${location}`, () => this.bga.actions.performAction("actNoise", { location }));
+        this.bga.statusBar.addActionButton(`<span class="notr-icon notr-icon-noise"></span> ${location}`, () => this.game.performActionWrapper("actNoise", { location }));
 
         // Board space
         boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${location}" class="notr-possible notr-possible-${role} notr-${location}"><span class="notr-icon notr-icon-noise"></span></div>`);
         const el = document.getElementById(`notr-possible-${location}`);
-        el.addEventListener("click", () => this.bga.actions.performAction("actNoise", { location }));
+        el.addEventListener("click", () => this.game.performActionWrapper("actNoise", { location }));
       }
 
       if (args.possible.length == 0) {
-        this.bga.statusBar.addActionButton(_("Confirm"), () => this.bga.actions.performAction("actConfirm"));
+        this.bga.statusBar.addActionButton(_("Confirm"), () => this.game.performActionWrapper("actConfirm"));
       }
 
       if (args.undo) {
-        this.bga.statusBar.addActionButton(_("Undo"), () => this.bga.actions.performAction("actUndo"), { color: "secondary" });
+        this.bga.statusBar.addActionButton(_("Undo"), () => this.game.performActionWrapper("actUndo"), { color: "secondary" });
       }
     }
   }

@@ -59,16 +59,15 @@ class NoviceRollPrivateState extends GameState
   public function onEnteringState(int $currentPlayerId)
   {
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
-    $this->game->debug("NoviceRollPrivateState loaded this novice: " . json_encode($novice) . ' // ');
-
     if (is_null($novice->move->noiseRoll)) {
       self::noviceRoll($this->game, $novice);
     }
   }
 
   #[PossibleAction]
-  public function actBlessingAdjust(int $currentPlayerId, array $args)
+  public function actBlessingAdjust(int $currentPlayerId, array $args, int $version)
   {
+    $this->game->checkVersion($version);
     if ($args['blessing'] != Game::BLESSING_ADJUST) {
       throw new SystemException("Unexpected blessing: " . $args['blessing']);
     }
@@ -82,8 +81,9 @@ class NoviceRollPrivateState extends GameState
   }
 
   #[PossibleAction]
-  public function actBlessingReroll(int $currentPlayerId, array $args)
+  public function actBlessingReroll(int $currentPlayerId, array $args, int $version)
   {
+    $this->game->checkVersion($version);
     if ($args['blessing'] != Game::BLESSING_REROLL) {
       throw new SystemException("Unexpected blessing: " . $args['blessing']);
     }
@@ -96,8 +96,9 @@ class NoviceRollPrivateState extends GameState
   }
 
   #[PossibleAction]
-  public function actConfirm(int $currentPlayerId, array $args)
+  public function actConfirm(int $currentPlayerId, array $args, int $version)
   {
+    $this->game->checkVersion($version);
     $this->game->giveExtraTime($currentPlayerId);
     if (empty($args['possible'])) {
       $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
@@ -106,21 +107,8 @@ class NoviceRollPrivateState extends GameState
     }
   }
 
-  /**
-   * This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
-   * You can do whatever you want in order to make sure the turn of this player ends appropriately
-   * (ex: play a random card).
-   * 
-   * See more about Zombie Mode: https://en.doc.boardgamearena.com/Zombie_Mode
-   *
-   * Important: your zombie code will be called when the player leaves the game. This action is triggered
-   * from the main site and propagated to the gameserver from a server, not from a browser.
-   * As a consequence, there is no current player associated to this action. In your zombieTurn function,
-   * you must _never_ use `getCurrentPlayerId()` or `getCurrentPlayerName()`, 
-   * but use the $playerId passed in parameter and $this->game->getPlayerNameById($playerId) instead.
-   */
   function zombie(int $playerId)
   {
-    throw new SystemException($this::class . " zombie function not implemented");
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
   }
 }

@@ -49,8 +49,9 @@ class NunMovePlayerState extends GameState
   }
 
   #[PossibleAction]
-  public function actMove(array $args, int $location)
+  public function actMove(array $args, int $version, int $location)
   {
+    $this->game->checkVersion($version);
     // Check location
     if (!array_key_exists($location, $args['possible'])) {
       throw new SystemException("Cannot move to location $location");
@@ -170,8 +171,9 @@ class NunMovePlayerState extends GameState
   }
 
   #[PossibleAction]
-  public function actConfirm(array $args, string $confirmAction)
+  public function actConfirm(array $args, int $version, string $confirmAction)
   {
+    $this->game->checkVersion($version);
     if (!array_key_exists($confirmAction, $args['actions'])) {
       throw new SystemException("Action $confirmAction is not possible now. Expected: " . json_encode($args['actions']));
     }
@@ -202,8 +204,9 @@ class NunMovePlayerState extends GameState
   }
 
   #[PossibleAction]
-  public function actUndo(array $args)
+  public function actUndo(array $args, int $version)
   {
+    $this->game->checkVersion($version);
     if (!$args['undo']) {
       throw new SystemException("Action undo is not possible now");
     }
@@ -233,21 +236,27 @@ class NunMovePlayerState extends GameState
     return NunMovePlayerState::class;
   }
 
-  /**
-   * This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
-   * You can do whatever you want in order to make sure the turn of this player ends appropriately
-   * (ex: play a random card).
-   * 
-   * See more about Zombie Mode: https://en.doc.boardgamearena.com/Zombie_Mode
-   *
-   * Important: your zombie code will be called when the player leaves the game. This action is triggered
-   * from the main site and propagated to the gameserver from a server, not from a browser.
-   * As a consequence, there is no current player associated to this action. In your zombieTurn function,
-   * you must _never_ use `getCurrentPlayerId()` or `getCurrentPlayerName()`, 
-   * but use the $playerId passed in parameter and $this->game->getPlayerNameById($playerId) instead.
-   */
-  function zombie(int $playerId)
+  function zombie(int $playerId, array $args)
   {
-    throw new SystemException($this::class . " zombie function not implemented");
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
+    // Give control to the other player, if possible
+    $nunIds = $this->game->getPlayerIds(1);
+    if (!empty($nunIds)) {
+      $otherPlayerId = reset($nunIds);
+      $this->bga->notify->all('message', "🪦 Zombie $playerId: Change nun owner to other player $otherPlayerId");
+      $nun = $this->game->getNunList()->getActiveNun();
+      $nun->playerId = $otherPlayerId;
+      $nun->playerName = $this->game->getPlayerNameById($nun->playerId);
+      $this->bga->notify->all('nunZombie', '', [
+        'playerId' => $nun->playerId,
+        'playerName' => $nun->playerName,
+        'role' => $nun->role,
+      ]);
+      $this->gamestate->changeActivePlayer($otherPlayerId);
+      return NunMovePlayerState::class;
+    }
+
+    // Otherwise, zombie makes a move
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: TODO move this");
   }
 }

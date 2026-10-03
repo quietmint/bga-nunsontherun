@@ -36,6 +36,15 @@ export class Game {
     this.bga.states.register("NunRollPlayerState", new NunRollPlayerState(this, bga));
     this.bga.states.register("NextRoundGameState", new NextRoundGameState(this, bga));
 
+    // Override showMessage
+    const bgaShowMessage = this.bga.dialogs.showMessage;
+    this.bga.dialogs.showMessage = (msg, type) => {
+      if (type == "error" && msg && msg.startsWith("!!!")) {
+        return;
+      }
+      return bgaShowMessage.call(this.bga.dialogs, msg, type);
+    };
+
     this.classLocations = ["notr-offset"];
     for (let i = 1; i <= 155; i++) {
       this.classLocations.push("notr-" + i);
@@ -66,13 +75,6 @@ export class Game {
   setup(gamedatas) {
     this.gamedatas = gamedatas;
     console.log("Setup", gamedatas);
-
-    Object.values(gamedatas.novices).forEach((novice) => {
-      novice.avatarUrl = this.bga.players.getPlayerAvatarUrl(novice.playerId);
-    });
-    Object.values(gamedatas.nuns).forEach((nun) => {
-      nun.avatarUrl = this.bga.players.getPlayerAvatarUrl(nun.playerId);
-    });
     this.setupBoard();
     this.setupPanels();
     const stateName = this.bga.states.getCurrentMainStateName();
@@ -123,11 +125,8 @@ export class Game {
           this.addMyWish(boardEl, novice);
         }
       }
-
       if (novice.move && novice.move.noiseTokens) {
-        console.log("novice noiseTokens", novice.move.noiseTokens);
         for (let location of novice.move.noiseTokens) {
-          console.log("novice noiseToken location", location);
           this.addNoviceNoise(novice, location);
         }
       }
@@ -629,6 +628,7 @@ export class Game {
   }
 
   async notif_noviceWish(args) {
+    console.log("doing notif_noviceWish", args);
     const novice = this.getNovice(args.player_id);
     novice.hasWish = args.hasWish;
     const el = document.getElementById(`notr-panel-${novice.playerId}-wish`);
@@ -746,6 +746,19 @@ export class Game {
 
   ///////////////////////////////////////////////////
   //// Utility methods
+
+  performActionWrapper(action, args, options) {
+    if (!args) args = {};
+    args.version = this.gamedatas.version;
+    return this.bga.actions.performAction(action, args, options).catch((error) => {
+      if (error?.message == "!!!checkVersion") {
+        console.warn(`🆙 New version available`);
+        this.bga.dialogs.multipleChoice(_("A new version of this game is now available"), [_("Reload Required")]).then((choice) => window.location.reload());
+      } else {
+        reject(error);
+      }
+    });
+  }
 
   animate(el, cssClass) {
     setTimeout(() => {

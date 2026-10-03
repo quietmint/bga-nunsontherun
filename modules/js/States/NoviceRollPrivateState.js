@@ -8,14 +8,14 @@ export class NoviceRollPrivateState {
     if (isCurrentPlayerActive) {
       // Actions
       if (args.heard) {
-        this.bga.statusBar.addActionButton(_("Confirm (Noise)"), () => this.bga.actions.performAction("actConfirm"), { color: "red" });
+        this.bga.statusBar.addActionButton(_("Confirm (Noise)"), () => this.game.performActionWrapper("actConfirm"), { color: "red" });
       } else {
-        this.bga.statusBar.addActionButton(_("Confirm (No Noise)"), () => this.bga.actions.performAction("actConfirm"));
+        this.bga.statusBar.addActionButton(_("Confirm (No Noise)"), () => this.game.performActionWrapper("actConfirm"));
       }
       if (args.blessing == "adjust") {
-        this.bga.statusBar.addActionButton(_("Blessing: -1"), () => this.bga.actions.performAction("actBlessingAdjust"), { color: "secondary" });
+        this.bga.statusBar.addActionButton(_("Blessing: -1"), () => this.game.performActionWrapper("actBlessingAdjust"), { color: "secondary" });
       } else if (args.blessing == "reroll") {
-        this.bga.statusBar.addActionButton(_("Blessing: Reroll"), () => this.bga.actions.performAction("actBlessingReroll"), { color: "secondary" });
+        this.bga.statusBar.addActionButton(_("Blessing: Reroll"), () => this.game.performActionWrapper("actBlessingReroll"), { color: "secondary" });
       }
 
       // Board

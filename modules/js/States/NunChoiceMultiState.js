@@ -6,8 +6,13 @@ export class NunChoiceMultiState {
 
   onPlayerActivationChange(args, isCurrentPlayerActive) {
     if (isCurrentPlayerActive) {
-      this.bga.statusBar.addActionButton(this.game.emoji("abbess") + _("Abbess"), () => this.bga.actions.performAction("actChoose", { role: "abbess" }));
-      this.bga.statusBar.addActionButton(this.game.emoji("prioress") + _("Prioress"), () => this.bga.actions.performAction("actChoose", { role: "prioress" }));
+      Object.values(this.game.gamedatas.nuns).forEach((nun) => {
+        const title = this.bga.gameui.format_string(_("${roleName} ${player_name}"), {
+          roleName: this.game.emoji(nun.role) + _(nun.roleName),
+          player_name: nun.playerName,
+        });
+        this.bga.statusBar.addActionButton(title, () => this.game.performActionWrapper("actChoose", { role: nun.role }));
+      });
     }
   }
 }

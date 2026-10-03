@@ -51,8 +51,7 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 		$visible = $nuns->getNovicesVisible($this);
 		foreach ($this->novices as $playerId => $novice) {
 			$json = json_decode(json_encode($novice), true);
-			$json['_get_class'] = get_class($state);
-			$json['_currentPlayerId'] = $currentPlayerId;
+			unset($json['room']);
 			if (!$gameEnd) {
 				unset($json['moves']);
 			} else {
@@ -67,7 +66,13 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 				}
 			}
 			if (!$gameEnd && $playerId != $currentPlayerId) {
-				unset($json['hasKey'], $json['hasWish'], $json['keyLocation'], $json['room'], $json['wish'], $json['wishLocation']);
+				unset(
+					$json['hasKey'],
+					$json['hasWish'],
+					$json['keyLocation'],
+					$json['wish'],
+					$json['wishLocation']
+				);
 				if ($state instanceof NoviceTurnMultiState) {
 					unset($json['move']);
 				}
@@ -96,11 +101,8 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 		$this->novices[$novice->playerId] = $novice;
 	}
 
-	public function &get(int $playerId): Novice
+	public function &get(int $playerId): ?Novice
 	{
-		if (!array_key_exists($playerId, $this->novices)) {
-			throw new SystemException("Novice not found for playerId: $playerId");
-		}
 		return $this->novices[$playerId];
 	}
 

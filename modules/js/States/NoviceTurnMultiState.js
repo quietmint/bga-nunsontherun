@@ -6,7 +6,7 @@ export class NoviceTurnMultiState {
 
   onPlayerActivationChange(args, isCurrentPlayerActive) {
     // if (!isCurrentPlayerActive && this.game.isNovice()) {
-    //   this.bga.statusBar.addActionButton(_("Go Back"), () => this.bga.actions.performAction("actActivate", {}, { checkAction: false, checkPossibleActions: true }), { color: "secondary" });
+    //   this.bga.statusBar.addActionButton(_("Go Back"), () => this.game.performActionWrapper("actActivate", {}, { checkAction: false, checkPossibleActions: true }), { color: "secondary" });
     // }
   }
 }

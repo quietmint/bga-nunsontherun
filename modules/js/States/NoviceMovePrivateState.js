@@ -21,15 +21,15 @@ export class NoviceMovePrivateState {
     <div class="notr-move-info">${_("Noise")}: ${noiseText}</div>
   </div>
 </div>`,
-          () => this.bga.actions.performAction("actConfirm", { confirmAction: action }),
+          () => this.game.performActionWrapper("actConfirm", { confirmAction: action }),
           { disabled: info.disabled },
         );
       }
       if (args.blessing == "move") {
-        this.bga.statusBar.addActionButton(_("Blessing: +1"), () => this.bga.actions.performAction("actBlessingMove"), { color: "secondary" });
+        this.bga.statusBar.addActionButton(_("Blessing: +1"), () => this.game.performActionWrapper("actBlessingMove"), { color: "secondary" });
       }
       if (args.undo) {
-        this.bga.statusBar.addActionButton(_("Undo"), () => this.bga.actions.performAction("actUndo"), { color: "secondary" });
+        this.bga.statusBar.addActionButton(_("Undo"), () => this.game.performActionWrapper("actUndo"), { color: "secondary" });
       }
 
       let specialMessage = null;
@@ -83,11 +83,11 @@ export class NoviceMovePrivateState {
           if (confirmMessage) {
             this.bga.dialogs.confirmation(confirmMessage).then((result) => {
               if (result) {
-                this.bga.actions.performAction("actMove", { location: move.location });
+                this.game.performActionWrapper("actMove", { location: move.location });
               }
             });
           } else {
-            this.bga.actions.performAction("actMove", { location: move.location });
+            this.game.performActionWrapper("actMove", { location: move.location });
           }
         });
       }

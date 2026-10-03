@@ -28,19 +28,15 @@ class NoviceRecapGameState extends GameState
 		$winners = [];
 		foreach ($novices as &$novice) {
 			// Notify each novice's move type
-			switch ($novice->move->action) {
-				case 'stand':
-					$message = clienttranslate('${player_name} stands still');
-					break;
-				case 'sneak':
-					$message = clienttranslate('${player_name} sneaks');
-					break;
-				case 'walk':
-					$message = clienttranslate('${player_name} walks');
-					break;
-				case 'run':
-					$message = clienttranslate('${player_name} runs');
-					break;
+			$message = '';
+			if ($novice->move->action == 'stand') {
+				$message = clienttranslate('${player_name} stands still');
+			} else if ($novice->move->action == 'sneak') {
+				$message = clienttranslate('${player_name} sneaks');
+			} else if ($novice->move->action == 'walk') {
+				$message = clienttranslate('${player_name} walks');
+			} else if ($novice->move->action == 'run') {
+				$message = clienttranslate('${player_name} runs');
 			}
 			$this->bga->notify->all('noviceAction', $message, [
 				'preserve' => ['action', 'actionName', 'player_id', 'recap'],

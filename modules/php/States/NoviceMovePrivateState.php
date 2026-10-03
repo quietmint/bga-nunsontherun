@@ -48,8 +48,9 @@ class NoviceMovePrivateState extends GameState
   }
 
   #[PossibleAction]
-  public function actMove(int $currentPlayerId, array $args, int $location)
+  public function actMove(int $currentPlayerId, array $args, int $version, int $location)
   {
+    $this->game->checkVersion($version);
     // Check location
     if (!array_key_exists($location, $args['possible'])) {
       throw new SystemException("Cannot move to location $location");
@@ -94,29 +95,26 @@ class NoviceMovePrivateState extends GameState
   }
 
   #[PossibleAction]
-  public function actConfirm(int $currentPlayerId, array $args, string $confirmAction)
+  public function actConfirm(int $currentPlayerId, array $args, int $version, string $confirmAction)
   {
-    if (!array_key_exists($confirmAction, $args['actions'])) {
-      throw new SystemException("$confirmAction is not possible. Possible actions: " . json_encode(array_keys($args['actions'])));
+    $this->game->checkVersion($version);
+    if ($args['actions'][$confirmAction]['disabled']) {
+      throw new SystemException("$confirmAction is not possible now");
     }
 
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $novice->move->action = $confirmAction;
     $this->bga->playerStats->inc('spaces', count($novice->move->spaces), $novice->playerId);
     $this->bga->playerStats->inc($confirmAction . 'Move', 1, $novice->playerId);
-    switch ($confirmAction) {
-      case 'stand':
-        $message = clienttranslate('You stand still at ${location1}');
-        break;
-      case 'sneak':
-        $message = clienttranslate('You sneak from ${location1} to ${location2}');
-        break;
-      case 'walk':
-        $message = clienttranslate('You walk from ${location1} to ${location2}');
-        break;
-      case 'run':
-        $message = clienttranslate('You run from ${location1} to ${location2}');
-        break;
+    $message = null;
+    if ($confirmAction == 'stand') {
+      $message = clienttranslate('You stand still at ${location1}');
+    } else if ($confirmAction == 'sneak') {
+      $message = clienttranslate('You sneak from ${location1} to ${location2}');
+    } else if ($confirmAction ==  'walk') {
+      $message = clienttranslate('You walk from ${location1} to ${location2}');
+    } else if ($confirmAction == 'run') {
+      $message = clienttranslate('You run from ${location1} to ${location2}');
     }
     $this->bga->notify->player($currentPlayerId, 'noviceAction', $message, [
       'preserve' => ['action', 'actionName', 'player_id'],
@@ -147,7 +145,6 @@ class NoviceMovePrivateState extends GameState
       ]);
     }
     $this->game->saveNovice($novice);
-    $this->game->debug("NoviceMovePrivateState saved this novice: " . json_encode($novice) . ' // ');
 
     $this->game->giveExtraTime($currentPlayerId);
     if ($novice->caught) {
@@ -170,8 +167,9 @@ class NoviceMovePrivateState extends GameState
   }
 
   #[PossibleAction]
-  public function actUndo(int $currentPlayerId)
+  public function actUndo(int $currentPlayerId, int $version)
   {
+    $this->game->checkVersion($version);
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $novice->location = $novice->move->start;
     $novice->move->action = null;
@@ -199,21 +197,8 @@ class NoviceMovePrivateState extends GameState
     $this->gamestate->initializePrivateState($currentPlayerId);
   }
 
-  /**
-   * This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
-   * You can do whatever you want in order to make sure the turn of this player ends appropriately
-   * (ex: play a random card).
-   * 
-   * See more about Zombie Mode: https://en.doc.boardgamearena.com/Zombie_Mode
-   *
-   * Important: your zombie code will be called when the player leaves the game. This action is triggered
-   * from the main site and propagated to the gameserver from a server, not from a browser.
-   * As a consequence, there is no current player associated to this action. In your zombieTurn function,
-   * you must _never_ use `getCurrentPlayerId()` or `getCurrentPlayerName()`, 
-   * but use the $playerId passed in parameter and $this->game->getPlayerNameById($playerId) instead.
-   */
-  function zombie(int $playerId)
+  function zombie(int $playerId, array $args)
   {
-    throw new SystemException($this::class . " zombie function not implemented");
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
   }
 }

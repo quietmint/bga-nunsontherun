@@ -21,15 +21,15 @@ export class NunMovePlayerState {
     <div class="notr-move-info">${_("Noise")}: ${noiseText}</div>
   </div>
 </div>`,
-          () => this.bga.actions.performAction("actConfirm", { confirmAction: action }),
+          () => this.game.performActionWrapper("actConfirm", { confirmAction: action }),
           { disabled: info.disabled },
         );
       }
       if (args.blessing == "move") {
-        this.bga.statusBar.addActionButton(_("Blessing: +1"), () => this.bga.actions.performAction("actBlessingMove"), { color: "secondary" });
+        this.bga.statusBar.addActionButton(_("Blessing: +1"), () => this.game.performActionWrapper("actBlessingMove"), { color: "secondary" });
       }
       if (args.undo) {
-        this.bga.statusBar.addActionButton(_("Undo"), () => this.bga.actions.performAction("actUndo"), { color: "secondary" });
+        this.bga.statusBar.addActionButton(_("Undo"), () => this.game.performActionWrapper("actUndo"), { color: "secondary" });
       }
 
       // Board possible moves
@@ -43,7 +43,7 @@ export class NunMovePlayerState {
         }
         boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${move.location}" class="notr-possible notr-possible-${action} notr-${move.location}">${str}</div>`);
         const el = document.getElementById(`notr-possible-${move.location}`);
-        el.addEventListener("click", () => this.bga.actions.performAction("actMove", { location: move.location }));
+        el.addEventListener("click", () => this.game.performActionWrapper("actMove", { location: move.location }));
       }
     }
   }

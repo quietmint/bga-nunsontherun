@@ -50,9 +50,10 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 		$gameEnd = $currentPlayerId == -1 || $state->name == 'gameEnd';
 		foreach ($this->nuns as $role => $nun) {
 			$json = json_decode(json_encode($nun), true);
-			$json['_get_class'] = get_class($state);
-			$json['_currentPlayerId'] = $currentPlayerId;
-			unset($json['paths'], $json['room']);
+			unset(
+				$json['paths'],
+				$json['room']
+			);
 			if (!$gameEnd) {
 				unset($json['moves']);
 			} else {

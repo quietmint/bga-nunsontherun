@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Bga\Games\NunsOnTheRun;
 
 use Bga\GameFramework\SystemException;
+use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\States\NoviceTurnMultiState;
 
 class Game extends \Bga\GameFramework\Table
@@ -71,6 +72,13 @@ class Game extends \Bga\GameFramework\Table
     $caughtProgression = round($this->getCaught() / $this->getCaughtGoal() * 100);
     $roundProgression = round(($this->getRound() - 1) / 0.15);
     return max($caughtProgression, $roundProgression);
+  }
+
+  public function checkVersion(int $clientVersion): void
+  {
+    if ($clientVersion != $this->bga->tableOptions->getGameVersion()) {
+      throw new UserException('!!!checkVersion');
+    }
   }
 
   /**
@@ -384,62 +392,21 @@ class Game extends \Bga\GameFramework\Table
     return NoviceTurnMultiState::class;
   }
 
-  public function getCaught(): int
-  {
-    return $this->tableStats->get('caught');
-  }
-
-  public function getCaughtGoal(): int
-  {
-    return $this->tableStats->get('caughtGoal');
-  }
-
-  public function getRound(): int
-  {
-    return $this->tableStats->get('round');
-  }
-
-  public function incRound(): int
-  {
-    $roundMax = 15;
-    $this->tableStats->inc('round', 1);
-    $round = $this->getRound();
-    $this->bga->notify->all('round', clienttranslate('Round ${round} of ${roundMax}'), [
-      'round' => $round,
-      'roundMax' => $roundMax,
-    ]);
-    return $round;
-  }
-
-  public function getMoveNoise(string $move): ?int
-  {
-    switch ($move) {
-      case 'run':
-        return 1;
-      case 'walk':
-        return -1;
-      case 'sneak':
-        return -2;
-      case 'still':
-        return -3;
-      default:
-        return null;
-    }
-  }
-
   public function winGame(array $winners, string $reason)
   {
     // Set score
-    $caughtTimes = [];
-    foreach ($winners as $playerId => $winner) {
-      $caughtTimes[$playerId] = $winner['caughtTimes'];
-      $this->bga->playerScore->set($playerId, 1);
-      $this->bga->playerScoreAux->set($playerId, $winner['caughtTimes'] * -1);
-    }
-    $min = min($caughtTimes);
-    foreach ($winners as $playerId => $winner) {
-      if ($winner['caughtTimes'] > $min) {
-        unset($winners[$playerId]);
+    if (!empty($winners)) {
+      $caughtTimes = [];
+      foreach ($winners as $playerId => $winner) {
+        $caughtTimes[$playerId] = $winner['caughtTimes'];
+        $this->bga->playerScore->set($playerId, 1);
+        $this->bga->playerScoreAux->set($playerId, $winner['caughtTimes'] * -1);
+      }
+      $min = min($caughtTimes);
+      foreach ($winners as $playerId => $winner) {
+        if ($winner['caughtTimes'] > $min) {
+          unset($winners[$playerId]);
+        }
       }
     }
 
@@ -479,12 +446,15 @@ class Game extends \Bga\GameFramework\Table
     if ($reason == 'novice') {
       $this->bga->notify->all('message', clienttranslate('Game over! A novice returned with their secret wish'));
     } else if ($reason == 'caught') {
-      $this->bga->notify->all('message', clienttranslate('Game over! Nuns caught enough naughty novices'));
+      $this->bga->notify->all('message', clienttranslate('Game over! Nuns caught ${caught} novices'), [
+        'caught' => $this->getCaught(),
+      ]);
     } else if ($reason == 'round') {
       $this->bga->notify->all('message', clienttranslate('Game over! Novices ran out of time'));
     }
 
     $count = count($winners);
+    $message = '';
     if ($count == 1) {
       $message = clienttranslate('${player_name} wins!');
     } else if ($count == 2) {
@@ -497,8 +467,6 @@ class Game extends \Bga\GameFramework\Table
       $message = clienttranslate('${player_name}, ${player_name2}, ${player_name3}, ${player_name4}, and ${player_name5} win!');
     } else if ($count == 6) {
       $message = clienttranslate('${player_name}, ${player_name2}, ${player_name3}, ${player_name4}, ${player_name5}, and ${player_name6} win!');
-    } else {
-      throw new SystemException("More than 6 winners");
     }
     $x = '';
     foreach ($winners as $playerId => $winner) {
@@ -511,6 +479,33 @@ class Game extends \Bga\GameFramework\Table
       }
     }
     $this->bga->notify->all('win', $message, $args);
+  }
+
+  public function getCaught(): int
+  {
+    return $this->tableStats->get('caught');
+  }
+
+  public function getCaughtGoal(): int
+  {
+    return $this->tableStats->get('caughtGoal');
+  }
+
+  public function getRound(): int
+  {
+    return $this->tableStats->get('round');
+  }
+
+  public function incRound(): int
+  {
+    $roundMax = 15;
+    $this->tableStats->inc('round', 1);
+    $round = $this->getRound();
+    $this->bga->notify->all('round', clienttranslate('Round ${round} of ${roundMax}'), [
+      'round' => $round,
+      'roundMax' => $roundMax,
+    ]);
+    return $round;
   }
 
   public function debug_win()
