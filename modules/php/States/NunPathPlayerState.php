@@ -9,6 +9,7 @@ use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
+use Random\Randomizer;
 
 class NunPathPlayerState extends GameState
 {
@@ -66,8 +67,21 @@ class NunPathPlayerState extends GameState
     return NunMovePlayerState::class;
   }
 
-  function zombie(int $playerId)
+  public function zombie(int $playerId, array $args)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
+    // Reassign nun if possible
+    $otherPlayerId = $this->game->zombieReassignNuns();
+    if ($otherPlayerId) {
+      $this->gamestate->changeActivePlayer($otherPlayerId);
+      return NunPathPlayerState::class;
+    }
+
+    // Otherwise, random path
+    $version = $this->bga->tableOptions->getGameVersion();
+    $r = new Randomizer();
+    $path = $r->pickArrayKeys($args['possible'], 1)[0];
+    $this->bga->notify->all('message', "🪦 Zombie $playerId -- random path $path");
+    return $this->actPath($args, $version, $path);
   }
 }

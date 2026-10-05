@@ -197,8 +197,8 @@ class NoviceMovePrivateState extends GameState
     $this->gamestate->initializePrivateState($currentPlayerId);
   }
 
-  function zombie(int $playerId, array $args)
+  public function zombie(int $playerId, array $args)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
   }
 }

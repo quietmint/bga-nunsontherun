@@ -133,6 +133,15 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return $paths;
 	}
 
+	public function getPlayerIds(): array
+	{
+		$playerIds = [];
+		foreach ($this->nuns as $nun) {
+			$playerIds[$nun->playerId] = true;
+		}
+		return array_keys($playerIds);
+	}
+
 	public function getRoomsVisible(): array
 	{
 		$roomIds = [];

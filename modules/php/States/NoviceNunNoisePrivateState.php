@@ -10,6 +10,7 @@ use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
 use Bga\Games\NunsOnTheRun\NunList;
+use Random\Randomizer;
 
 class NoviceNunNoisePrivateState extends GameState
 {
@@ -97,8 +98,18 @@ class NoviceNunNoisePrivateState extends GameState
     $this->gamestate->nextPrivateState($currentPlayerId, NoviceNunNoisePrivateState::class);
   }
 
-  function zombie(int $playerId)
+  public function zombie(int $playerId, array $args)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
+    $version = $this->bga->tableOptions->getGameVersion();
+    if (!empty($args['possible'])) {
+      $r = new Randomizer();
+      $location = $r->pickArrayKeys($args['possible'], 1)[0];
+      $this->bga->notify->all('message', "🪦 Zombie $playerId -- random noise $location");
+      return $this->actNoise($playerId, $args, $version, $location);
+    } else {
+      $this->bga->notify->all('message', "🪦 Zombie $playerId -- confirm");
+      return $this->actConfirm($playerId, $args, $version);
+    }
   }
 }

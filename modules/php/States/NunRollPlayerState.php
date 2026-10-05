@@ -113,8 +113,19 @@ class NunRollPlayerState extends GameState
     return NunNoiseMultiState::class;
   }
 
-  function zombie(int $playerId)
+  public function zombie(int $playerId)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
+    // Reassign nun if possible
+    $otherPlayerId = $this->game->zombieReassignNuns();
+    if ($otherPlayerId) {
+      $this->gamestate->changeActivePlayer($otherPlayerId);
+      return NunRollPlayerState::class;
+    }
+
+    // Otherwise, confirm
+    $version = $this->bga->tableOptions->getGameVersion();
+    $this->bga->notify->all('message', "🪦 Zombie $playerId -- confirm");
+    return $this->actConfirm($playerId, $version);
   }
 }

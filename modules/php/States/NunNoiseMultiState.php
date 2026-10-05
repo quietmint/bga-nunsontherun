@@ -52,8 +52,8 @@ class NunNoiseMultiState extends GameState
     }
   }
 
-  function zombie(int $playerId)
+  public function zombie(int $playerId)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
   }
 }

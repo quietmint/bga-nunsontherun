@@ -106,6 +106,15 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return $this->novices[$playerId];
 	}
 
+	public function getPlayerIds(): array
+	{
+		$playerIds = [];
+		foreach ($this->novices as $novice) {
+			$playerIds[$novice->playerId] = true;
+		}
+		return array_keys($playerIds);
+	}
+
 	public function getLocationsWithNovices(): array
 	{
 		$locations = [];

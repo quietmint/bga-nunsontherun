@@ -395,7 +395,7 @@ export class Game {
   setupPanels() {
     // Novices
     Object.values(this.gamedatas.novices).forEach((novice) => {
-      const panelEl = this.bga.playerPanels.getElement(novice.playerId);
+      const parentEl = this.bga.playerPanels.getElement(novice.playerId);
       const statusText = novice.caught ? _("Caught") : _("On The Run");
       const key = novice.hasKey ? `<span class="notr-icon notr-icon-circle-yes"></span>` : novice.keyLocation || "-";
       const wish = novice.hasWish ? `<span class="notr-icon notr-icon-circle-yes"></span>` : novice.wishLocation || "-";
@@ -405,7 +405,7 @@ export class Game {
 <div title="${_("Secret Wish Location")}"><span class="notr-label notr-icon notr-icon-wish"></span><div id="notr-panel-${novice.playerId}-wish">${wish}</div></div>
 <div title="${_("Current Location")}"><span class="notr-label notr-icon notr-icon-location"></span><div id="notr-panel-${novice.playerId}-location">${novice.location}</div></div>`;
       }
-      panelEl.insertAdjacentHTML(
+      parentEl.insertAdjacentHTML(
         "beforeend",
         `<div id="notr-panel-${novice.playerId}" class="notr-panel  notr-panel-novice notr-player-${novice.color}">
   <div class="notr-portrait"></div>
@@ -422,7 +422,7 @@ export class Game {
 
     // Nuns
     Object.values(this.gamedatas.nuns).forEach((nun) => {
-      const panelEl = this.bga.playerPanels.getElement(nun.playerId);
+      const parentEl = this.bga.playerPanels.getElement(nun.playerId);
       const path = nun.path ? `<span class="notr-tag notr-path-${nun.path.color}"><span class="notr-icon notr-icon-path-${nun.path.color}"></span></span><div>${nun.path.origin}▸${nun.path.destination}</div>` : _("No Path");
       let noise = "-";
       if (nun.move) {
@@ -434,7 +434,7 @@ export class Game {
           noise = '<span class="notr-icon notr-icon-circle-no"></span>';
         }
       }
-      panelEl.insertAdjacentHTML(
+      parentEl.insertAdjacentHTML(
         "beforeend",
         `<div id="notr-panel-${nun.role}" class="notr-panel notr-panel-nun notr-player-${nun.color}">
   <div class="notr-portrait"></div>
@@ -723,6 +723,26 @@ export class Game {
     if (el != null) {
       el.innerText = args.noiseTotal;
     }
+  }
+
+  async notif_nunZombie(args) {
+    console.log("doing notif_nunZombie", args);
+    const nun = this.getNun(args.role);
+    nun.playerId = args.player_id;
+    nun.playerName = args.player_name;
+
+    // Move panel
+    const parentEl = this.bga.playerPanels.getElement(nun.playerId);
+    const panelEl = document.getElementById(`notr-panel-${nun.role}`);
+    parentEl.append(panelEl);
+
+    // Update board tooltip
+    const title = this.bga.gameui.format_string(_("${roleName} ${player_name}"), {
+      roleName: this.emoji(nun.role) + _(nun.roleName),
+      player_name: nun.playerName,
+    });
+    const nunEl = document.getElementById(`notr-nun-${nun.role}`);
+    nunEl.title = title;
   }
 
   async notif_round(args) {

@@ -59,13 +59,21 @@ class NunChoiceMultiState extends GameState
       } else {
         // Choose the other nun
         $role = reset($args['choices']);
-        $this->actChoose($role, $this->bga->tableOptions->getGameVersion());
+        $version = $this->bga->tableOptions->getGameVersion();
+        $this->actChoose($role, $version);
         return;
       }
     }
 
     // Activate all nuns
-    $this->gamestate->setPlayersMultiactive($this->game->getPlayerIds(1), '', true);
+    $playerIds = $this->game->getNunList()->getPlayerIds();
+    if (!empty($playerIds)) {
+      $this->gamestate->setPlayersMultiactive($playerIds, '', true);
+    } else {
+      // zombie
+      $version = $this->bga->tableOptions->getGameVersion();
+      $this->actChoose('abbess', $version);
+    }
   }
 
   #[PossibleAction]
@@ -95,19 +103,22 @@ class NunChoiceMultiState extends GameState
     }
   }
 
-  function zombie(int $playerId, array $args)
+  public function zombie(int $playerId, array $args)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
-    if (!$args['_no_notify']) {
-      $nunIds = $this->game->getPlayerIds(1);
-      if (empty($nunIds)) {
-        $this->bga->notify->all('message', "🪦 Zombie $playerId: Choose abbess.");
-        $this->actChoose('abbess', $this->bga->tableOptions->getGameVersion());
-      } else {
-        $this->bga->notify->all('message', "🪦 Zombie $playerId: The remaining player will choose.");
-      }
-    } else {
-      $this->bga->notify->all('message', "🪦 Zombie $playerId: _no_notify = true so do nothing");
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
+    // Reassign nun if possible
+    $otherPlayerId = $this->game->zombieReassignNuns();
+    if ($otherPlayerId) {
+      return NunChoiceMultiState::class;
     }
+
+    if (!$args['_no_notify'] && empty($this->game->getPlayerIds(1))) {
+      $this->bga->notify->all('message', "🪦 Zombie $playerId -- choose abbess");
+      $version = $this->bga->tableOptions->getGameVersion();
+      return $this->actChoose('abbess', $version);
+    }
+
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: -- inactivate and do nothing");
+    $this->gamestate->setPlayerNonMultiactive($playerId, '');
   }
 }

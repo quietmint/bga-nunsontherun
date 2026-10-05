@@ -17,6 +17,7 @@ namespace Bga\Games\NunsOnTheRun;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\States\NoviceTurnMultiState;
+use Random\Randomizer;
 
 class Game extends \Bga\GameFramework\Table
 {
@@ -139,10 +140,10 @@ class Game extends \Bga\GameFramework\Table
 
   function getPlayerIds(int $dbNun): array
   {
-    return $this->getObjectListFromDB(
+    return array_map('intval', $this->getObjectListFromDB(
       "SELECT `player_id` FROM `player` WHERE `nun` = $dbNun AND `player_zombie` = 0 AND `player_eliminated` = 0",
       true
-    );
+    ));
   }
 
   function getNoviceList(): NoviceList
@@ -177,6 +178,31 @@ class Game extends \Bga\GameFramework\Table
   function saveNuns(NunList $nunList)
   {
     $this->bga->globals->set('nuns', $nunList);
+  }
+
+  function zombieReassignNuns(): ?int
+  {
+    $playerIds = $this->getPlayerIds(1);
+    $this->bga->notify->all('message', "🪦 Zombie: Try to reassign, nun players are: " . json_encode($playerIds));
+    if (!empty($playerIds)) {
+      $playerId = reset($playerIds);
+      $nuns = $this->getNunList();
+      foreach ($nuns as &$nun) {
+        if ($nun->playerId != $playerId) {
+          $this->bga->notify->all('message', "🪦 Zombie: Reassign {$nun->role} to player $playerId");
+          $nun->playerId = $playerId;
+          $nun->playerName = $this->getPlayerNameById($nun->playerId);
+          $this->bga->notify->all('nunZombie', '', [
+            'player_id' => $nun->playerId,
+            'player_name' => $nun->playerName,
+            'role' => $nun->role,
+          ]);
+        }
+      }
+      $this->saveNuns($nuns);
+      return $playerId;
+    }
+    return null;
   }
 
   function getSpecificColorPairings(): array
@@ -227,7 +253,7 @@ class Game extends \Bga\GameFramework\Table
    */
   protected function setupNewGame($players, $options = [])
   {
-    $r = new \Random\Randomizer();
+    $r = new Randomizer();
     $gameinfos = $this->getGameinfos();
     $playerCount = count($players);
 

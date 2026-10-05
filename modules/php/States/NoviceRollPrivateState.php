@@ -107,8 +107,10 @@ class NoviceRollPrivateState extends GameState
     }
   }
 
-  function zombie(int $playerId)
+  public function zombie(int $playerId, array $args)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name . " -- confirm");
+    $version = $this->bga->tableOptions->getGameVersion();
+    return $this->actConfirm($playerId, $args, $version);
   }
 }

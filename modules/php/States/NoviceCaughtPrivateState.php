@@ -27,8 +27,8 @@ class NoviceCaughtPrivateState extends GameState
   public function actConfirm(int $currentPlayerId, int $version, bool $caught)
   {
     $this->game->checkVersion($version);
-    $novice = $this->game->getNoviceList()->get($currentPlayerId);
     if (!$caught) {
+      $novice = $this->game->getNoviceList()->get($currentPlayerId);
       $novice->caught = false;
       $this->game->saveNovice($novice);
       $this->bga->notify->player($currentPlayerId, 'noviceCaught', clienttranslate('You are back on the run'), [
@@ -41,8 +41,10 @@ class NoviceCaughtPrivateState extends GameState
     $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NoviceRecapGameState::class);
   }
 
-  function zombie(int $playerId)
+  public function zombie(int $playerId)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name . " -- stay caught");
+    $version = $this->bga->tableOptions->getGameVersion();
+    return $this->actConfirm($playerId, $version, true);
   }
 }

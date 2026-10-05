@@ -9,6 +9,7 @@ use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
+use Random\Randomizer;
 
 class NunMovePlayerState extends GameState
 {
@@ -215,12 +216,6 @@ class NunMovePlayerState extends GameState
     $nun->location = empty($nun->move->undo) ? $nun->move->start : end($nun->move->undo);
     $nun->move->action = null;
     $nun->move->spaces = $nun->move->undo;
-    // $position = array_search($nun->move->undo, $nun->move->spaces);
-    // $this->bga->notify->all('message', 'undo position = ' . $position . ' within spaces ' . json_encode($nun->move->spaces));
-    // if ($position === false) {
-    //   throw new SystemException("Not found undo " . $nun->move->undo . " in spaces " . json_encode($nun->move->spaces));
-    // }
-    // $nun->move->spaces = array_slice($nun->move->spaces, 0, $position + 1);
     $this->game->saveNun($nun);
 
     $this->bga->notify->all('nunMove', clienttranslate('${roleName} ${player_name} returns to ${location} (undo)'), [
@@ -236,27 +231,29 @@ class NunMovePlayerState extends GameState
     return NunMovePlayerState::class;
   }
 
-  function zombie(int $playerId, array $args)
+  public function zombie(int $playerId, array $args)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name);
-    // Give control to the other player, if possible
-    $nunIds = $this->game->getPlayerIds(1);
-    if (!empty($nunIds)) {
-      $otherPlayerId = reset($nunIds);
-      $this->bga->notify->all('message', "🪦 Zombie $playerId: Change nun owner to other player $otherPlayerId");
-      $nun = $this->game->getNunList()->getActiveNun();
-      $nun->playerId = $otherPlayerId;
-      $nun->playerName = $this->game->getPlayerNameById($nun->playerId);
-      $this->bga->notify->all('nunZombie', '', [
-        'playerId' => $nun->playerId,
-        'playerName' => $nun->playerName,
-        'role' => $nun->role,
-      ]);
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
+    // Reassign nun if possible
+    $otherPlayerId = $this->game->zombieReassignNuns();
+    if ($otherPlayerId) {
       $this->gamestate->changeActivePlayer($otherPlayerId);
       return NunMovePlayerState::class;
     }
 
-    // Otherwise, zombie makes a move
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: TODO move this");
+    // Otherwise, random move
+    $version = $this->bga->tableOptions->getGameVersion();
+    $this->bga->notify->all('message', "🪦 Zombie $playerId -- TODO move");
+    foreach ($args['actions'] as $action => &$info) {
+      if (!$info['disabled']) {
+        $this->bga->notify->all('message', "🪦 Zombie $playerId -- confirm $action");
+        return $this->actConfirm($args, $version, $action);
+      }
+    }
+
+    $r = new Randomizer();
+    $location = $r->pickArrayKeys($args['possible'], 1)[0];
+    $this->bga->notify->all('message', "🪦 Zombie $playerId -- random move $location");
+    return $this->actMove($args, $version, $location);
   }
 }
