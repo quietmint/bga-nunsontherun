@@ -186,15 +186,18 @@ export class Game {
     }
 
     let markers = "";
-    for (let i = 1; i <= this.gamedatas.round; i++) {
-      markers += `<option value="${i}"></option>`;
+    for (let i = 0.5; i <= this.gamedatas.round + 0.5; i += 0.5) {
+      const label = i == Math.floor(i) ? `label="${i}"` : "";
+      markers += `<option value="${i}" ${label}></option>`;
     }
     document.getElementById("page-title").insertAdjacentHTML(
       "beforeend",
       `<div id="notr-replay">
   <a href="#" class="action-button bgabutton bgabutton_blue" id="notr-replay-button"><span id="notr-replay-icon" class="notr-icon notr-icon-play"></span> ${_("Watch replay")}</a>
-  <input type="range" id="notr-replay-range" list="notr-replay-markers" step="0.5" min="0.5" max="${this.gamedatas.round}.5" value="${this.gamedatas.round}.5" />
-  <datalist id="notr-replay-markers">${markers}</datalist>
+  <div id="notr-range-wrap">
+    <input type="range" id="notr-replay-range" list="notr-replay-markers" step="0.5" min="0.5" max="${this.gamedatas.round}.5" value="${this.gamedatas.round}.5" />
+    <datalist id="notr-replay-markers">${markers}</datalist>
+  </div>
 </div>`,
     );
 
