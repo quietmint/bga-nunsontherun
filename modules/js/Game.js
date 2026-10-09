@@ -882,15 +882,15 @@ export class Game {
           const novice = this.gamedatas.novices[args.player_id] || {};
           args.visibleLocation = `<b><span class="notr-icon notr-icon-visible"></span> ${args.visibleLocation}</b>`;
         }
+        if (args.wishLocation) {
+          args.wishLocation = `<b><span class="notr-icon notr-icon-wish"></span> ${args.wishLocation}</b>`;
+        }
         if (args.wishIcon) {
           log += `<div class="notr-notify notr-wish">
   <div class="notr-wish-icon notr-wish-${args.wishIcon}" title="${_(args.wish)}"></div>
-  <div class="notr-wish-key" title="${_("Key")}">🔑${args.keyLocation}</div>
-  <div class="notr-wish-loc" title="${_("Secret Wish")}">🌟${args.wishLocation}</div>
+  <div class="notr-wish-key" title="${_("Key")}">${args.keyLocation}</div>
+  <div class="notr-wish-loc" title="${_("Secret Wish")}">${args.wishLocation}</div>
 </div>`;
-        }
-        if (args.wishLocation) {
-          args.wishLocation = `<b><span class="notr-icon notr-icon-wish"></span> ${args.wishLocation}</b>`;
         }
       }
     } catch (e) {
