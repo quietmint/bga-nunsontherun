@@ -1,5 +1,8 @@
 {
-  "dependencies": {
-    "sass": "^1.101.0"
+  "devDependencies": {
+    "sass": "^1.105.1"
+  },
+  "scripts": {
+    "prepare": "sass --style compressed --no-source-map src/scss/index.scss nunsontherun.css"
   }
 }
