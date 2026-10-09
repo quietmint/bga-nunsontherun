@@ -42,6 +42,11 @@ class Game extends \Bga\GameFramework\Table
   public const BLESSING_NOISE = 'noise';
   public const BLESSING_REROLL = 'reroll';
 
+  public const OPTION_BLESSINGS = 100;
+  public const OPTION_SLOW_NOVICES = 101;
+  public const OPTION_SLOW_NUNS = 102;
+  public const OPTION_CAUGHT_GOAL = 103;
+
   public Board $board;
 
   /**
@@ -406,7 +411,7 @@ class Game extends \Bga\GameFramework\Table
 
     // Table statistics
     $this->incRound();
-    $caughtGoal = $this->bga->tableOptions->get(103) == 1 ? count($novices) : $playerCount;
+    $caughtGoal = $this->bga->tableOptions->get(Game::OPTION_CAUGHT_GOAL) == 1 ? count($novices) : $playerCount;
     $this->bga->tableStats->set('caughtGoal', $caughtGoal);
     $this->bga->tableStats->set('noiseTokens', 0);
     $this->bga->tableStats->set('vanishTokens', 0);

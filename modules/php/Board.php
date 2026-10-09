@@ -460,7 +460,7 @@ class Board
 			$possible = array_filter($possible, fn(PossibleMove $move, int $spaceId) => array_key_exists($spaceId, $keys) && $move->distance <= 4, ARRAY_FILTER_USE_BOTH);
 			$this->game->debug("$novice caught possible: " . json_encode($possible) . " // ");
 		} else {
-			$maxDistance = $round == 1 && $this->game->bga->tableOptions->get(101) != 1 ? 10 : 5;
+			$maxDistance = $round == 1 && $this->game->bga->tableOptions->get(Game::OPTION_SLOW_NOVICES) != 1 ? 10 : 5;
 			$flags = $novice->hasKey ? 0 : TRAVERSE_UNLOCKED;
 			$targets = [];
 			foreach ($nuns as $nun) {
@@ -540,7 +540,7 @@ class Board
 
 	public function getNoviceActions(Novice $novice, int $round): array
 	{
-		$multi = $round == 1 && $this->game->bga->tableOptions->get(101) != 1 ? 2 : 1;
+		$multi = $round == 1 && $this->game->bga->tableOptions->get(Game::OPTION_SLOW_NOVICES) != 1 ? 2 : 1;
 		$actions = [
 			'stand' => [
 				'min' => 0,
@@ -584,7 +584,7 @@ class Board
 			],
 			'run' => [
 				'min' => 5,
-				'max' => $this->game->bga->tableOptions->get(102) == 1 ? 5 : 6,
+				'max' => $this->game->bga->tableOptions->get(Game::OPTION_SLOW_NUNS) == 1 ? 5 : 6,
 				'name' => \clienttranslate('Run'),
 				'noise' => false,
 			],

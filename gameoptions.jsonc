@@ -1,4 +1,5 @@
 {
+  /*
   "100": {
     "default": 0,
     "name": "Blessings",
@@ -14,6 +15,7 @@
       },
     },
   },
+  */
   "101": {
     "default": 0,
     "name": "Slow Novices",
