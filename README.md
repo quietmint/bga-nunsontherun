@@ -10,7 +10,7 @@ This adaptation includes the following licensed material, used with permission. 
 
 - [Material Symbols icons](https://fonts.google.com/icons), licensed under [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
-- Fonts licensed under the [SIL Open Font License](http://scripts.sil.org/OFL):
+- Fonts licensed under [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) or [SIL Open Font License](http://scripts.sil.org/OFL):
   - [Chilanka](https://fonts.google.com/specimen/Chilanka/about) by SMC, Santhosh Thottingal
   - [Crafty Girls](https://fonts.google.com/specimen/Crafty+Girls/about) by Tart Workshop
   - [Handlee](https://fonts.google.com/specimen/Handlee/about) by Joe Prince
