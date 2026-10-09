@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Bga\Games\NunsOnTheRun;
 
+use Bga\GameFramework\NotificationMessage;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
 use Bga\Games\NunsOnTheRun\States\NoviceTurnMultiState;
@@ -65,7 +66,7 @@ class Game extends \Bga\GameFramework\Table
   public function checkVersion(int $clientVersion): void
   {
     if ($clientVersion != $this->bga->tableOptions->getGameVersion()) {
-      throw new UserException('!!!checkVersion');
+      throw new UserException(new NotificationMessage('', ['checkVersion' => true]));
     }
   }
 

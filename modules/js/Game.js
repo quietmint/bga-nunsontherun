@@ -12,7 +12,6 @@ import { NoviceCaughtPrivateState } from "./States/NoviceCaughtPrivateState.js";
 import { NoviceMovePrivateState } from "./States/NoviceMovePrivateState.js";
 import { NoviceNoisePrivateState } from "./States/NoviceNoisePrivateState.js";
 import { NoviceRollPrivateState } from "./States/NoviceRollPrivateState.js";
-import { NoviceTurnMultiState } from "./States/NoviceTurnMultiState.js";
 import { NunChoiceMultiState } from "./States/NunChoiceMultiState.js";
 import { NunMovePlayerState } from "./States/NunMovePlayerState.js";
 import { NunPathPlayerState } from "./States/NunPathPlayerState.js";
@@ -29,21 +28,11 @@ export class Game {
     this.bga.states.register("NoviceNunNoisePrivateState", new NoviceNoisePrivateState(this, bga));
     this.bga.states.register("NoviceOwnNoisePrivateState", new NoviceNoisePrivateState(this, bga));
     this.bga.states.register("NoviceRollPrivateState", new NoviceRollPrivateState(this, bga));
-    this.bga.states.register("NoviceTurnMultiState", new NoviceTurnMultiState(this, bga));
     this.bga.states.register("NunChoiceMultiState", new NunChoiceMultiState(this, bga));
     this.bga.states.register("NunMovePlayerState", new NunMovePlayerState(this, bga));
     this.bga.states.register("NunPathPlayerState", new NunPathPlayerState(this, bga));
     this.bga.states.register("NunRollPlayerState", new NunRollPlayerState(this, bga));
     this.bga.states.register("NextRoundGameState", new NextRoundGameState(this, bga));
-
-    // Override showMessage
-    const bgaShowMessage = this.bga.dialogs.showMessage;
-    this.bga.dialogs.showMessage = (msg, type) => {
-      if (type == "error" && msg && msg.startsWith("!!!")) {
-        return;
-      }
-      return bgaShowMessage.call(this.bga.dialogs, msg, type);
-    };
 
     this.classLocations = ["notr-offset"];
     for (let i = 1; i <= 155; i++) {
@@ -770,7 +759,7 @@ export class Game {
     if (!args) args = {};
     args.version = this.gamedatas.version;
     return this.bga.actions.performAction(action, args, options).catch((error) => {
-      if (error?.message == "!!!checkVersion") {
+      if (error?.args?.checkVersion) {
         console.warn(`🆙 New version available`);
         this.bga.dialogs.multipleChoice(_("A new version of this game is now available"), [_("Reload Required")]).then((choice) => window.location.reload());
       } else {
