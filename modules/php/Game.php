@@ -49,30 +49,12 @@ class Game extends \Bga\GameFramework\Table
 
   public Board $board;
 
-  /**
-   * Your global variables labels:
-   *
-   * Here, you can assign labels to global variables you are using for this game. You can use any number of global
-   * variables with IDs between 10 and 99. If you want to store any type instead of int, use $this->globals instead.
-   *
-   * NOTE: afterward, you can get/set the global variables with `getGameStateValue`, `setGameStateInitialValue` or
-   * `setGameStateValue` functions.
-   */
   public function __construct()
   {
     parent::__construct();
     $this->board = new Board($this);
   }
 
-  /**
-   * Compute and return the current game progression.
-   *
-   * The number returned must be an integer between 0 and 100.
-   *
-   * This method is called each time we are in a game state with the "updateGameProgression" property set to true.
-   *
-   * @return int
-   */
   public function getGameProgression()
   {
     $caughtProgression = round($this->getCaught() / $this->getCaughtGoal() * 100);
@@ -94,37 +76,14 @@ class Game extends \Bga\GameFramework\Table
    * method is called everytime the system detects a game running with your old database scheme. In this case, if you
    * change your database scheme, you just have to apply the needed changes in order to update the game database and
    * allow the game to continue to run with your new version.
+   * 
+   * ! important ! Use `DBPREFIX_<table_name>` for all tables
    *
    * @param int $from_version
    * @return void
    */
-  public function upgradeTableDb($from_version)
-  {
-    //       if ($from_version <= 1404301345)
-    //       {
-    //            // ! important ! Use `DBPREFIX_<table_name>` for all tables
-    //
-    //            $sql = "ALTER TABLE `DBPREFIX_xxxxxxx` ....";
-    //            $this->applyDbUpgradeToAllDB( $sql );
-    //       }
-    //
-    //       if ($from_version <= 1405061421)
-    //       {
-    //            // ! important ! Use `DBPREFIX_<table_name>` for all tables
-    //
-    //            $sql = "CREATE TABLE `DBPREFIX_xxxxxxx` ....";
-    //            $this->applyDbUpgradeToAllDB( $sql );
-    //       }
-  }
+  public function upgradeTableDb($from_version) {}
 
-  /*
-     * Gather all information about current game situation (visible by the current player).
-     *
-     * The method is called each time the game interface is displayed to a player, i.e.:
-     *
-     * - when the game starts
-     * - when a player refreshes the game page (F5)
-     */
   protected function getAllDatas(int $currentPlayerId): array
   {
     $state = $this->gamestate->getCurrentMainStateClass();
@@ -141,73 +100,6 @@ class Game extends \Bga\GameFramework\Table
       'version' => $this->bga->tableOptions->getGameVersion(),
     ];
     return $result;
-  }
-
-  function getPlayerIds(int $dbNun): array
-  {
-    return array_map('intval', $this->getObjectListFromDB(
-      "SELECT `player_id` FROM `player` WHERE `nun` = $dbNun AND `player_zombie` = 0 AND `player_eliminated` = 0",
-      true
-    ));
-  }
-
-  function getNoviceList(): NoviceList
-  {
-    return NoviceList::fromData($this->bga->globals->get('novices'));
-  }
-
-  function saveNovice(Novice $novice)
-  {
-    $noviceList = $this->getNoviceList();
-    $noviceList->add($novice);
-    $this->saveNovices($noviceList);
-  }
-
-  function saveNovices(NoviceList $noviceList)
-  {
-    $this->bga->globals->set('novices', $noviceList);
-  }
-
-  function getNunList(): NunList
-  {
-    return NunList::fromData($this->bga->globals->get('nuns'));
-  }
-
-  function saveNun(Nun $nun)
-  {
-    $nunList = $this->getNunList();
-    $nunList->add($nun);
-    $this->saveNuns($nunList);
-  }
-
-  function saveNuns(NunList $nunList)
-  {
-    $this->bga->globals->set('nuns', $nunList);
-  }
-
-  function zombieReassignNuns(): ?int
-  {
-    $playerIds = $this->getPlayerIds(1);
-    $this->bga->notify->all('message', "🪦 Zombie: Try to reassign, nun players are: " . json_encode($playerIds));
-    if (!empty($playerIds)) {
-      $playerId = reset($playerIds);
-      $nuns = $this->getNunList();
-      foreach ($nuns as &$nun) {
-        if ($nun->playerId != $playerId) {
-          $this->bga->notify->all('message', "🪦 Zombie: Reassign {$nun->role} to player $playerId");
-          $nun->playerId = $playerId;
-          $nun->playerName = $this->getPlayerNameById($nun->playerId);
-          $this->bga->notify->all('nunZombie', '', [
-            'player_id' => $nun->playerId,
-            'player_name' => $nun->playerName,
-            'role' => $nun->role,
-          ]);
-        }
-      }
-      $this->saveNuns($nuns);
-      return $playerId;
-    }
-    return null;
   }
 
   function getSpecificColorPairings(): array
@@ -423,6 +315,74 @@ class Game extends \Bga\GameFramework\Table
     return NoviceTurnMultiState::class;
   }
 
+  public function getCaught(): int
+  {
+    return $this->tableStats->get('caught');
+  }
+
+  public function getCaughtGoal(): int
+  {
+    return $this->tableStats->get('caughtGoal');
+  }
+
+  public function getRound(): int
+  {
+    return $this->tableStats->get('round');
+  }
+
+  public function incRound(): int
+  {
+    $this->tableStats->inc('round', 1);
+    $round = $this->getRound();
+    $this->bga->notify->all('round', clienttranslate('Round ${round} of ${roundMax}'), [
+      'round' => $round,
+      'roundMax' => 15,
+    ]);
+    return $round;
+  }
+
+  public function getPlayerIds(int $dbNun): array
+  {
+    return array_map('intval', $this->getObjectListFromDB(
+      "SELECT `player_id` FROM `player` WHERE `nun` = $dbNun AND `player_zombie` = 0 AND `player_eliminated` = 0",
+      true
+    ));
+  }
+
+  public function getNoviceList(): NoviceList
+  {
+    return NoviceList::fromData($this->bga->globals->get('novices'));
+  }
+
+  public function saveNovice(Novice $novice)
+  {
+    $noviceList = $this->getNoviceList();
+    $noviceList->add($novice);
+    $this->saveNovices($noviceList);
+  }
+
+  public function saveNovices(NoviceList $noviceList)
+  {
+    $this->bga->globals->set('novices', $noviceList);
+  }
+
+  public function getNunList(): NunList
+  {
+    return NunList::fromData($this->bga->globals->get('nuns'));
+  }
+
+  public function saveNun(Nun $nun)
+  {
+    $nunList = $this->getNunList();
+    $nunList->add($nun);
+    $this->saveNuns($nunList);
+  }
+
+  public function saveNuns(NunList $nunList)
+  {
+    $this->bga->globals->set('nuns', $nunList);
+  }
+
   public function winGame(array $winners, string $reason)
   {
     // Set score
@@ -512,31 +472,65 @@ class Game extends \Bga\GameFramework\Table
     $this->bga->notify->all('win', $message, $args);
   }
 
-  public function getCaught(): int
+  function zombieNovice(int $playerId)
   {
-    return $this->tableStats->get('caught');
+    $novice = $this->getNoviceList()->get($playerId);
+    $save = false;
+    if ($novice->move->action == null) {
+      $save = true;
+      $novice->move->action = 'stand';
+      $this->bga->playerStats->inc('standMove', 1, $novice->playerId);
+    }
+    if ($novice->location != $novice->startLocation) {
+      $save = true;
+      $novice->hasWish = false;
+      $novice->location = $novice->startLocation;
+      $this->bga->notify->all('noviceMove', '', [
+        'preserve' => ['location', 'player_id'],
+        'location' => $novice->startLocation,
+        'player_id' => $novice->playerId,
+      ]);
+    }
+    if (!$novice->caught) {
+      $save = true;
+      $novice->caught = true;
+      $novice->hasWish = false;
+      $this->bga->tableStats->inc('caught', 1);
+      $this->bga->playerStats->inc('caughtTimes', 1, $novice->playerId);
+      $this->bga->notify->all('noviceCaught', '', [
+        'preserve' => ['caught', 'caughtMeter', 'player_id2'],
+        'caught' => $novice->caught,
+        'caughtMeter' => $this->getCaught(),
+        'player_id2' => $novice->playerId,
+      ]);
+    }
+    if ($save) {
+      $this->saveNovice($novice);
+    }
   }
 
-  public function getCaughtGoal(): int
+  function zombieNun(int $playerId): ?int
   {
-    return $this->tableStats->get('caughtGoal');
-  }
-
-  public function getRound(): int
-  {
-    return $this->tableStats->get('round');
-  }
-
-  public function incRound(): int
-  {
-    $roundMax = 15;
-    $this->tableStats->inc('round', 1);
-    $round = $this->getRound();
-    $this->bga->notify->all('round', clienttranslate('Round ${round} of ${roundMax}'), [
-      'round' => $round,
-      'roundMax' => $roundMax,
-    ]);
-    return $round;
+    $playerIds = $this->getPlayerIds(1);
+    if (!empty($playerIds)) {
+      $playerId = reset($playerIds);
+      $nuns = $this->getNunList();
+      foreach ($nuns as &$nun) {
+        if ($nun->playerId != $playerId) {
+          $this->bga->notify->all('message', "🪦 Zombie $playerId: Reassign {$nun->role} to player $playerId");
+          $nun->playerId = $playerId;
+          $nun->playerName = $this->getPlayerNameById($nun->playerId);
+          $this->bga->notify->all('nunZombie', '', [
+            'player_id' => $nun->playerId,
+            'player_name' => $nun->playerName,
+            'role' => $nun->role,
+          ]);
+        }
+      }
+      $this->saveNuns($nuns);
+      return $playerId;
+    }
+    return null;
   }
 
   public function debug_win()

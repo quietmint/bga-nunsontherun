@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Bga\Games\NunsOnTheRun\States;
 
 use Bga\GameFramework\StateType;
-use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
 use Bga\Games\NunsOnTheRun\Move;
 

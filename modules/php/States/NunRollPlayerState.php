@@ -10,7 +10,6 @@ use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
 use Bga\Games\NunsOnTheRun\Nun;
-use Bga\Games\NunsOnTheRun\NunList;
 
 class NunRollPlayerState extends GameState
 {
@@ -117,7 +116,7 @@ class NunRollPlayerState extends GameState
   {
     $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
     // Reassign nun if possible
-    $otherPlayerId = $this->game->zombieReassignNuns();
+    $otherPlayerId = $this->game->zombieNun($playerId);
     if ($otherPlayerId) {
       $this->gamestate->changeActivePlayer($otherPlayerId);
       return NunRollPlayerState::class;
@@ -125,7 +124,6 @@ class NunRollPlayerState extends GameState
 
     // Otherwise, confirm
     $version = $this->bga->tableOptions->getGameVersion();
-    $this->bga->notify->all('message', "🪦 Zombie $playerId -- confirm");
     return $this->actConfirm($playerId, $version);
   }
 }

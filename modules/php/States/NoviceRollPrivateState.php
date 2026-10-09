@@ -107,10 +107,10 @@ class NoviceRollPrivateState extends GameState
     }
   }
 
-  public function zombie(int $playerId, array $args)
+  public function zombie(int $playerId)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name . " -- confirm");
-    $version = $this->bga->tableOptions->getGameVersion();
-    return $this->actConfirm($playerId, $args, $version);
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
+    $this->game->zombieNovice($playerId);
+    $this->gamestate->setPlayerNonMultiactive($playerId, NoviceRecapGameState::class);
   }
 }

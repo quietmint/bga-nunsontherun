@@ -6,10 +6,7 @@ namespace Bga\Games\NunsOnTheRun\States;
 
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
-use Bga\GameFramework\States\PossibleAction;
-use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
-use Bga\Games\NunsOnTheRun\Move;
 use Bga\Games\NunsOnTheRun\NunList;
 
 class NunNoiseMultiState extends GameState
@@ -50,10 +47,5 @@ class NunNoiseMultiState extends GameState
       $this->game->saveNun($nun);
       return NunNoiseGameState::class;
     }
-  }
-
-  public function zombie(int $playerId)
-  {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
   }
 }

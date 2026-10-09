@@ -127,7 +127,7 @@ class NoviceRecapGameState extends GameState
 						'caughtTimes' => $caughtTimes,
 						'playerName' => $novice->playerName
 					];
-				} else {
+				} else if ($novice->move->noiseTotal != null) {
 					// Notify noise
 					$this->bga->notify->all('noviceRoll', clienttranslate('${player_name} rolls ${roll} and makes noise ${noiseTotal} spaces away'), [
 						'preserve' => ['player_id', 'recap'],

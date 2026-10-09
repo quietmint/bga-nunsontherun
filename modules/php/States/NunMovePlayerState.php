@@ -235,25 +235,30 @@ class NunMovePlayerState extends GameState
   {
     $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
     // Reassign nun if possible
-    $otherPlayerId = $this->game->zombieReassignNuns();
+    $otherPlayerId = $this->game->zombieNun($playerId);
     if ($otherPlayerId) {
       $this->gamestate->changeActivePlayer($otherPlayerId);
       return NunMovePlayerState::class;
     }
 
-    // Otherwise, random move
+    // Random move (at least 4 spaces)
     $version = $this->bga->tableOptions->getGameVersion();
-    $this->bga->notify->all('message', "🪦 Zombie $playerId -- TODO move");
+    $walkMax = $args['actions']['walk']['max'];
+    if ($args['distance'] < $walkMax && !empty($args['possible'])) {
+      $r = new Randomizer();
+      $location = $r->pickArrayKeys($args['possible'], 1)[0];
+      return $this->actMove($args, $version, $location);
+    }
+
+    // First available action
     foreach ($args['actions'] as $action => &$info) {
       if (!$info['disabled']) {
-        $this->bga->notify->all('message', "🪦 Zombie $playerId -- confirm $action");
         return $this->actConfirm($args, $version, $action);
       }
     }
 
-    $r = new Randomizer();
-    $location = $r->pickArrayKeys($args['possible'], 1)[0];
-    $this->bga->notify->all('message', "🪦 Zombie $playerId -- random move $location");
-    return $this->actMove($args, $version, $location);
+    // This shouldn't happen
+    $this->game->error("🪦 Zombie nun $playerId cannot move! " . json_encode($args));
+    throw new SystemException("🪦 Zombie nun $playerId cannot move!");
   }
 }

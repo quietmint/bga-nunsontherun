@@ -51,11 +51,9 @@ class NoviceMovePrivateState extends GameState
   public function actMove(int $currentPlayerId, array $args, int $version, int $location)
   {
     $this->game->checkVersion($version);
-    // Check location
     if (!array_key_exists($location, $args['possible'])) {
       throw new SystemException("Cannot move to location $location");
     }
-
     $possible = $args['possible'][$location];
     $spaces = $possible->spaces;
     array_shift($spaces);
@@ -197,8 +195,10 @@ class NoviceMovePrivateState extends GameState
     $this->gamestate->initializePrivateState($currentPlayerId);
   }
 
-  public function zombie(int $playerId, array $args)
+  public function zombie(int $playerId)
   {
     $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
+    $this->game->zombieNovice($playerId);
+    $this->gamestate->setPlayerNonMultiactive($playerId, NoviceRecapGameState::class);
   }
 }

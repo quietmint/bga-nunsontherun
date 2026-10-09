@@ -301,8 +301,7 @@ export class Game {
         }
       }
       const noviceEl = document.getElementById(`notr-novice-${novice.playerId}`);
-      noviceEl.classList.remove(...this.classLocations);
-      noviceEl.classList.add("notr-" + location);
+      this.locationClass(noviceEl, location);
       this.playerOffset(boardEl, location);
     });
 
@@ -322,8 +321,7 @@ export class Game {
         }
       }
       const nunEl = document.getElementById(`notr-nun-${nun.role}`);
-      nunEl.classList.remove(...this.classLocations);
-      nunEl.classList.add("notr-" + location);
+      this.locationClass(nunEl, location);
       this.playerOffset(boardEl, location);
     });
 
@@ -571,8 +569,7 @@ export class Game {
       console.error(`#notr-novice-${novice.playerId} not found`);
       return;
     }
-    noviceEl.classList.remove(...this.classLocations);
-    noviceEl.classList.add("notr-" + novice.location);
+    this.locationClass(noviceEl, novice.location);
     const boardEl = document.getElementById("notr-board");
     this.playerOffset(boardEl, oldLocation);
     this.playerOffset(boardEl, novice.location);
@@ -679,8 +676,7 @@ export class Game {
       console.error(`#notr-nun-${nun.role} not found`);
       return;
     }
-    nunEl.classList.remove(...this.classLocations);
-    nunEl.classList.add("notr-" + nun.location);
+    this.locationClass(nunEl, nun.location);
     const boardEl = document.getElementById("notr-board");
     this.playerOffset(boardEl, oldLocation);
     this.playerOffset(boardEl, nun.location);
@@ -806,6 +802,14 @@ export class Game {
 
   addMyWish(boardEl, novice) {
     boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-wish" class="notr-my notr-player-${novice.color} notr-${novice.wishLocation}" title="${_("Secret Wish Location")}"><span class="notr-icon notr-icon-wish"></span></div>`);
+  }
+
+  locationClass(el, location) {
+    const locationClass = `notr-${location}`;
+    if (!el.classList.contains(locationClass)) {
+      el.classList.remove(...this.classLocations);
+      el.classList.add(locationClass);
+    }
   }
 
   playerOffset(boardEl, location) {

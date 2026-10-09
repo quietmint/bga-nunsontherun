@@ -6,7 +6,6 @@ namespace Bga\Games\NunsOnTheRun\States;
 
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
-use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
 
 class NoviceTurnMultiState extends GameState
@@ -26,12 +25,7 @@ class NoviceTurnMultiState extends GameState
   public function onEnteringState()
   {
     // Activate all novices
-    $this->gamestate->setPlayersMultiactive($this->game->getPlayerIds(0), '', true);
+    $this->gamestate->setPlayersMultiactive($this->game->getNoviceList()->getPlayerIds(), '', true);
     $this->gamestate->initializePrivateStateForAllActivePlayers();
-  }
-
-  public function zombie(int $playerId)
-  {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
   }
 }

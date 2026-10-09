@@ -7,9 +7,7 @@ namespace Bga\Games\NunsOnTheRun\States;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
-use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
-use Bga\Games\NunsOnTheRun\Move;
 
 class NunChoiceMultiState extends GameState
 {
@@ -66,14 +64,7 @@ class NunChoiceMultiState extends GameState
     }
 
     // Activate all nuns
-    $playerIds = $this->game->getNunList()->getPlayerIds();
-    if (!empty($playerIds)) {
-      $this->gamestate->setPlayersMultiactive($playerIds, '', true);
-    } else {
-      // zombie
-      $version = $this->bga->tableOptions->getGameVersion();
-      $this->actChoose('abbess', $version);
-    }
+    $this->gamestate->setPlayersMultiactive($this->game->getNunList()->getPlayerIds(), '', true);
   }
 
   #[PossibleAction]
@@ -107,18 +98,16 @@ class NunChoiceMultiState extends GameState
   {
     $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
     // Reassign nun if possible
-    $otherPlayerId = $this->game->zombieReassignNuns();
+    $otherPlayerId = $this->game->zombieNun($playerId);
     if ($otherPlayerId) {
       return NunChoiceMultiState::class;
     }
 
     if (!$args['_no_notify'] && empty($this->game->getPlayerIds(1))) {
-      $this->bga->notify->all('message', "🪦 Zombie $playerId -- choose abbess");
       $version = $this->bga->tableOptions->getGameVersion();
       return $this->actChoose('abbess', $version);
     }
 
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: -- inactivate and do nothing");
     $this->gamestate->setPlayerNonMultiactive($playerId, '');
   }
 }

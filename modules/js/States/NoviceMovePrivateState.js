@@ -73,9 +73,14 @@ export class NoviceMovePrivateState {
         const action = move.actions[0];
         let str = move.distance;
         if (!novice.hasKey && move.location == novice.keyLocation) {
+          // key
           str = `<span class="notr-icon notr-icon-key"></span>`;
         } else if (!novice.hasWish && move.location == novice.wishLocation) {
+          // wish
           str = `<span class="notr-icon notr-icon-wish"></span>`;
+        } else if (novice.hasWish && move.location == novice.startLocation) {
+          // win
+          str = `<span class="notr-icon notr-icon-start"></span>`;
         }
         boardEl.insertAdjacentHTML("beforeend", `<div id="notr-possible-${move.location}" class="notr-possible notr-possible-${action} notr-${move.location}">${str}</div>`);
         const el = document.getElementById(`notr-possible-${move.location}`);

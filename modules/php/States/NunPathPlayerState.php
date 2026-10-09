@@ -71,7 +71,7 @@ class NunPathPlayerState extends GameState
   {
     $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
     // Reassign nun if possible
-    $otherPlayerId = $this->game->zombieReassignNuns();
+    $otherPlayerId = $this->game->zombieNun($playerId);
     if ($otherPlayerId) {
       $this->gamestate->changeActivePlayer($otherPlayerId);
       return NunPathPlayerState::class;
@@ -81,7 +81,6 @@ class NunPathPlayerState extends GameState
     $version = $this->bga->tableOptions->getGameVersion();
     $r = new Randomizer();
     $path = $r->pickArrayKeys($args['possible'], 1)[0];
-    $this->bga->notify->all('message', "🪦 Zombie $playerId -- random path $path");
     return $this->actPath($args, $version, $path);
   }
 }

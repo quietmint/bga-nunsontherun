@@ -7,7 +7,6 @@ namespace Bga\Games\NunsOnTheRun\States;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
-use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
 
 class NoviceCaughtPrivateState extends GameState
@@ -43,8 +42,8 @@ class NoviceCaughtPrivateState extends GameState
 
   public function zombie(int $playerId)
   {
-    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . $this->name . " -- stay caught");
-    $version = $this->bga->tableOptions->getGameVersion();
-    return $this->actConfirm($playerId, $version, true);
+    $this->bga->notify->all('message', "🪦 Zombie $playerId: " . get_class($this));
+    $this->game->zombieNovice($playerId);
+    $this->gamestate->setPlayerNonMultiactive($playerId, NoviceRecapGameState::class);
   }
 }
