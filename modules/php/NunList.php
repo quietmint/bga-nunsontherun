@@ -18,11 +18,13 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 		$this->nuns = $nuns;
 	}
 
-	public static function fromData(\stdClass $data): NunList
+	public static function fromData(?\stdClass $data): NunList
 	{
 		$nuns = [];
-		foreach ($data as $role => $nun) {
-			$nuns[$role] = Nun::fromData($nun);
+		if ($data) {
+			foreach ($data as $role => $nun) {
+				$nuns[$role] = Nun::fromData($nun);
+			}
 		}
 		return new NunList(
 			nuns: $nuns,

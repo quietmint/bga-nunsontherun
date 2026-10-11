@@ -18,11 +18,13 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 		$this->novices = $novices;
 	}
 
-	public static function fromData(\stdClass $data): NoviceList
+	public static function fromData(?\stdClass $data): NoviceList
 	{
 		$novices = [];
-		foreach ($data as $playerId => $novice) {
-			$novices[$playerId] = Novice::fromData($novice);
+		if ($data) {
+			foreach ($data as $playerId => $novice) {
+				$novices[$playerId] = Novice::fromData($novice);
+			}
 		}
 		return new NoviceList(
 			novices: $novices,

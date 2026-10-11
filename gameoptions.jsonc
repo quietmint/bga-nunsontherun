@@ -1,4 +1,25 @@
 {
+  "110": {
+    "default": 0,
+    "name": "Nun Selection",
+    "values": {
+      "0": {
+        "name": "Random Nuns",
+        "description": "Nuns are selected randomly by BGA",
+        "tmdisplay": "Random Nuns",
+      },
+      "1": {
+        "name": "Players Volunteer as Nuns",
+        "description": "Nuns are the first player(s) to volunteer",
+        "tmdisplay": "Players Volunteer as Nuns",
+      },
+      "2": {
+        "name": "Table Host as Nuns",
+        "description": "Nuns are the table host (and, with 8 players, the first player to volunteer)",
+        "tmdisplay": "Table Host as Nuns",
+      },
+    },
+  },
   /*
   "100": {
     "default": 0,

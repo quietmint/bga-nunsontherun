@@ -92,6 +92,10 @@
   justify-content: space-around;
   row-gap: 5px;
   text-align: center;
+
+  .log & {
+    margin: 5px 0;
+  }
 }
 
 .notr-label {

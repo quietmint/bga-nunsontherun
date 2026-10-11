@@ -15,10 +15,8 @@ declare(strict_types=1);
 namespace Bga\Games\NunsOnTheRun;
 
 use Bga\GameFramework\NotificationMessage;
-use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
-use Bga\Games\NunsOnTheRun\States\NoviceTurnMultiState;
-use Random\Randomizer;
+use Bga\Games\NunsOnTheRun\States\RolesMultiState;
 
 class Game extends \Bga\GameFramework\Table
 {
@@ -42,11 +40,28 @@ class Game extends \Bga\GameFramework\Table
   public const BLESSING_MOVE = 'move';
   public const BLESSING_NOISE = 'noise';
   public const BLESSING_REROLL = 'reroll';
+  public const BLESSINGS = [
+    Game::BLESSING_ADJUST,
+    Game::BLESSING_ADJUST,
+    Game::BLESSING_MOVE,
+    Game::BLESSING_MOVE,
+    Game::BLESSING_NOISE,
+    Game::BLESSING_NOISE,
+    Game::BLESSING_REROLL,
+    Game::BLESSING_REROLL,
+  ];
 
   public const OPTION_BLESSINGS = 100;
   public const OPTION_SLOW_NOVICES = 101;
   public const OPTION_SLOW_NUNS = 102;
   public const OPTION_CAUGHT_GOAL = 103;
+  public const OPTION_ROLES = 110;
+  public const OPTION_ROLES__RANDOM = 0;
+  public const OPTION_ROLES__CHOOSE = 1;
+  public const OPTION_ROLES__ADMIN = 2;
+
+  public const START_LOCATIONS = [1, 2, 3, 4, 5, 6];
+  public const WISHES = ['dessert', 'game', 'letter', 'magazine', 'makeup', 'perfume', 'phone', 'wine'];
 
   public Board $board;
 
@@ -60,7 +75,7 @@ class Game extends \Bga\GameFramework\Table
   {
     $caughtProgression = round($this->getCaught() / $this->getCaughtGoal() * 100);
     $roundProgression = round(($this->getRound() - 1) / 0.15);
-    return max($caughtProgression, $roundProgression);
+    return min(max($caughtProgression, $roundProgression), 100);
   }
 
   public function checkVersion(int $clientVersion): void
@@ -115,205 +130,27 @@ class Game extends \Bga\GameFramework\Table
     ];
   }
 
-  public function getColorName(string $color): ?string
-  {
-    switch ($color) {
-      case Game::BGA_ORANGE:
-      case Game::COLOR_ORANGE:
-        return 'orange';
-      case Game::BGA_BLUE:
-      case Game::COLOR_BLUE:
-        return 'blue';
-      case Game::BGA_RED:
-      case Game::COLOR_RED:
-        return 'red';
-      case Game::BGA_GREEN:
-      case Game::COLOR_GREEN:
-        return 'green';
-      case Game::BGA_PURPLE:
-      case Game::COLOR_PURPLE:
-        return 'purple';
-      case Game::BGA_YELLOW:
-      case Game::COLOR_YELLOW:
-        return 'yellow';
-      case Game::COLOR_BLACK:
-        return 'black';
-      case Game::COLOR_WHITE:
-        return 'white';
-      default:
-        throw new SystemException("Unknown color: $color");
-    }
-  }
-
   /**
    * This method is called only once, when a new game is launched. In this method, you must setup the game
    *  according to the game rules, so that the game is ready to be played.
    */
   protected function setupNewGame($players, $options = [])
   {
-    $r = new Randomizer();
-    $gameinfos = $this->getGameinfos();
-    $playerCount = count($players);
-
-    // Assign nun colors
-    $insertNuns = [];
-    $nunColors = ['000000', 'ffffff'];
-    $nunCount = $playerCount == 8 ? 2 : 1;
-    $nunIds = $r->pickArrayKeys($players, $nunCount);
-    foreach ($nunIds as $playerId) {
-      $player = $players[$playerId];
-      $color = array_shift($nunColors);
-      $insertNuns[] = vsprintf("(%s, '%s', '%s', 1)", [
-        $playerId,
-        $color,
-        addslashes($player['player_name']),
-      ]);
-      unset($players[$playerId]);
-    }
-
-    // Assign novice colors
-    $insertNovices = [];
-    $colors = $gameinfos['player_colors'];
+    $this->bga->globals->set('players', $players);
+    $values = [];
     foreach ($players as $playerId => $player) {
-      $color = array_shift($colors);
-      $insertNovices[] = vsprintf("(%s, '%s', '%s', 0)", [
+      $values[] = vsprintf("(%s, '%s', '%s')", [
         $playerId,
-        $color,
+        Game::COLOR_BLACK,
         addslashes($player["player_name"]),
       ]);
     }
-
-    // Create novices
-    static::DbQuery(sprintf("INSERT INTO `player` (`player_id`, `player_color`, `player_name`, `nun`) VALUES %s", implode(",", $insertNovices)));
-    $this->reattributeColorsBasedOnPreferences($players, $gameinfos['player_colors']);
-
-    // Create nuns
-    static::DbQuery(sprintf("INSERT INTO `player` (`player_id`, `player_color`, `player_name`, `nun`) VALUES %s", implode(",", $insertNuns)));
-    $this->reloadPlayersBasicInfos();
-
-    // Setup novices
-    $novices = new NoviceList();
-    $novicePlayers = $this->getCollectionFromDb("SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 0 ORDER BY `player_no`");
-    $wishes = $r->shuffleArray(['dessert', 'game', 'letter', 'magazine', 'makeup', 'perfume', 'phone', 'wine']);
-    $location = 0;
-    foreach ($novicePlayers as $playerId => $player) {
-      $color = $player['player_color'];
-      $location++;
-      $novice = new Novice(
-        color: $this->getColorName($color),
-        location: $location,
-        move: new Move(
-          start: $location,
-        ),
-        playerId: $playerId,
-        playerName: $player['player_name'],
-        room: $this->board->getRoomId($location),
-        startLocation: $location,
-        wish: array_shift($wishes),
-      );
-      $novices->add($novice);
-      $this->bga->notify->all(
-        'message',
-        clienttranslate('${player_name} starts at ${startLocation}'),
-        [
-          'i18n' => ['role'],
-          'player_id' => $novice->playerId,
-          'player_name' => $novice->playerName,
-          'role' => 'novice',
-          'startLocation' => $novice->location,
-        ]
-      );
-      $this->bga->notify->player(
-        $playerId,
-        'wish',
-        clienttranslate('Your secret wish is ${wish}'),
-        [
-          'i18n' => ['wish'],
-          'keyLocation' => $novice->keyLocation,
-          'preserve' => [
-            'keyLocation',
-            'wishIcon',
-            'wishLocation',
-          ],
-          'wish' => $novice->wish,
-          'wishIcon' => $novice->wish,
-          'wishLocation' => $novice->wishLocation,
-        ]
-      );
-      $this->bga->playerStats->set('caughtTimes', 0, $playerId);
-      $this->bga->playerStats->set('keyLocation', $novice->keyLocation, $playerId);
-      $this->bga->playerStats->set('keyObtained', 0, $playerId);
-      $this->bga->playerStats->set('noiseTokens', 0, $playerId);
-      $this->bga->playerStats->set('role', 0, $playerId);
-      $this->bga->playerStats->set('runMove', 0, $playerId);
-      $this->bga->playerStats->set('sneakMove', 0, $playerId);
-      $this->bga->playerStats->set('spaces', 0, $playerId);
-      $this->bga->playerStats->set('standMove', 0, $playerId);
-      $this->bga->playerStats->set('startLocation', $novice->location, $playerId);
-      $this->bga->playerStats->set('vanishTokens', 0, $playerId);
-      $this->bga->playerStats->set('walkMove', 0, $playerId);
-      $this->bga->playerStats->set('wishLocation', $novice->wishLocation, $playerId);
-      $this->bga->playerStats->set('wishObtained', 0, $playerId);
-    }
-    $this->saveNovices($novices);
-
-    // Setup nuns
-    $nuns = new NunList();
-    $nunColors = ['000000', 'ffffff'];
-    if (count($nunIds) == 1) {
-      $nunIds[1] = $nunIds[0];
-    }
-    $nunPlayers = $this->getCollectionFromDb("SELECT `player_id`, `player_color`, `player_name` FROM `player` WHERE `nun` = 1 ORDER BY `player_no`");
-    foreach (['abbess', 'prioress'] as $role) {
-      $playerId = array_shift($nunIds);
-      $player = $nunPlayers[$playerId];
-      $color = array_shift($nunColors);
-      $nun = new Nun(
-        color: $this->getColorName($color),
-        location: 26,
-        move: new Move(
-          start: 26,
-          undo: [],
-        ),
-        playerId: $playerId,
-        playerName: $player['player_name'],
-        role: $role,
-        room: $this->board->getRoomId(26),
-      );
-      $nuns->add($nun);
-      $this->bga->notify->all(
-        'message',
-        clienttranslate('${roleName} ${player_name} starts at ${location}'),
-        [
-          'i18n' => ['roleName'],
-          'preserve' => ['role'],
-          'location' => $nun->location,
-          'player_id' => $nun->playerId,
-          'player_name' => $nun->playerName,
-          'role' => $nun->role,
-          'roleName' => $nun->roleName,
-        ]
-      );
-      $this->bga->playerStats->set('caught', 0, $playerId);
-      $this->bga->playerStats->set('role', 1, $playerId);
-      $this->bga->playerStats->set('runMove', 0, $playerId);
-      $this->bga->playerStats->set('spaces', 0, $playerId);
-      $this->bga->playerStats->set('walkMove', 0, $playerId);
-    }
-    $this->saveNuns($nuns);
+    static::DbQuery(sprintf("INSERT INTO `player` (`player_id`, `player_color`, `player_name`) VALUES %s", implode(",", $values)));
 
     // Table statistics
-    $this->incRound();
-    $caughtGoal = $this->bga->tableOptions->get(Game::OPTION_CAUGHT_GOAL) == 1 ? count($novices) : $playerCount;
-    $this->bga->tableStats->set('caughtGoal', $caughtGoal);
     $this->bga->tableStats->set('noiseTokens', 0);
     $this->bga->tableStats->set('vanishTokens', 0);
-
-    $this->bga->notify->all('message', clienttranslate('Nuns must catch ${caughtGoal} novices to win'), [
-      'caughtGoal' => $caughtGoal,
-    ]);
-
-    return NoviceTurnMultiState::class;
+    return RolesMultiState::class;
   }
 
   public function getCaught(): int
@@ -335,7 +172,7 @@ class Game extends \Bga\GameFramework\Table
   {
     $this->tableStats->inc('round', 1);
     $round = $this->getRound();
-    $this->bga->notify->all('round', clienttranslate('Round ${round} of ${roundMax}'), [
+    $this->bga->notify->all('round', clienttranslate('Round ${round} of ${roundMax} begins'), [
       'round' => $round,
       'roundMax' => 15,
     ]);
@@ -438,18 +275,17 @@ class Game extends \Bga\GameFramework\Table
     if ($reason == 'novice') {
       $this->bga->notify->all('message', clienttranslate('Game over! A novice returned with their secret wish'));
     } else if ($reason == 'caught') {
-      $this->bga->notify->all('message', clienttranslate('Game over! Nuns caught ${caught} novices'), [
+      $this->bga->notify->all('message', clienttranslate('Game over! Nuns caught ${caught} of ${caughtGoal} novices'), [
         'caught' => $this->getCaught(),
+        'caughtGoal' => $this->getCaughtGoal(),
       ]);
     } else if ($reason == 'round') {
       $this->bga->notify->all('message', clienttranslate('Game over! Novices ran out of time'));
     }
 
     $count = count($winners);
-    $message = '';
-    if ($count == 1) {
-      $message = clienttranslate('${player_name} wins!');
-    } else if ($count == 2) {
+    $message = clienttranslate('${player_name} wins!');
+    if ($count == 2) {
       $message = clienttranslate('${player_name} and ${player_name2} win!');
     } else if ($count == 3) {
       $message = clienttranslate('${player_name}, ${player_name2}, and ${player_name3} win!');
@@ -563,5 +399,17 @@ class Game extends \Bga\GameFramework\Table
   public function debug_playOneMove()
   {
     $this->bga->debug->playUntil(fn(int $count) => $count == 1);
+  }
+
+  public function debug_playerColors()
+  {
+    $colors = [];
+    $players = $this->loadPlayersBasicInfos();
+    foreach ($players as $playerId => $player) {
+      $colors[$playerId] = Game::COLOR_ORANGE;
+    }
+    $this->bga->notify->all('playerColors', '', [
+      'colors' => $colors
+    ]);
   }
 }

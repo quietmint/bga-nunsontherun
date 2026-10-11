@@ -68,7 +68,7 @@ class NunChoiceMultiState extends GameState
   }
 
   #[PossibleAction]
-  public function actChoose(string $role, int $version)
+  public function actChoose(int $version, string $role)
   {
     $this->game->checkVersion($version);
     $novices = $this->game->getNoviceList();
@@ -105,7 +105,7 @@ class NunChoiceMultiState extends GameState
 
     if (!$args['_no_notify'] && empty($this->game->getPlayerIds(1))) {
       $version = $this->bga->tableOptions->getGameVersion();
-      return $this->actChoose('abbess', $version);
+      return $this->actChoose($version, 'abbess');
     }
 
     $this->gamestate->setPlayerNonMultiactive($playerId, '');

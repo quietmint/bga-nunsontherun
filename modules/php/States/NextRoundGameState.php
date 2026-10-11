@@ -25,7 +25,7 @@ class NextRoundGameState extends \Bga\GameFramework\States\GameState
   {
     $nuns = $this->game->getNunList();
     $round = $this->game->incRound();
-    if ($round == 15) {
+    if ($round == 16) {
       // We have a winner!
       $winners = [];
       foreach ($nuns as $nun) {

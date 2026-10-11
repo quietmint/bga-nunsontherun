@@ -8,6 +8,7 @@
  * -----
  */
 
+import { NextRoundGameState } from "./States/NextRoundGameState.js";
 import { NoviceCaughtPrivateState } from "./States/NoviceCaughtPrivateState.js";
 import { NoviceMovePrivateState } from "./States/NoviceMovePrivateState.js";
 import { NoviceNoisePrivateState } from "./States/NoviceNoisePrivateState.js";
@@ -16,13 +17,14 @@ import { NunChoiceMultiState } from "./States/NunChoiceMultiState.js";
 import { NunMovePlayerState } from "./States/NunMovePlayerState.js";
 import { NunPathPlayerState } from "./States/NunPathPlayerState.js";
 import { NunRollPlayerState } from "./States/NunRollPlayerState.js";
-import { NextRoundGameState } from "./States/NextRoundGameState.js";
+import { RolesMultiState } from "./States/RolesMultiState.js";
 
 export class Game {
   constructor(bga) {
     console.log("Nuns on the Run!");
     this.bga = bga;
     this.bga.states.logger = console.log;
+    this.bga.states.register("NextRoundGameState", new NextRoundGameState(this, bga));
     this.bga.states.register("NoviceCaughtPrivateState", new NoviceCaughtPrivateState(this, bga));
     this.bga.states.register("NoviceMovePrivateState", new NoviceMovePrivateState(this, bga));
     this.bga.states.register("NoviceNunNoisePrivateState", new NoviceNoisePrivateState(this, bga));
@@ -32,7 +34,7 @@ export class Game {
     this.bga.states.register("NunMovePlayerState", new NunMovePlayerState(this, bga));
     this.bga.states.register("NunPathPlayerState", new NunPathPlayerState(this, bga));
     this.bga.states.register("NunRollPlayerState", new NunRollPlayerState(this, bga));
-    this.bga.states.register("NextRoundGameState", new NextRoundGameState(this, bga));
+    this.bga.states.register("RolesMultiState", new RolesMultiState(this, bga));
 
     this.classLocations = ["notr-offset"];
     for (let i = 1; i <= 155; i++) {
@@ -72,7 +74,7 @@ export class Game {
       this.setupNotes();
     }
     this.setupNotifications();
-    if (gamedatas.round == gamedatas.roundMax - 1) {
+    if (gamedatas.round == gamedatas.roundMax) {
       this.bga.gameArea.addLastTurnBanner();
     }
   }
@@ -83,9 +85,11 @@ export class Game {
   }
 
   setupBoard() {
-    this.bga.gameArea.getElement().insertAdjacentHTML(
-      "beforeend",
-      `<div id="notr-meters">
+    let boardEl = document.getElementById("notr-board");
+    if (boardEl == null) {
+      this.bga.gameArea.getElement().insertAdjacentHTML(
+        "beforeend",
+        `<div id="notr-meters">
   <div class="notr-meter notr-meter-caught">
       <div class="notr-label">${_("Caught")}:</div>
       <div class="notr-value"><span id="notr-meter-caught">${this.gamedatas.caught}</span> / ${this.gamedatas.caughtGoal}</div>
@@ -96,8 +100,9 @@ export class Game {
   </div>
 </div>
 <div id="notr-board"></div>`,
-    );
-    const boardEl = document.getElementById("notr-board");
+      );
+      boardEl = document.getElementById("notr-board");
+    }
     const playerId = this.bga.players.getCurrentPlayerId();
 
     // Novices
@@ -143,12 +148,9 @@ export class Game {
           boardEl.insertAdjacentHTML("beforeend", `<div class="notr-path notr-path-${nun.role} notr-path-${nun.path.color} notr-${space}"></div>`);
         }
       }
-
       if (nun.move && nun.move.noiseTokens) {
-        console.log("nun noiseTokens", nun.move.noiseTokens);
         for (let playerId in nun.move.noiseTokens) {
           const location = nun.move.noiseTokens[playerId];
-          console.log("nun noiseToken", playerId, location);
           const novice = this.getNovice(playerId);
           this.addNoviceNoise(novice, location);
         }
@@ -369,9 +371,9 @@ export class Game {
         <tr><th colspan="99">
           <div class="notr-player-name">${novice.playerName}</div>
           <div class="notr-locations">
-            <div title="Start Location"><span class="notr-label notr-icon notr-icon-start"></span> ${novice.startLocation}</div>
-            <div title="Key Location"><span class="notr-label notr-icon notr-icon-key"></span> ${novice.keyLocation}</div>
-            <div title="Secret Wish Location"><span class="notr-label notr-icon notr-icon-wish"></span> ${novice.wishLocation}</div>
+            <div title="${_("Start Location")}"><span class="notr-label notr-icon notr-icon-start"></span> ${novice.startLocation}</div>
+            <div title="${_("Key Location")}"><span class="notr-label notr-icon notr-icon-key"></span> ${novice.keyLocation}</div>
+            <div title="${_("Secret Wish Location")}"><span class="notr-label notr-icon notr-icon-wish"></span> ${novice.wishLocation}</div>
           </div>
         </th></tr>
     </thead>
@@ -477,7 +479,7 @@ export class Game {
   }
 
   async notif_clearNoise(args) {
-    console.log("doing notif_clearNoise", args);
+    console.log("🔔 Notify clearNoise", args);
     let els = document.getElementsByClassName("notr-noise");
     while (els.length > 0) {
       els[0].remove();
@@ -489,7 +491,7 @@ export class Game {
   }
 
   async notif_noviceAction(args) {
-    console.log("doing notif_noviceAction", args);
+    console.log("🔔 Notify noviceAction", args);
     const el = document.getElementById(`notr-panel-${args.player_id}-move`);
     if (el != null) {
       el.innerText = _(args.actionName);
@@ -497,7 +499,7 @@ export class Game {
   }
 
   async notif_noviceCaught(args) {
-    console.log("doing notif_noviceCaught", args);
+    console.log("🔔 Notify noviceCaught", args);
     const novice = this.getNovice(args.player_id2 || args.player_id);
     const caughtEl = document.getElementById(`notr-title-${novice.playerId}`);
     novice.caught = args.caught;
@@ -524,6 +526,7 @@ export class Game {
   }
 
   async notif_noviceKey(args) {
+    console.log("🔔 Notify noviceKey", args);
     const novice = this.getNovice(args.player_id);
     novice.hasKey = args.hasKey;
     const el = document.getElementById(`notr-panel-${novice.playerId}-key`);
@@ -544,7 +547,7 @@ export class Game {
   }
 
   async notif_noviceMove(args) {
-    console.log("doing notif_noviceMove", args);
+    console.log("🔔 Notify noviceMove", args);
     const novice = this.getNovice(args.player_id);
     const oldLocation = novice.location;
     novice.location = args.visibleLocation || args.location;
@@ -565,7 +568,7 @@ export class Game {
   }
 
   async notif_noviceNoise(args) {
-    console.log("doing notif_noviceNoise", args);
+    console.log("🔔 Notify noviceNoise", args);
     this.bga.sounds.play("noise" + (Math.floor(Math.random() * 5) + 1));
     this.bga.gameui.disableNextMoveSound();
     const novice = this.getNovice(args.player_id);
@@ -573,7 +576,7 @@ export class Game {
   }
 
   async notif_noviceNoiseUndo(args) {
-    console.log("doing notif_noviceNoiseUndo", args);
+    console.log("🔔 Notify noviceNoiseUndo", args);
     const noiseEls = document.getElementsByClassName(`notr-noise-${args.player_id}`);
     // Remove all noise
     while (noiseEls.length > 0) {
@@ -589,7 +592,7 @@ export class Game {
   }
 
   async notif_noviceRoll(args) {
-    console.log("doing notif_noviceRoll", args);
+    console.log("🔔 Notify noviceRoll", args);
     const el = document.getElementById(`notr-panel-${args.player_id}-noise`);
     if (el != null) {
       el.innerText = args.noiseTotal;
@@ -597,7 +600,7 @@ export class Game {
   }
 
   async notif_noviceUndo(args) {
-    console.log("doing notif_noviceUndo", args);
+    console.log("🔔 Notify noviceUndo", args);
     const vanishEls = document.getElementsByClassName(`notr-vanish-${args.player_id}`);
     console.log("vanishEls", vanishEls.length);
     while (vanishEls.length > 0) {
@@ -608,7 +611,7 @@ export class Game {
   }
 
   async notif_noviceVanish(args) {
-    console.log("doing notif_noviceVanish", args);
+    console.log("🔔 Notify noviceVanish", args);
     const novice = this.getNovice(args.player_id);
     this.addNoviceVanish(novice, args.vanishLocation);
     if (args.player_id != this.bga.players.getCurrentPlayerId()) {
@@ -617,7 +620,7 @@ export class Game {
   }
 
   async notif_noviceWish(args) {
-    console.log("doing notif_noviceWish", args);
+    console.log("🔔 Notify noviceWish", args);
     const novice = this.getNovice(args.player_id);
     novice.hasWish = args.hasWish;
     const el = document.getElementById(`notr-panel-${novice.playerId}-wish`);
@@ -641,7 +644,7 @@ export class Game {
   }
 
   async notif_nunAction(args) {
-    console.log("doing notif_nunAction", args);
+    console.log("🔔 Notify nunAction", args);
     const moveEl = document.getElementById(`notr-panel-${args.role}-move`);
     if (moveEl != null) {
       moveEl.innerText = _(args.actionName);
@@ -653,7 +656,7 @@ export class Game {
   }
 
   async notif_nunMove(args) {
-    console.log("doing notif_nunMove", args);
+    console.log("🔔 Notify nunMove", args);
     const nun = this.getNun(args.role);
     const oldLocation = nun.location;
     nun.location = args.location;
@@ -672,7 +675,7 @@ export class Game {
   }
 
   async notif_nunPath(args) {
-    console.log("doing notif_nunPath", args);
+    console.log("🔔 Notify nunPath", args);
     const nun = this.getNun(args.role);
     nun.path = args.path;
 
@@ -703,7 +706,7 @@ export class Game {
   }
 
   async notif_nunRoll(args) {
-    console.log("doing notif_nunRoll", args);
+    console.log("🔔 Notify nunRoll", args);
     const nun = this.getNun(args.role);
     nun.noiseTotal = args.noiseTotal;
 
@@ -714,7 +717,7 @@ export class Game {
   }
 
   async notif_nunZombie(args) {
-    console.log("doing notif_nunZombie", args);
+    console.log("🔔 Notify nunZombie", args);
     const nun = this.getNun(args.role);
     nun.playerId = args.player_id;
     nun.playerName = args.player_name;
@@ -733,8 +736,31 @@ export class Game {
     nunEl.title = title;
   }
 
+  async notif_playerColors(args) {
+    console.log("🔔 Notify playerColors", args);
+    for (const playerId in args.colors) {
+      const color = args.colors[playerId];
+      this.gamedatas.players[playerId].color = color;
+      const nameEl = document.querySelector(`#player_name_${playerId} a`);
+      nameEl.style.color = `#${color}`;
+      nameEl.style.textShadow = null;
+      nameEl.style.cssText += this.bga.players.getPlayerNameTextShadowStyle(color);
+    }
+  }
+
+  async notif_roles(args) {
+    console.log("🔔 Notify roles", args);
+    this.gamedatas.novices = args.novices;
+    this.gamedatas.nuns = args.nuns;
+    if (args._private) {
+      this.gamedatas.novices[this.bga.players.getCurrentPlayerId()] = args._private.novice;
+    }
+    this.setupBoard();
+    this.setupPanels();
+  }
+
   async notif_round(args) {
-    console.log("doing notif_round", args);
+    console.log("🔔 Notify round", args);
     this.gamedatas.round = args.round;
     const meterEl = document.getElementById("notr-meter-round");
     meterEl.innerText = this.gamedatas.round;
@@ -745,7 +771,7 @@ export class Game {
   }
 
   async notif_win(args) {
-    console.log("doing notif_win", args);
+    console.log("🔔 Notify win", args);
     this.gamedatas.novices = args.novices;
     this.gamedatas.nuns = args.nuns;
     this.setupReplay();
@@ -858,8 +884,7 @@ export class Game {
           args.location2 = `<b>${args.location2}</b>`;
         }
         if (args.noiseLocation) {
-          const novice = this.gamedatas.novices[args.player_id] || {};
-          args.noiseLocation = `<b><span class="notr-tag notr-player-${novice.color}"><span class="notr-icon notr-icon-noise"></span></span> ${args.noiseLocation}</b>`;
+          args.noiseLocation = `<b><span class="notr-icon notr-icon-noise"></span> ${args.noiseLocation}</b>`;
         }
         if (args.pathName && args.path) {
           args.pathName = `<b><span class="notr-tag notr-path-${args.path.color}"><span class="notr-icon notr-icon-path-${args.path.color}"></span></span> ${args.path.origin}▸${args.path.destination}</b>`;
@@ -875,22 +900,20 @@ export class Game {
           args.startLocation = `<b><span class="notr-icon notr-icon-start"></span> ${args.startLocation}</b>`;
         }
         if (args.vanishLocation) {
-          const novice = this.gamedatas.novices[args.player_id] || {};
-          args.vanishLocation = `<b><span class="notr-tag notr-player-${novice.color}"><span class="notr-icon notr-icon-vanish"></span></span> ${args.vanishLocation}</b>`;
+          args.vanishLocation = `<b><span class="notr-icon notr-icon-vanish"></span> ${args.vanishLocation}</b>`;
         }
         if (args.visibleLocation) {
-          const novice = this.gamedatas.novices[args.player_id] || {};
           args.visibleLocation = `<b><span class="notr-icon notr-icon-visible"></span> ${args.visibleLocation}</b>`;
         }
         if (args.wishLocation) {
           args.wishLocation = `<b><span class="notr-icon notr-icon-wish"></span> ${args.wishLocation}</b>`;
         }
         if (args.wishIcon) {
-          log += `<div class="notr-notify notr-wish">
-  <div class="notr-wish-icon notr-wish-${args.wishIcon}" title="${_(args.wish)}"></div>
-  <div class="notr-wish-key" title="${_("Key")}">${args.keyLocation}</div>
-  <div class="notr-wish-loc" title="${_("Secret Wish")}">${args.wishLocation}</div>
-</div>`;
+          log += `<div class="notr-locations">
+  <div title="${_("Key Location")}">${args.keyLocation}</div>
+  <div title="${_("Secret Wish Location")}">${args.wishLocation}</div>
+</div>
+<div class="notr-wish-icon notr-wish-${args.wishIcon}"></div>`;
         }
       }
     } catch (e) {
