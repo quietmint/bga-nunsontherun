@@ -49,7 +49,7 @@ class NoviceRecapGameState extends GameState
 
 			// Notify when the novice is visible/vanishes
 			$oldSpaceId = $novice->move->start;
-			$oldVisible = $nuns->isRoomVisible($this->game->board->getRoomId($novice->location));
+			$oldVisible = $nuns->isRoomVisible($novice->move->startRoom);
 			foreach ($novice->move->spaces as $spaceId) {
 				$visible = $nuns->isRoomVisible($this->game->board->getRoomId($spaceId));
 				if ($visible) {
@@ -137,15 +137,17 @@ class NoviceRecapGameState extends GameState
 						'recap' => true,
 						'roll' => $novice->move->noiseRoll,
 					]);
-					if (!empty($novice->move->noiseTokens)) {
-						foreach ($novice->move->noiseTokens as $noiseLocation) {
-							$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
-								'preserve' => ['player_id', 'recap'],
-								'noiseLocation' => $noiseLocation,
-								'player_id' => $novice->playerId,
-								'player_name' => $novice->playerName,
-								'recap' => true,
-							]);
+					if (!empty($novice->move->tokens)) {
+						foreach ($novice->move->tokens as $token) {
+							if ($token->type == 'noise') {
+								$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
+									'preserve' => ['player_id', 'recap'],
+									'noiseLocation' => $token->location,
+									'player_id' => $novice->playerId,
+									'player_name' => $novice->playerName,
+									'recap' => true,
+								]);
+							}
 						}
 					}
 				}

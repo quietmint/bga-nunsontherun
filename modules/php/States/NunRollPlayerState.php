@@ -18,7 +18,7 @@ class NunRollPlayerState extends GameState
   ) {
     parent::__construct(
       $game,
-      id: 34,
+      id: 35,
       type: StateType::ACTIVE_PLAYER,
       description: clienttranslate('${roleName} ${player_name} rolls ${roll} and hears noise ${noiseTotal} spaces away'),
       descriptionMyTurn: clienttranslate('${you} (${roleName}) roll ${roll} and hear noise ${noiseTotal} spaces away'),

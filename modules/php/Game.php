@@ -74,9 +74,13 @@ class Game extends \Bga\GameFramework\Table
 
   public function getGameProgression()
   {
-    $caughtProgression = round($this->getCaught() / $this->getCaughtGoal() * 100);
     $roundProgression = round(($this->getRound() - 1) / 0.15);
-    return min(max($caughtProgression, $roundProgression), 100);
+    $caughtProgression = 0;
+    $caughtGoal = $this->getCaughtGoal();
+    if ($caughtGoal > 0) {
+      $caughtProgression = round($this->getCaught() / $caughtGoal * 100);
+    }
+    return min(max($roundProgression, $caughtProgression,  0), 100);
   }
 
   public function getVersion(): int

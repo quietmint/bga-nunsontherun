@@ -10,7 +10,7 @@ export class NoviceRollPrivateState {
       if (args.heard) {
         this.bga.statusBar.addActionButton(_("Confirm (Noise)"), () => this.game.performActionWrapper("actConfirm"), { color: "red" });
       } else {
-        this.bga.statusBar.addActionButton(_("Confirm (No Noise)"), () => this.game.performActionWrapper("actConfirm"));
+        this.bga.statusBar.addActionButton(_("Confirm"), () => this.game.performActionWrapper("actConfirm"));
       }
       if (args.blessing == "adjust") {
         this.bga.statusBar.addActionButton(_("Blessing: -1"), () => this.game.performActionWrapper("actBlessingAdjust"), { color: "secondary" });
@@ -39,6 +39,4 @@ export class NoviceRollPrivateState {
       el.remove();
     }
   }
-
-  onPlayerActivationChange(args, isCurrentPlayerActive) {}
 }

@@ -10,6 +10,9 @@ use Bga\Games\NunsOnTheRun\States\NoviceTurnMultiState;
 
 class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 {
+	/**
+	 * @var array<int, Novice>
+	 */
 	private array $novices = [];
 
 	public function __construct(
@@ -41,16 +44,22 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return count($this->novices);
 	}
 
+	/**
+	 * @return \Traversable<int, Novice>
+	 */
 	public function getIterator(): \Traversable
 	{
 		return new \ArrayIterator($this->novices);
 	}
 
+	/**
+	 * @return array<int, Novice>
+	 */
 	public function getAllDatas(int $currentPlayerId, GameState $state, NunList $nuns): array
 	{
 		$output = [];
 		$gameEnd = $currentPlayerId == -1 || $state->name == 'gameEnd';
-		$visible = $nuns->getNovicesVisible($this);
+		$roomsVisible = $nuns->getRoomsVisible();
 		foreach ($this->novices as $playerId => $novice) {
 			$json = json_decode(json_encode($novice), true);
 			unset($json['room']);
@@ -61,9 +70,8 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 					unset(
 						$move['active'],
 						$move['deviate'],
-						$move['noiseTokens'],
+						$move['startRoom'],
 						$move['undo'],
-						$move['vanishTokens']
 					);
 				}
 			}
@@ -75,10 +83,15 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 					$json['wish'],
 					$json['wishLocation']
 				);
+				$room = $novice->room;
 				if ($state instanceof NoviceTurnMultiState) {
+					$room = $novice->move->startRoom;
+					$json['caught'] = $novice->move->caught;
+					$json['location'] = $novice->move->start;
 					unset($json['move']);
 				}
-				if (!$visible[$playerId]) {
+				$visible = array_key_exists($room, $roomsVisible);
+				if (!$visible) {
 					$json['location'] = $json['startLocation'];
 				}
 			}
@@ -88,9 +101,8 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 					$json['move']['caught'],
 					$json['move']['caughtHistory'],
 					$json['move']['deviate'],
-					$json['move']['noiseHistory'],
+					$json['move']['startRoom'],
 					$json['move']['undo'],
-					$json['move']['vanishHistory'],
 				);
 			}
 			$output[$playerId] = $json;
@@ -108,6 +120,9 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return $this->novices[$playerId];
 	}
 
+	/**
+	 * @return array<int>
+	 */
 	public function getPlayerIds(): array
 	{
 		$playerIds = [];
@@ -117,6 +132,9 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return array_keys($playerIds);
 	}
 
+	/**
+	 * @return array<int, array<int>>
+	 */
 	public function getLocationsWithNovices(): array
 	{
 		$locations = [];

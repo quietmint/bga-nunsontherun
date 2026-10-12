@@ -15,7 +15,7 @@ class NunNoiseGameState extends GameState
   ) {
     parent::__construct(
       $game,
-      id: 33,
+      id: 34,
       type: StateType::GAME,
     );
   }

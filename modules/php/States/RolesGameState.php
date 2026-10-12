@@ -69,16 +69,18 @@ class RolesGameState extends GameState
       $color = $players[$playerId]['player_color'];
       $blessing = array_shift($blessings);
       $location = array_shift($locations);
+      $room = $this->game->board->getRoomId($location);
       $novice = new Novice(
         blessing: $blessing,
         color: $this->getColorName($color),
         location: $location,
         move: new Move(
           start: $location,
+          startRoom: $room,
         ),
         playerId: $playerId,
         playerName: $players[$playerId]['player_name'],
-        room: $this->game->board->getRoomId($location),
+        room: $room,
         startLocation: $location,
         wish: array_shift($wishes),
       );
@@ -117,18 +119,20 @@ class RolesGameState extends GameState
     foreach ($nunInfos as $role => $info) {
       $playerId = $info['playerId'];
       $blessing = array_shift($blessings);
+      $room = $this->game->board->getRoomId(26);
       $nun = new Nun(
         blessing: $blessing,
         color: $this->getColorName($info['color']),
         location: 26,
         move: new Move(
           start: 26,
+          startRoom: $room,
           undo: [],
         ),
         playerId: $playerId,
         playerName: $players[$playerId]['player_name'],
         role: $info['role'],
-        room: $this->game->board->getRoomId(26),
+        room: $room,
       );
       $nuns->add($nun);
       $this->bga->notify->all(
@@ -214,17 +218,17 @@ class RolesGameState extends GameState
   {
     $count = count($noviceIds);
     $args = [];
-    $message = clienttranslate('${player_name} plays as a novice');
+    $message = clienttranslate('Novices are ${player_name}');
     if ($count == 2) {
-      $message = clienttranslate('${player_name} and ${player_name2} play as novices');
+      $message = clienttranslate('Novices are ${player_name} and ${player_name2}');
     } else if ($count == 3) {
-      $message = clienttranslate('${player_name}, ${player_name2}, and ${player_name3} play as novices');
+      $message = clienttranslate('Novices are ${player_name}, ${player_name2}, and ${player_name3}');
     } else if ($count == 4) {
-      $message = clienttranslate('${player_name}, ${player_name2}, ${player_name3}, and ${player_name4} play as novices');
+      $message = clienttranslate('Novices are ${player_name}, ${player_name2}, ${player_name3}, and ${player_name4}');
     } else if ($count == 5) {
-      $message = clienttranslate('${player_name}, ${player_name2}, ${player_name3}, ${player_name4}, and ${player_name5} play as novices');
+      $message = clienttranslate('Novices are ${player_name}, ${player_name2}, ${player_name3}, ${player_name4}, and ${player_name5}');
     } else if ($count == 6) {
-      $message = clienttranslate('${player_name}, ${player_name2}, ${player_name3}, ${player_name4}, ${player_name5}, and ${player_name6} play as novices');
+      $message = clienttranslate('Novices are ${player_name}, ${player_name2}, ${player_name3}, ${player_name4}, ${player_name5}, and ${player_name6}');
     }
     $x = '';
     foreach ($noviceIds as $playerId) {
@@ -246,9 +250,9 @@ class RolesGameState extends GameState
     $args = [];
     $message = '';
     if ($count == 1) {
-      $message = clienttranslate('${player_name} plays as nuns');
+      $message = clienttranslate('Nuns are ${player_name}');
     } else if ($count == 2) {
-      $message = clienttranslate('${player_name} and ${player_name2} play as nuns');
+      $message = clienttranslate('Nuns are ${player_name} and ${player_name2}');
     }
     $x = '';
     foreach ($nunIds as $playerId) {

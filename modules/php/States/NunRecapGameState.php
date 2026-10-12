@@ -15,7 +15,7 @@ class NunRecapGameState extends GameState
 	) {
 		parent::__construct(
 			$game,
-			id: 37,
+			id: 38,
 			type: StateType::GAME,
 			description: clienttranslate('Novices make noise'),
 		);
@@ -45,16 +45,18 @@ class NunRecapGameState extends GameState
 		}
 
 		$nun = $this->game->getNunList()->getActiveNun();
-		if (!empty($nun->move->noiseTokens)) {
-			foreach ($nun->move->noiseTokens as $playerId => $noiseLocation) {
-				$novice = $novices->get($playerId);
-				$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
-					'preserve' => ['player_id', 'recap'],
-					'noiseLocation' => $noiseLocation,
-					'player_id' => $novice->playerId,
-					'player_name' => $novice->playerName,
-					'recap' => true,
-				]);
+		if (!empty($nun->move->tokens)) {
+			foreach ($nun->move->tokens as $token) {
+				if (!$token->history) {
+					$novice = $novices->get($token->playerId);
+					$this->bga->notify->all('noviceNoise', clienttranslate('${player_name} makes noise at ${noiseLocation}'), [
+						'preserve' => ['player_id', 'recap'],
+						'noiseLocation' => $token->location,
+						'player_id' => $novice->playerId,
+						'player_name' => $novice->playerName,
+						'recap' => true,
+					]);
+				}
 			}
 		}
 		$nun->move->active = false;

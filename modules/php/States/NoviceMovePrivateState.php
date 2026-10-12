@@ -9,6 +9,7 @@ use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
+use Bga\Games\NunsOnTheRun\Token;
 
 class NoviceMovePrivateState extends GameState
 {
@@ -51,15 +52,15 @@ class NoviceMovePrivateState extends GameState
   public function actMove(int $currentPlayerId, array $args, int $version, int $location)
   {
     $this->game->checkVersion($version);
+    $novice = $this->game->getNoviceList()->get($currentPlayerId);
     if (!array_key_exists($location, $args['possible'])) {
-      throw new SystemException("Cannot move to location $location");
+      throw new SystemException("$novice cannot move to location $location");
     }
     $possible = $args['possible'][$location];
     $spaces = $possible->spaces;
     array_shift($spaces);
 
     $nuns = $this->game->getNunList();
-    $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $oldSpaceId = $novice->location;
     $oldVisible = $nuns->isNoviceVisible($novice);
     foreach ($spaces as $spaceId) {
@@ -76,7 +77,12 @@ class NoviceMovePrivateState extends GameState
           'player_id' => $currentPlayerId,
           'vanishLocation' => $oldSpaceId,
         ]);
-        $novice->move->vanishTokens[$oldSpaceId] = $this->game->board->getRoomId($oldSpaceId);
+        $novice->move->tokens[] = new Token(
+          location: $oldSpaceId,
+          playerId: $novice->playerId,
+          room: $this->game->board->getRoomId($oldSpaceId),
+          type: 'vanish',
+        );
         $this->bga->playerStats->inc('vanishTokens', 1, $novice->playerId, true);
       }
       $this->bga->notify->player($currentPlayerId, 'noviceMove', '', [
@@ -171,17 +177,18 @@ class NoviceMovePrivateState extends GameState
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $novice->location = $novice->move->start;
     $novice->move->action = null;
-    $novice->move->noiseTokens = [];
     $novice->move->spaces = [];
-    $novice->move->vanishTokens = [];
+    $novice->move->tokens = [];
     $novice->room = $this->game->board->getRoomId($novice->location);
     $this->game->saveNovice($novice);
 
-    $noiseTokens = $novice->move->noiseTokens;
+    $noiseTokens = [];
     $nuns = $this->game->getNunList();
     foreach ($nuns as $nun) {
-      if (array_key_exists($novice->playerId, $nun->move->noiseTokens)) {
-        $noiseTokens[] = $nun->move->noiseTokens[$novice->playerId];
+      foreach ($nun->move->tokens as $token) {
+        if ($token->playerId == $novice->playerId) {
+          $noiseTokens[] = $token->location;
+        }
       }
     }
     $this->bga->notify->player($currentPlayerId, 'noviceUndo', clienttranslate('You return to ${location} (undo)'), [

@@ -8,6 +8,12 @@ class Space
 {
 	public int $location;
 	public int $roomId;
+	/**
+	 * @var array<int, array{
+	 *   space: Space, 
+	 *   locked: bool,
+	 * }>
+	 */
 	public array $neighbors = [];
 
 	public function __construct(int $location, int $roomId)

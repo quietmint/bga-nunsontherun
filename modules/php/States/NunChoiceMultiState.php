@@ -37,23 +37,7 @@ class NunChoiceMultiState extends GameState
   {
     if ($args['_no_notify']) {
       if (empty($args['choices'])) {
-        // 2c. Remove noise and vanish tokens
-        $novices = $this->game->getNoviceList();
-        foreach ($novices as &$novice) {
-          $novice->move->noiseHistory = $novice->move->noiseTokens;
-          $novice->move->noiseTokens = [];
-          $novice->move->vanishHistory = array_keys($novice->move->vanishTokens);
-          $novice->move->vanishTokens = [];
-        }
-        $this->game->saveNovices($novices);
-        $nuns = $this->game->getNunList();
-        foreach ($nuns as &$nun) {
-          $nun->move->noiseHistory = $nun->move->noiseTokens;
-          $nun->move->noiseTokens = [];
-        }
-        $this->game->saveNuns($nuns);
-        $this->bga->notify->all('clearNoise');
-        return NunNoiseGameState::class;
+        return RemoveTokensGameState::class;
       } else {
         // Choose the other nun
         $role = reset($args['choices']);

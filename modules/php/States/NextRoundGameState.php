@@ -49,6 +49,7 @@ class NextRoundGameState extends \Bga\GameFramework\States\GameState
       $novice->move = new Move(
         caught: $novice->caught,
         start: $novice->location,
+        startRoom: $novice->room,
       );
     }
     $this->game->saveNovices($novices);
@@ -61,8 +62,9 @@ class NextRoundGameState extends \Bga\GameFramework\States\GameState
         $nun->moves[] = $oldMove;
       }
       $nun->move = new Move(
-        noiseTokens: $oldMove->noiseTokens,
         start: $nun->location,
+        startRoom: $nun->room,
+        tokens: $oldMove->getActiveTokens(),
         undo: [],
       );
     }

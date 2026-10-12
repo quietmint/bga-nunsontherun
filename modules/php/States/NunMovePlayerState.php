@@ -53,17 +53,15 @@ class NunMovePlayerState extends GameState
   public function actMove(array $args, int $version, int $location)
   {
     $this->game->checkVersion($version);
-    // Check location
+    $nuns = $this->game->getNunList();
+    $nun = &$nuns->getActiveNun();
     if (!array_key_exists($location, $args['possible'])) {
-      throw new SystemException("Cannot move to location $location");
+      throw new SystemException("$nun cannot move to location $location");
     }
-
     $possible = $args['possible'][$location];
     $spaces = $possible->spaces;
     array_shift($spaces);
 
-    $nuns = $this->game->getNunList();
-    $nun = &$nuns->getActiveNun();
     $novices = $this->game->getNoviceList();
     $locationsWithNovices = $novices->getLocationsWithNovices();
     $oldSpaceId = $nun->location;

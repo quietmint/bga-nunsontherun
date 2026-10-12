@@ -19,8 +19,8 @@ class RolesMultiState extends GameState
       $game,
       id: 41,
       type: StateType::MULTIPLE_ACTIVE_PLAYER,
-      description: clienttranslate('${nunCount} players must play as nuns'),
-      descriptionMyTurn: clienttranslate('${nunCount} players must play as nuns'),
+      description: clienttranslate('${nunCount} players must volunteer as nuns'),
+      descriptionMyTurn: clienttranslate('${nunCount} players must volunteer as nuns'),
     );
   }
 
@@ -101,7 +101,7 @@ class RolesMultiState extends GameState
     // Ask for more volunteers if not enough
     $activeCount = count($this->gamestate->getActivePlayerList());
     if ($activeCount == 1) {
-      $this->bga->notify->all('message', clienttranslate('${nunCount} players must play as nuns'), [
+      $this->bga->notify->all('message', clienttranslate('${nunCount} players must volunteer as nuns'), [
         'nunCount' => $args['nunCount'],
       ]);
       $playerIds = $this->game->getPlayerIds(0);

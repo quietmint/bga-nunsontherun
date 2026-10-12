@@ -13,6 +13,9 @@ class Novice
 	public bool $hasWish;
 	public int $location;
 	public ?Move $move;
+	/**
+	 * @var array<Move>
+	 */
 	public array $moves;
 	public int $playerId;
 	public string $playerName;

@@ -119,14 +119,15 @@ export class Game {
           this.addMyWish(boardEl, novice);
         }
       }
-      if (novice.move && novice.move.noiseTokens) {
-        for (let location of novice.move.noiseTokens) {
-          this.addNoviceNoise(novice, location);
-        }
-      }
-      if (novice.move && novice.move.vanishTokens) {
-        for (let location in novice.move.vanishTokens) {
-          this.addNoviceVanish(novice, location);
+      if (novice.move && novice.move.tokens) {
+        for (const token of novice.move.tokens) {
+          if (!token.history) {
+            if (token.type == "noise") {
+              this.addNoviceNoise(novice, token.location);
+            } else if (token.type == "vanish") {
+              this.addNoviceVanish(novice, token.location);
+            }
+          }
         }
       }
     });
@@ -148,11 +149,14 @@ export class Game {
           boardEl.insertAdjacentHTML("beforeend", `<div class="notr-path notr-path-${nun.role} notr-path-${nun.path.color} notr-${space}"></div>`);
         }
       }
-      if (nun.move && nun.move.noiseTokens) {
-        for (let playerId in nun.move.noiseTokens) {
-          const location = nun.move.noiseTokens[playerId];
-          const novice = this.getNovice(playerId);
-          this.addNoviceNoise(novice, location);
+      if (nun.move && nun.move.tokens) {
+        for (const token of nun.move.tokens) {
+          if (!token.history) {
+            if (token.type == "noise") {
+              const novice = this.getNovice(token.playerId);
+              this.addNoviceNoise(novice, token.location);
+            }
+          }
         }
       }
     });
@@ -283,14 +287,9 @@ export class Game {
         if (roundNovice > 0 && move.spaces.length) {
           location = move.spaces.at(-1);
         }
-        if (roundNovice > 0 && move.noiseHistory) {
-          for (const noise of move.noiseHistory) {
-            tokens.push({ type: "noise", novice: novice, location: noise });
-          }
-        }
-        if (roundNovice > 0 && move.vanishHistory) {
-          for (const vanish of move.vanishHistory) {
-            tokens.push({ type: "vanish", novice: novice, location: vanish });
+        if (roundNovice > 0 && move.tokens) {
+          for (const token of move.tokens) {
+            tokens.push({ type: token.type, novice: novice, location: token.location });
           }
         }
       }
@@ -308,9 +307,9 @@ export class Game {
         if (roundNun > 0 && move.spaces.length) {
           location = move.spaces.at(-1);
         }
-        if (roundNun > 0 && move.noiseHistory) {
-          for (const playerId in move.noiseHistory) {
-            tokens.push({ type: "noise", novice: this.getNovice(playerId), location: move.noiseHistory[playerId] });
+        if (roundNun > 0 && move.tokens) {
+          for (const token of move.tokens) {
+            tokens.push({ type: token.type, novice: this.getNovice(token.playerId), location: token.location });
           }
         }
       }
@@ -449,9 +448,7 @@ export class Game {
   }
 
   setupNotifications() {
-    this.bga.notifications.setupPromiseNotifications({
-      logger: console.log,
-    });
+    this.bga.notifications.setupPromiseNotifications();
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceAction", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceCaught", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
     this.bga.gameui.notifqueue.setIgnoreNotificationCheck("noviceMove", (notif) => notif.args.recap && notif.args.player_id == this.bga.players.getCurrentPlayerId());
@@ -481,8 +478,8 @@ export class Game {
     holderEl.insertAdjacentHTML("beforeend", `<div class="notr-tag notr-player-${novice.color} notr-vanish notr-vanish-${novice.playerId}" title="${novice.playerName}"><span class="notr-icon notr-icon-vanish"></span></div>`);
   }
 
-  async notif_clearNoise(args) {
-    console.log("🔔 Notify clearNoise", args);
+  async notif_removeTokens(args) {
+    console.log("🔔 Notify removeTokens", args);
     let els = document.getElementsByClassName("notr-noise");
     while (els.length > 0) {
       els[0].remove();

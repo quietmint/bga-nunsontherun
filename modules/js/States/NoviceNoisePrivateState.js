@@ -41,6 +41,4 @@ export class NoviceNoisePrivateState {
       el.remove();
     }
   }
-
-  onPlayerActivationChange(args, isCurrentPlayerActive) {}
 }

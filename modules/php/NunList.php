@@ -10,6 +10,9 @@ use Bga\Games\NunsOnTheRun\States\NunNoiseMultiState;
 
 class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 {
+	/**
+	 * @var array<string, Nun>
+	 */
 	private array $nuns;
 
 	public function __construct(
@@ -41,11 +44,17 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return count($this->nuns);
 	}
 
+	/**
+	 * @return \Traversable<string, Nun>
+	 */
 	public function getIterator(): \Traversable
 	{
 		return new \ArrayIterator($this->nuns);
 	}
 
+	/**
+	 * @return array<string, Nun>
+	 */
 	public function getAllDatas(int $currentPlayerId, GameState $state): array
 	{
 		$output = [];
@@ -63,26 +72,21 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 					unset(
 						$move['active'],
 						$move['caught'],
-						$move['caughtNow'],
-						$move['noiseTokens'],
+						$move['startRoom'],
 						$move['undo'],
-						$move['vanishHistory'],
-						$move['vanishTokens'],
 					);
 				}
 			}
 			if ($state instanceof NunNoiseMultiState && $nun->move != null && $nun->move->active) {
-				$noiseTokens = array_intersect_key($json['move']['noiseTokens'], [$currentPlayerId => true]);
-				$json['move']['noiseTokens'] = $noiseTokens;
+				$json['move']['tokens'] = array_filter($json['move']['tokens'], fn($token) => $token['playerId'] == $currentPlayerId);
 			}
 			if (array_key_exists('move', $json) && $json['move'] != null) {
 				unset(
 					$json['move']['caught'],
 					$json['move']['caughtHistory'],
-					$json['move']['noiseHistory'],
+					$json['move']['startCaught'],
+					$json['move']['startRoom'],
 					$json['move']['undo'],
-					$json['move']['vanishHistory'],
-					$json['move']['vanishTokens'],
 				);
 			}
 			$output[$role] = $json;
@@ -113,6 +117,9 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return null;
 	}
 
+	/**
+	 * @return array<string>
+	 */
 	public function getChoices(): array
 	{
 		$choices = [];
@@ -124,6 +131,9 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return $choices;
 	}
 
+	/**
+	 * @return array<string, bool>
+	 */
 	public function getPathsUsed(): array
 	{
 		$paths = [];
@@ -135,6 +145,9 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return $paths;
 	}
 
+	/**
+	 * @return array<int>
+	 */
 	public function getPlayerIds(): array
 	{
 		$playerIds = [];
@@ -144,6 +157,9 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return array_keys($playerIds);
 	}
 
+	/**
+	 * @return array<int, bool>
+	 */
 	public function getRoomsVisible(): array
 	{
 		$roomIds = [];
@@ -153,6 +169,9 @@ class NunList implements \Countable, \IteratorAggregate, \JsonSerializable
 		return $roomIds;
 	}
 
+	/**
+	 * @return array<int, bool>
+	 */
 	public function getNovicesVisible(NoviceList $novices): array
 	{
 		$visible = [];

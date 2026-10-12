@@ -10,6 +10,7 @@ use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\SystemException;
 use Bga\Games\NunsOnTheRun\Game;
 use Bga\Games\NunsOnTheRun\NunList;
+use Bga\Games\NunsOnTheRun\Token;
 
 class NoviceNunNoisePrivateState extends GameState
 {
@@ -33,7 +34,7 @@ class NoviceNunNoisePrivateState extends GameState
     $possible = $this->game->board->getNovicePossibleNoise($novice, $oneNuns);
     return [
       'possible' => $possible,
-      'undo' => array_key_exists($novice->playerId, $nun->move->noiseTokens),
+      'undo' => !empty($nun->move->getNoiseTokens($novice->playerId)),
     ];
   }
 
@@ -45,8 +46,9 @@ class NoviceNunNoisePrivateState extends GameState
       throw new SystemException("You must make more noise.");
     }
     $nun = $this->game->getNunList()->getActiveNun();
-    if (array_key_exists($currentPlayerId, $nun->move->noiseTokens)) {
-      $this->bga->playerStats->inc('noiseTokens', 1, $currentPlayerId, true);
+    $count = count($nun->move->getNoiseTokens($currentPlayerId));
+    if ($count > 0) {
+      $this->bga->playerStats->inc('noiseTokens', $count, $currentPlayerId, true);
     }
     $this->game->giveExtraTime($currentPlayerId);
     $this->gamestate->setPlayerNonMultiactive($currentPlayerId, NunRecapGameState::class);
@@ -56,13 +58,17 @@ class NoviceNunNoisePrivateState extends GameState
   public function actNoise(int $currentPlayerId, array $args, int $version, int $location)
   {
     $this->game->checkVersion($version);
-    // Check location
     if (!array_key_exists($location, $args['possible'])) {
-      throw new SystemException("Cannot make noise at location $location");
+      throw new SystemException("Novice $currentPlayerId cannot make noise at location $location");
     }
 
     $nun = $this->game->getNunList()->getActiveNun();
-    $nun->move->noiseTokens[$currentPlayerId] = $location;
+    $nun->move->tokens[] = new Token(
+      location: $location,
+      playerId: $currentPlayerId,
+      room: $this->game->board->getRoomId($location),
+      type: 'noise',
+    );
     $this->game->saveNun($nun);
 
     $this->bga->notify->player($currentPlayerId, 'noviceNoise', clienttranslate('You make noise at ${noiseLocation}'), [
@@ -79,16 +85,14 @@ class NoviceNunNoisePrivateState extends GameState
     $novice = $this->game->getNoviceList()->get($currentPlayerId);
     $nuns = $this->game->getNunList();
     $nun = $nuns->getActiveNun();
-    unset($nun->move->noiseTokens[$currentPlayerId]);
+    $nun->move->tokens = array_filter($nun->move->tokens, fn($token) => !(!$token->history && $token->type == 'noise' && $token->playerId == $currentPlayerId));
     $this->game->saveNun($nun);
-    unset($nun->move->noiseTokens['___bga_associative_array_flag']);
 
-    $noiseTokens = $novice->move->noiseTokens;
+    $noiseTokens = $novice->move->getNoiseTokens();
     foreach ($nuns as $nun) {
-      if (array_key_exists($novice->playerId, $nun->move->noiseTokens)) {
-        $noiseTokens[] = $nun->move->noiseTokens[$novice->playerId];
-      }
+      $noiseTokens = array_merge($noiseTokens, $nun->move->getNoiseTokens($novice->playerId));
     }
+    $noiseTokens = array_map(fn($token) => $token->location, $noiseTokens);
     $this->bga->notify->player($currentPlayerId, 'noviceNoiseUndo', clienttranslate('You undo'), [
       'preserve' => ['noiseTokens', 'player_id'],
       'noiseTokens' => $noiseTokens,

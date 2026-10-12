@@ -13,14 +13,18 @@ class Move
 	public bool $caughtHistory;
 	public bool $deviate;
 	public ?int $noiseRoll;
-	public array $noiseHistory;
-	public array $noiseTokens;
 	public ?int $noiseTotal;
+	/**
+	 * @var array<int>
+	 */
 	public array $spaces;
 	public int $start;
+	public int $startRoom;
+	/**
+	 * @var array<Token>
+	 */
+	public array $tokens;
 	public ?array $undo;
-	public array $vanishHistory;
-	public array $vanishTokens;
 
 	public ?string $actionName {
 		&get {
@@ -40,6 +44,7 @@ class Move
 
 	public function __construct(
 		int $start,
+		int $startRoom,
 		?string $action = null,
 		bool $active = false,
 		?string $blessing = null,
@@ -47,13 +52,10 @@ class Move
 		bool $caughtHistory = false,
 		bool $deviate = false,
 		?int $noiseRoll = null,
-		array $noiseHistory = [],
-		array $noiseTokens = [],
 		?int $noiseTotal = null,
 		array $spaces = [],
+		array $tokens = [],
 		?array $undo = null,
-		array $vanishHistory = [],
-		array $vanishTokens = [],
 	) {
 		$this->action = $action;
 		$this->active = $active;
@@ -61,19 +63,23 @@ class Move
 		$this->caught = $caught;
 		$this->caughtHistory = $caughtHistory;
 		$this->deviate = $deviate;
-		$this->noiseHistory = $noiseHistory;
 		$this->noiseRoll = $noiseRoll;
-		$this->noiseTokens = $noiseTokens;
 		$this->noiseTotal = $noiseTotal;
 		$this->spaces = $spaces;
 		$this->start = $start;
+		$this->startRoom = $startRoom;
+		$this->tokens = $tokens;
 		$this->undo = $undo;
-		$this->vanishHistory = $vanishHistory;
-		$this->vanishTokens = $vanishTokens;
 	}
 
 	public static function fromData(\stdClass $data): Move
 	{
+		$tokens = [];
+		if (property_exists($data, 'tokens')) {
+			foreach ($data->tokens as $token) {
+				$tokens[] = Token::fromData($token);
+			}
+		}
 		return new Move(
 			action: $data->action,
 			active: $data->active,
@@ -81,15 +87,51 @@ class Move
 			caught: $data->caught,
 			caughtHistory: $data->caughtHistory,
 			deviate: $data->deviate,
-			noiseHistory: $data->noiseHistory,
 			noiseRoll: $data->noiseRoll,
-			noiseTokens: $data->noiseTokens,
 			noiseTotal: $data->noiseTotal,
 			spaces: $data->spaces,
 			start: $data->start,
+			startRoom: $data->startRoom,
+			tokens: $tokens,
 			undo: $data->undo,
-			vanishHistory: $data->vanishHistory,
-			vanishTokens: $data->vanishTokens,
 		);
+	}
+
+	/**
+	 * @return array<Token>
+	 */
+	public function getActiveTokens(): array
+	{
+		return array_filter($this->tokens, fn($token) => !$token->history);
+	}
+
+	/**
+	 * @return array<Token>
+	 */
+	public function getNoiseTokens(?int $playerId = null): array
+	{
+		$tokens = [];
+		foreach ($this->tokens as $token) {
+			if (!$token->history && $token->type == 'noise' && ($playerId == null || $token->playerId == $playerId)) {
+				$tokens[] = $token;
+			}
+		}
+		return $tokens;
+	}
+
+	/**
+	 * @return array<Token>
+	 */
+	public function getNoiseTokensInLocations(array $locations): array
+	{
+		return array_filter($this->tokens, fn($token) => !$token->history && $token->type == 'noise' && in_array($token->location, $locations));
+	}
+
+	/**
+	 * @return array<Token>
+	 */
+	public function getVanishTokensInRoom(int $room): array
+	{
+		return array_filter($this->tokens, fn($token) => !$token->history && $token->type == 'vanish' && $token->room == $room);
 	}
 }

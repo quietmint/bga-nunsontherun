@@ -16,7 +16,7 @@ class NunNoiseMultiState extends GameState
   ) {
     parent::__construct(
       $game,
-      id: 35,
+      id: 37,
       type: StateType::MULTIPLE_ACTIVE_PLAYER,
       description: clienttranslate('Novices must make noise'),
       initialPrivate: NoviceNunNoisePrivateState::class,
