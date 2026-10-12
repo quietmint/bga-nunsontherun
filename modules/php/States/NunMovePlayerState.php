@@ -242,18 +242,17 @@ class NunMovePlayerState extends GameState
     }
 
     // Random move (at least 4 spaces)
-    $version = $this->bga->tableOptions->getGameVersion();
     $walkMax = $args['actions']['walk']['max'];
     if ($args['distance'] < $walkMax && !empty($args['possible'])) {
       $r = new Randomizer();
       $location = $r->pickArrayKeys($args['possible'], 1)[0];
-      return $this->actMove($args, $version, $location);
+      return $this->actMove($args, Game::ZOMBIE_VERSION, $location);
     }
 
     // First available action
     foreach ($args['actions'] as $action => &$info) {
       if (!$info['disabled']) {
-        return $this->actConfirm($args, $version, $action);
+        return $this->actConfirm($args, Game::ZOMBIE_VERSION, $action);
       }
     }
 

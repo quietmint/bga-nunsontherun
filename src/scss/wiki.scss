@@ -1,0 +1,35 @@
+.wikicontent {
+  .wikitable {
+    width: auto;
+
+    caption {
+      text-align: center;
+      font-style: italic;
+    }
+
+    th {
+      font-weight: bold;
+    }
+
+    th,
+    td {
+      border: 1px solid #808080;
+    }
+  }
+
+  h2,
+  h3 {
+    clear: both;
+  }
+
+  ol,
+  ul,
+  li {
+    list-style: unset;
+  }
+
+  ol,
+  ul {
+    padding-left: 1.5em;
+  }
+}

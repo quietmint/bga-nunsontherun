@@ -123,7 +123,6 @@ class NunRollPlayerState extends GameState
     }
 
     // Otherwise, confirm
-    $version = $this->bga->tableOptions->getGameVersion();
-    return $this->actConfirm($playerId, $version);
+    return $this->actConfirm($playerId, Game::ZOMBIE_VERSION);
   }
 }

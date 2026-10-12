@@ -119,7 +119,6 @@ class RolesMultiState extends GameState
 
   public function zombie(int $playerId)
   {
-    $version = $this->bga->tableOptions->getGameVersion();
-    return $this->actChoose($playerId, $this->getArgs(), $version, 'novice');
+    return $this->actChoose($playerId, $this->getArgs(), Game::ZOMBIE_VERSION, 'novice');
   }
 }

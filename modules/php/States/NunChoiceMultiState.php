@@ -57,8 +57,7 @@ class NunChoiceMultiState extends GameState
       } else {
         // Choose the other nun
         $role = reset($args['choices']);
-        $version = $this->bga->tableOptions->getGameVersion();
-        $this->actChoose($role, $version);
+        $this->actChoose(Game::ZOMBIE_VERSION, $role);
         return;
       }
     }
@@ -104,8 +103,7 @@ class NunChoiceMultiState extends GameState
     }
 
     if (!$args['_no_notify'] && empty($this->game->getPlayerIds(1))) {
-      $version = $this->bga->tableOptions->getGameVersion();
-      return $this->actChoose($version, 'abbess');
+      return $this->actChoose(Game::ZOMBIE_VERSION, 'abbess');
     }
 
     $this->gamestate->setPlayerNonMultiactive($playerId, '');

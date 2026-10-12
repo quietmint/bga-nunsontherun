@@ -164,17 +164,20 @@ export class Game {
     boardEl.querySelectorAll(".notr-path").forEach((el) => el.remove());
 
     // Add my key, wish
-    const novice = this.getNovice();
-    if (novice != null) {
-      const myKeyEl = document.getElementById("notr-my-key");
+    Object.values(this.gamedatas.novices).forEach((novice) => {
+      const myStartEl = document.getElementById(`notr-my-start-${novice.playerId}`);
+      if (myStartEl == null) {
+        this.addMyStart(boardEl, novice);
+      }
+      const myKeyEl = document.getElementById(`notr-my-key-${novice.playerId}`);
       if (myKeyEl == null) {
         this.addMyKey(boardEl, novice);
       }
-      const myWishEl = document.getElementById("notr-my-wish");
+      const myWishEl = document.getElementById(`notr-my-wish-${novice.playerId}`);
       if (myWishEl == null) {
         this.addMyWish(boardEl, novice);
       }
-    }
+    });
 
     let markers = "";
     for (let i = 0.5; i <= this.gamedatas.round + 0.5; i += 0.5) {
@@ -513,7 +516,7 @@ export class Game {
       this.bga.sounds.play("caught");
       this.bga.gameui.disableNextMoveSound();
       if (novice.playerId == this.bga.players.getCurrentPlayerId()) {
-        const myWishEl = document.getElementById("notr-my-wish");
+        const myWishEl = document.getElementById(`notr-my-wish-${novice.playerId}`);
         if (myWishEl == null) {
           const boardEl = document.getElementById("notr-board");
           this.addMyWish(boardEl, novice);
@@ -539,7 +542,7 @@ export class Game {
         this.bga.sounds.play("collect");
         this.bga.gameui.disableNextMoveSound();
       }
-      const myKeyEl = document.getElementById("notr-my-key");
+      const myKeyEl = document.getElementById(`notr-my-key-${novice.playerId}`);
       if (myKeyEl != null) {
         myKeyEl.remove();
       }
@@ -633,7 +636,7 @@ export class Game {
         this.bga.sounds.play("collect");
         this.bga.gameui.disableNextMoveSound();
       }
-      const myWishEl = document.getElementById("notr-my-wish");
+      const myWishEl = document.getElementById(`notr-my-wish-${novice.playerId}`);
       if (novice.hasWish && myWishEl != null) {
         myWishEl.remove();
       } else if (!novice.hasWish && myWishEl == null) {
@@ -808,15 +811,15 @@ export class Game {
   }
 
   addMyStart(boardEl, novice) {
-    boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-start" class="notr-my notr-player-${novice.color} notr-${novice.startLocation}" title="${_("Start Location")}"><span class="notr-icon notr-icon-start"></span></div>`);
+    boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-start-${novice.playerId}" class="notr-my notr-player-${novice.color} notr-${novice.startLocation}" title="${_("Start Location")}"><span class="notr-icon notr-icon-start"></span></div>`);
   }
 
   addMyKey(boardEl, novice) {
-    boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-key" class="notr-my notr-player-${novice.color} notr-${novice.keyLocation}" title="${_("Key Location")}"><span class="notr-icon notr-icon-key"></span></div>`);
+    boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-key-${novice.playerId}" class="notr-my notr-player-${novice.color} notr-${novice.keyLocation}" title="${_("Key Location")}"><span class="notr-icon notr-icon-key"></span></div>`);
   }
 
   addMyWish(boardEl, novice) {
-    boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-wish" class="notr-my notr-player-${novice.color} notr-${novice.wishLocation}" title="${_("Secret Wish Location")}"><span class="notr-icon notr-icon-wish"></span></div>`);
+    boardEl.insertAdjacentHTML("beforeend", `<div id="notr-my-wish-${novice.playerId}" class="notr-my notr-player-${novice.color} notr-${novice.wishLocation}" title="${_("Secret Wish Location")}"><span class="notr-icon notr-icon-wish"></span></div>`);
   }
 
   locationClass(el, location) {

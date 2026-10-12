@@ -78,9 +78,8 @@ class NunPathPlayerState extends GameState
     }
 
     // Otherwise, random path
-    $version = $this->bga->tableOptions->getGameVersion();
     $r = new Randomizer();
     $path = $r->pickArrayKeys($args['possible'], 1)[0];
-    return $this->actPath($args, $version, $path);
+    return $this->actPath($args, Game::ZOMBIE_VERSION, $path);
   }
 }

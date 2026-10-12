@@ -121,7 +121,7 @@ class NoviceList implements \Countable, \IteratorAggregate, \JsonSerializable
 	{
 		$locations = [];
 		foreach ($this->novices as $playerId => $novice) {
-			if (!$novice->caught) {
+			if (!$novice->caught && $novice->location != $novice->startLocation) {
 				$locations[$novice->location][] = $playerId;
 			}
 		}

@@ -62,6 +62,7 @@ class Game extends \Bga\GameFramework\Table
 
   public const START_LOCATIONS = [1, 2, 3, 4, 5, 6];
   public const WISHES = ['dessert', 'game', 'letter', 'magazine', 'makeup', 'perfume', 'phone', 'wine'];
+  public const ZOMBIE_VERSION = -666;
 
   public Board $board;
 
@@ -78,9 +79,14 @@ class Game extends \Bga\GameFramework\Table
     return min(max($caughtProgression, $roundProgression), 100);
   }
 
+  public function getVersion(): int
+  {
+    return (int) $this->bga->tableOptions->getGameVersion();
+  }
+
   public function checkVersion(int $clientVersion): void
   {
-    if ($clientVersion != $this->bga->tableOptions->getGameVersion()) {
+    if ($clientVersion != Game::ZOMBIE_VERSION && $clientVersion != $this->getVersion()) {
       throw new UserException(new NotificationMessage('', ['checkVersion' => true]));
     }
   }
@@ -113,7 +119,7 @@ class Game extends \Bga\GameFramework\Table
       'players' => $this->getCollectionFromDb('SELECT `player_id` AS `id`, `player_score` AS `score` FROM `player`'),
       'round' => $this->getRound(),
       'roundMax' => 15,
-      'version' => $this->bga->tableOptions->getGameVersion(),
+      'version' => $this->getVersion(),
     ];
     return $result;
   }
